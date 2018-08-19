@@ -1,6 +1,6 @@
     TITLE   "Source for CAN accessory decoder using CBUS"
-; filename CANACC4_2_v2n.asm
-; use with ACC4_2 pcb rev A and in original ACC4 pcb
+; filename CANACC4_2_v2p.asm
+; use with ACC4_2 pcb rev A or with original ACC4 pcb
 
 ;ACC4_2 is a modified version of ACC4_h for use with a 12V system
 ;Incorporates drive for the voltage doubler
@@ -48,6 +48,8 @@
 ; No Rev l
 ; Rev v2m - New parameter format
 ; Rev v2n New self.enum as subroutine. New enum OPCs. 0x5D and 0x75
+; Rev v2o (23Sep13) - Added configurable fire delay (Phil Wheeler)
+; Rev v2p - 11-Dec-13, improved TMR1 setting, fixed some bugs, added charge delay (Phil Wheeler)
 
 ;end of comments for ACC4_2
 
@@ -57,6 +59,7 @@
 
   include   "p18f2480.inc"
   include   "cbuslib/constants.inc"
+
 
 ;set config registers
 
@@ -88,23 +91,33 @@
 ; __CONFIG  _CONFIG7H,  B'01000000' ;boot block protection (off)
 
 
-
-
 ; processor uses 4 MHz resonator but clock is 16 MHz.
 
 ;**************************************************************************
 ;definitions
 
-LEARN     equ 4 ;input bits in port B
-POL     equ 5
-UNLEARN   equ 5 ;setup jumper in port A (unlearn)
 S_PORT    equ PORTA
+CE_BIT    equ 0 ;CANACC2 Charger Enable
 S_BIT   equ 3 ;PB input
+CD_BIT    equ 4 ;CANACC2 Charger Doubler Drive
+UNLEARN   equ 5 ;setup jumper in port A (unlearn)
+
 LED_PORT  equ PORTB
+LEARN     equ 4 ;input bits in port B
 LED2    equ 7 ;PB7 is the green LED on the PCB
 LED1    equ 6 ;PB6 is the yellow LED on the PCB
 
+POL     equ 5 ;Not apparently used
 
+;Defaults
+DFFTIM  equ .5      ; Default fire time (units of 10mS)
+DFRDLY  equ .25     ; Default recharge delay (units of 10mS)
+DFFDLY  equ .0      ; Default fire delay (units of 10mS)
+DFCDLY  equ .3      ; Default CANACC2 Charge pump enable delay (units of 10mS)  
+
+CHGFREQ equ .100    ; CANACC2 Charge pump frequency (50,100 or 200Hz only)
+LPINTI  equ CHGFREQ*2 ; Low Priority Interrupts per second
+TMR1CN  equ 10000-(.4000000/LPINTI) ;Timer 1 count (counts UP)
 
 CMD_ON  equ 0x90  ;on event
 CMD_OFF equ 0x91  ;off event
@@ -128,7 +141,7 @@ Modstat equ 1   ;address in EEPROM
 
 MAN_NO      equ MANU_MERG    ;manufacturer number
 MAJOR_VER   equ 2
-MINOR_VER   equ "N"
+MINOR_VER   equ "P"
 MODULE_ID   equ MTYP_CANACC4_2 ; id to identify this type of module
 EVT_NUM     equ EN_NUM           ; Number of events
 EVperEVT    equ EV_NUM           ; Event variables per event
@@ -308,6 +321,10 @@ CPU_TYPE    equ P18F2480
   OpTimr    ; Output timer (countdown)
   OpTrig    ; Output channel trigger mask
   OpFlag    ; Output flags  Timout    ;used in timer routines
+  ; new variables at Rev 2_2p
+  OpFdly    ; Output fire delay
+  OpCdly    ; Output charge delay
+  LPintc    ; LPint Counter
   
   ;****************************************************************
 ; Redundant at Rev j  
@@ -325,6 +342,10 @@ CPU_TYPE    equ P18F2480
   T4b
   ; The following added at Rev j
   Trchg   ; Recharge Time. Must follow T4b
+  ; The following added at Rev 2_2o
+  Tfdly   ; Fire delay. Must follow Trchg
+  ; The following added at Rev 2_2p
+  Tcdly   ; Charge delay. Must follow Tfdly
   ;End of timer values
 
   Opm1a   ; Mask for output 1a
@@ -376,6 +397,7 @@ CPU_TYPE    equ P18F2480
   ENidx   ; event index from commands which access events by index
   CountFb0  ; counters used by Flash handling
   CountFb1  
+
   ENDC
   
   CBLOCK  0x80
@@ -1362,11 +1384,37 @@ lpint movwf W_tempL       ;used for output timers
 ;   clrf  PCLATH
   
 
-    movlw 0x78        ;Timer 1 lo byte. (adjust if needed)
+    movlw LOW TMR1CN      ;Timer 1 lo byte. (adjust if needed)
     movwf TMR1L       ;reset timer 1
     clrf  PIR1        ;clear all timer flags
-    btg   PORTA,4       ;doubler drive
+    movf  OpCdly,W      ;Is charge delay active?
+    bnz   lpint0        ;Don't toggle doubler drive then
+    btg   S_PORT,CD_BIT   ;doubler drive
+lpint0
+#if CHGFREQ > .50
+    incf  LPintc,F      ;Increment count
+    btfsc LPintc,0      ;skip alternate interrupts
+    bra   lpend       ;all done
+#if CHGFREQ >= .200
+    btfsc LPintc,1      ;skip alternate interrupts
+    bra   lpend       ;all done
+#endif
+#endif
     
+; We get here once every 10mS, no matter what interrupt rate is in use
+; Countdown fire delay (time between an event received and an output firing)
+
+    movf  OpFdly,W    ; Get fire delay, is it zero?
+    bz    lpint1      ; Inactive, check for next operation
+    decf  OpFdly,F    ; Decrement fire delay
+lpint1
+
+; Countdown charge delay (time between an output firing and the doubler restarting)
+
+    movf  OpCdly,W    ; Get fire delay, is it zero?
+    bz    lpint2      ; Inactive, check for next operation
+    decf  OpCdly,F    ; Decrement fire delay
+lpint2
 
 ; Control PORTC (trigger) outputs
 
@@ -1377,7 +1425,7 @@ lpint movwf W_tempL       ;used for output timers
 
 ; Process expired timer
 
-    bsf   PORTA,0     ; Enable Charger
+    bsf   S_PORT,CE_BIT ; Enable Charging
     movf  OpFlag,W    ; Get output flag to W and set/reset Z
     bz    donext      ; Not recharging, do next output
     andwf PORTC,F     ; Turn off last outputs
@@ -1391,6 +1439,8 @@ lpint movwf W_tempL       ;used for output timers
 
 donext  movf  OpTrig,F    ; Check trigger
     bz    lpend     ; All done
+    movf  OpFdly,F    ; Check fire delay
+    bnz   lpend     ; Wait until zero
     btfsc OpTrig,0    ; Do output 1a?
     bra   trig1a
     btfsc OpTrig,1    ; Do output 1b?
@@ -1518,7 +1568,10 @@ trig4b  bcf   OpTrig,7    ; Clear trigger bit
     comf  Opm4b,W     ; Get inverted mask for active output into W
     movwf OpFlag      ; Save in flag byte
     
-trig  bcf   PORTA,0     ; Disable Charger
+trig  bcf   S_PORT,CE_BIT ; Disable Charging
+    movf  OpTimr,W    ; Get output timer setting
+    addwf Tcdly,W     ; Add a bit more delay
+    movwf OpCdly      ; Set charge delay
     
 lpend movff Bsr_tempL,BSR
     movf  W_tempL,W
@@ -1531,7 +1584,7 @@ lpend movff Bsr_tempL,BSR
 
 ; main waiting loop
 
-main  btfsc Mode,1      ;is it SLiM?
+main0 btfsc Mode,1      ;is it SLiM?
     bra   mainf     ;no
 
 mains             ;is SLiM
@@ -1626,7 +1679,7 @@ wait1 btfss S_PORT,S_BIT
   
     movlw B'11000000'
     movwf INTCON
-    goto  main        ;
+    goto  main0       ;
 
 main5 movlw Modstat
     movwf EEADR
@@ -1688,7 +1741,7 @@ go_FLiM bsf   Datmode,1   ;FLiM setup mode
   
 main1 
     btfss Datmode,0   ;any new CAN frame received?
-    bra   main
+    bra   main0
     
     bra   packet      ;yes
     
@@ -1754,6 +1807,7 @@ setNV call  thisNN
     sublw 0
     bnz   notNNx      ;not this node
     call  putNV
+    call  timload     ;Reload NV's into RAM
     bra   main2
 
 short clrf  Rx0d1
@@ -1918,7 +1972,7 @@ para1s
     bra   main2
       
 main2 bcf   Datmode,0
-    goto  main      ;loop
+    goto  main0     ;loop
     
 setNN btfss Datmode,2   ;in NN set mode?
     bra   main2     ;no
@@ -2039,7 +2093,7 @@ go_on1  call  enmatch
     bz    do_it
     bra   main2     ;not here
 
-go_on_s btfss PORTA,LEARN
+go_on_s btfss S_PORT,LEARN
     bra   learn2      ;is in learn mode
     bra   go_on1
 
@@ -2081,7 +2135,7 @@ learn2  call  enmatch     ;is it there already?
     bz    isthere
     btfsc Mode,1      ;FLiM?
     bra   learn3
-    btfss PORTA,UNLEARN ;if unset and not here
+    btfss S_PORT,UNLEARN  ;if unset and not here
     bra   l_out2      ;do nothing else 
     call  learnin     ;put EN into stack and RAM
     sublw 0
@@ -2111,7 +2165,7 @@ lrnend
 isthere
     btfsc Mode,1
     bra   isthf     ;j if FLiM mode
-    btfsc PORTA,UNLEARN ;is it here and unlearn...
+    btfsc S_PORT,UNLEARN  ;is it here and unlearn...
     bra   dolrn
     call  unlearn     ;...goto unlearn  
     bra   l_out1
@@ -2233,7 +2287,7 @@ mskloop clrf  POSTINC0
     movwf T0CON     ;set Timer 0 for LED flash
     movlw B'10000001'   ;Timer 1 control.16 bit write
     movwf T1CON     ;Timer 1 is for output duration
-    movlw 0x63
+    movlw HIGH TMR1CN
     movwf TMR1H     ;set timer hi byte
     
     clrf  Tx1con
@@ -2269,8 +2323,7 @@ mskloop clrf  POSTINC0
     bcf   COMSTAT,RXB1OVFL
     clrf  PIR3      ;clear all flags
   
-  
-    
+    call  clrvar      ;clear variables
     
     ;   test for setup mode
     call  copyEVs
@@ -2294,7 +2347,8 @@ seten_f
     bsf   PORTB,6   ;Yellow LED on.
     bcf   PORTB,7     
     bcf   Datmode,0
-    goto  main
+    call  timload     ;load stuff
+    goto  main0
 
 slimset bcf   Mode,1
     clrf  NN_temph
@@ -2302,20 +2356,17 @@ slimset bcf   Mode,1
     ;test for clear all events
     btfss PORTB,LEARN   ;ignore the clear if learn is set
     goto  seten
-    btfss PORTA,UNLEARN
+    btfss S_PORT,UNLEARN
     call  initevdata      ;clear all events if unlearn is set during power up
 seten
     call  nv_rest     ;if SLiM put default NVs in.
-    
+    call  timload     ;Load NV's into RAM
   
     movlw B'11000000'
     movwf INTCON      ;enable interrupts
     bcf   PORTB,6
     bsf   PORTB,7     ;RUN LED on. Green for SLiM
-    goto  main
-    
-  
-        
+    goto  main0     
   
     
 
@@ -2369,7 +2420,7 @@ shuffin movff Rx0sidl,IDtempl
 ;   Checks command for ON or OFF and checks the POL bit for which way to set output
 
 ev_set
-    call  timload     ;Reload NV's into RAM (PJW: Not ideal place, but safe...)
+    movff Tfdly,OpFdly  ;Reload fire delay counter
     btfss EVtemp,0
     bra   ev_set2   ;no action on pair 1
     btfss Rx0d0,0   ;on or off?
@@ -2479,10 +2530,9 @@ timload movlw LOW NVstart     ;reloads timers
 timloop bsf   EECON1,RD
     movff EEDATA,POSTINC1
     incf  EEADR
-    movlw LOW NVstart+9   ; 8 outputs and recharge time
+    movlw LOW NVstart+.11   ; 8 outputs and 3 timers
     cpfseq  EEADR
     bra   timloop
-
     movlw HIGH Opmap      ; Opmap is in Flash
     movwf TBLPTRH
     movlw LOW Opmap
@@ -2498,6 +2548,16 @@ opmloop
     bra   opmloop
     return
     
+;**************************************************************************
+; Clear key variables used for output timing
+;**************************************************************************
+clrvar  clrf  WREG
+    movwf OpTimr        ; Clear working variables
+    movwf OpTrig
+    movwf OpFlag
+    movwf OpFdly
+    movwf OpCdly
+    return
 
 ;**************************************************************************
 ;   write to EEPROM, EEADR must be set before this sub.
@@ -3141,7 +3201,10 @@ EVstart de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   ;event qualifiers
     de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 NVstart
-    de  5,5,5,5,5,5,5,5,.20,0,0,0,0,0,0,0
+    de  DFFTIM,DFFTIM,DFFTIM,DFFTIM     ;NV 1..4
+    de  DFFTIM,DFFTIM,DFFTIM,DFFTIM     ;NV 5..8
+    de  DFRDLY,DFFDLY,DFCDLY,0        ;NV 9..11
+    de  0,0,0,0               ;NV 12..16
 hashnum   
     de  0,0,0,0,0,0,0,0
 
