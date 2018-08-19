@@ -1,6 +1,6 @@
     TITLE   "Source for CAN accessory decoder using CBUS"
-; filename ACC4_2a.asm
-; use with ACC4_2 pcb rev A
+; filename ACC4_2j.asm
+; use with ACC4_2 pcb rev A or ACC4_1 pcb rev D
 
 ;ACC4_2 is a modified version of ACC4_h for use with a 12V system
 ;Incorporates drive for the voltage doubler
@@ -8,18 +8,26 @@
 ;RA4 is the doubler drive. Uses the LPINT for a 50Hz square wave
 ;RA0 is the charge cutoff. Hi is run, low is off.
 ;Tested 07/06/10. Works OK
-
-
+; 28/02/11 version b, added Id for CANACC4_2
+; 07/03/11 version c
+;     Boot command only works with NN of zero
+;       Read parameters by index now works in SLiM mode with NN of zero
+; version d clear NN_temph and NN_templ in slimset
+; 18/03/11 version e - set number of event to zero in enclear
+; 19/03/11 version f - add WRACK after NNCLR and EVLRN
+; 22/09/11 version g - add WRACK after EVULN
+; 17/12/11 version h - interrupt driven outputs (Phil Wheeler)
+; 30/12/11 version j - move Opmap into Flash
 
 ;end of comments for ACC4_2
-
-
 
 ; 
 ; Assembly options
   LIST  P=18F2480,r=hex,N=75,C=120,T=ON
 
   include   "p18f2480.inc"
+
+#define ACC4_2    ; Define for ACC4_2 board, comment out for ACC4_1 board
 
 ;set config registers
 
@@ -78,19 +86,28 @@ SCMD_REQ  equ 0x9A
 EN_NUM  equ .32   ;number of allowed events
 EV_NUM  equ 2   ;number of allowed EVs per event
 NV_NUM  equ .16   ;number of allowed NVs for node (provisional)
-ACC4_ID equ 1
-
+ACC4_1_ID equ 1
+ACC4_2_ID equ 8
 Modstat equ 1   ;address in EEPROM
+
+D_PORT  equ PORTA ;Debug port
+D_BIT1  equ 1   ;Debug output 1 (Pin 3)
+D_BIT2  equ 2   ;Debug output 2 (Pin 4)
 
 ;module parameters  change as required
 
 Para1 equ .165  ;manufacturer number
-Para2 equ  "H"  ;for now
-Para3 equ ACC4_ID
+Para2 equ  "J"  ;update with interlocked output triggering
+#ifdef ACC4_2
+Para3 equ ACC4_2_ID ; V2 board 
+#else
+Para3 equ ACC4_1_ID ; V1 board
+#endif
 Para4 equ EN_NUM    ;node descriptors (temp values)
 Para5 equ EV_NUM
 Para6 equ NV_NUM
 Para7 equ 0
+
 
 ; definitions used by bootloader
 
@@ -216,12 +233,6 @@ Para7 equ 0
   ENtemp1     ;number of events
   Dlc       ;data length for CAN TX
   
-  
-  
-  
-
-  
-  
   Rx0con      ;start of receive packet 0
   Rx0sidh
   Rx0sidl
@@ -257,10 +268,17 @@ Para7 equ 0
     
 
   ;***************************************************************
-  Timout    ;used in timer routines
-  Timbit    ;
-  Timset    ;
-  Timtemp
+
+  OpTimr    ; Output timer (countdown)
+  OpTrig    ; Output channel trigger mask
+  OpFlag    ; Output flags
+  Timout    ; used in timer routines (REVH: Redundant)
+  Timbit    ; (REVH: Redundant)
+  Timset    ; (REVH: Redundant)
+  Timtemp   ; (REVH: Redundant)
+
+  ;Timer values. As this block is read from EEPROM in a chunk, the
+  ;entries MUST be sequential
   T1a     ;timer registers for each output
   T1b
   T2a
@@ -269,14 +287,23 @@ Para7 equ 0
   T3b
   T4a
   T4b
-  ;****************************************************************
-  Opnum   ;used in testing for number match
-  Opbit   ;bit to set or clear in output  
-  Opbit1    ;temp used in output routine  
-  ;*************************************************************
+  Trchg   ; Recharge Time. Must follow T4b
+  ;End of timer values
+
+  Opm1a   ; Mask for output 1a
+  Opm1b   ; Mask for output 1b
+  Opm2a   ; Mask for output 2a
+  Opm2b   ; Mask for output 2b
+  Opm3a   ; Mask for output 3a
+  Opm3b   ; Mask for output 3b
+  Opm4a   ; Mask for output 4a
+  Opm4b   ; Mask for output 4b
+  Opnum   ;used in testing for number match (REVH: Redundant)
+  Opbit   ;bit to set or clear in output (REVH: Redundant)  
+  Opbit1    ;temp used in output routine (REVH: Redundant)  
   
-  Outtmp    ;used to sort out output
-  Togmode   ;outputs to toggle
+  Outtmp    ;used to sort out output (REVH: Redundant)
+  Togmode   ;outputs to toggle (REVH: Redundant)
   ;
 
   Roll    ;rolling bit for enum
@@ -389,28 +416,11 @@ Para7 equ 0
 ;**********************************************************************************
 
 
-
-
-  
-
-
-
-
-
-
 ; processor uses  4 MHz. Resonator with HSPLL to give a clock of 16MHz
 
 ;********************************************************************************
 
 
-
-
-
-  
-
-  
-  
-  ;
 
 ;****************************************************************
 ; This is the bootloader
@@ -1179,8 +1189,7 @@ enum_3  movf  Roll,W
 ;
 ;
 ;   low priority interrupt. Used by output timer overflow. Every 10 millisecs.
-; 
-
+;
 lpint movwf W_tempL       ;used for output timers
     movff STATUS,St_tempL
     movff BSR,Bsr_tempL
@@ -1193,54 +1202,166 @@ lpint movwf W_tempL       ;used for output timers
     movwf TMR1L       ;reset timer 1
     clrf  PIR1        ;clear all timer flags
     btg   PORTA,4       ;doubler drive
-    
   
-lp1   clrf  Timout
-    clrf  Timbit        ;rolling bit for testing which timer
-    dcfsnz  T1a,F
-    bsf   Timout,0      ;set bits in Timout if it needs to go off
-    dcfsnz  T1b,F
-    bsf   Timout,1  
-    dcfsnz  T2a,F
-    bsf   Timout,2
-    dcfsnz  T2b,F
-    bsf   Timout,3
-    dcfsnz  T3a,F
-    bsf   Timout,4
-    dcfsnz  T3b,F
-    bsf   Timout,5
-    dcfsnz  T4a,F
-    bsf   Timout,6
-    dcfsnz  T4b,F
-    bsf   Timout,7
-    tstfsz  Timout
-    bra   off           ;turn off outputs
-    bra   lpend         ;nothing to do
+; Control PORTC (trigger) outputs
+
+    movf  OpTimr,W    ; Get timer value, is it zero?
+    bz    donext      ; Inactive, check for next operation
+    decfsz  OpTimr,F    ; Decrement timer, skip if zero (expired)
+    bra   lpend     ; Timer not expired, all done for now
+
+; Process expired timer
+
+    bsf   PORTA,0     ; Enable Charger
+    movf  OpFlag,W    ; Get output flag to W and set/reset Z
+    bz    donext      ; Not recharging, do next output
+    andwf PORTC,F     ; Turn off last outputs
+    clrf  OpFlag      ; Clear output flag
+    movf  Trchg,W     ; Get recharge time
+    bz    donext      ; None, do next output
+    movwf OpTimr      ; Store timer value
+    bra   lpend
+
+; Find next bit to trigger
+
+donext  movf  OpTrig,F    ; Check trigger
+    bz    lpend     ; All done
+    btfsc OpTrig,0    ; Do output 1a?
+    bra   trig1a
+    btfsc OpTrig,1    ; Do output 1b?
+    bra   trig1b
+    btfsc OpTrig,2    ; Do output 2a?
+    bra   trig2a
+    btfsc OpTrig,3    ; Do output 2b?
+    bra   trig2b
+    btfsc OpTrig,4    ; Do output 3a?
+    bra   trig3a
+    btfsc OpTrig,5    ; Do output 3b?
+    bra   trig3b
+    btfsc OpTrig,6    ; Do output 4a?
+    bra   trig4a
+    bra   trig4b      ; Do output 4b
+
+; Trigger output 1a
+
+trig1a  bcf   OpTrig,0    ; Clear trigger bit
+    comf  Opm1b,W     ; Get inverted mask for other output into W
+    andwf PORTC,F     ; Set other output off
+    movf  Opm1a,W     ; Get mask for active output into W
+    iorwf PORTC,F     ; Active pair on
+    movf  T1a,W     ; Get timer into W
+    bz    lpend     ; If timer is zero, then all done
+    movwf OpTimr      ; Save timer value
+    comf  Opm1a,W     ; Get inverted mask for active output into W
+    movwf OpFlag      ; Save in flag byte
+    bra   trig
+
+; Trigger output 1b
+
+trig1b  bcf   OpTrig,1    ; Clear trigger bit
+    comf  Opm1a,W     ; Get inverted mask for other output into W
+    andwf PORTC,F     ; Set other output off
+    movf  Opm1b,W     ; Get mask for active output into W
+    iorwf PORTC,F     ; Active pair on
+    movf  T1b,W     ; Get timer into W
+    bz    lpend     ; If timer is zero, then all done
+    movwf OpTimr      ; Save timer value
+    comf  Opm1b,W     ; Get inverted mask for active output into W
+    movwf OpFlag      ; Save in flag byte
+    bra   trig
+
+; Trigger output 2a
+
+trig2a  bcf   OpTrig,2    ; Clear trigger bit
+    comf  Opm2b,W     ; Get inverted mask for other output into W
+    andwf PORTC,F     ; Set other output off
+    movf  Opm2a,W     ; Get mask for active output into W
+    iorwf PORTC,F     ; Active pair on
+    movf  T2a,W     ; Get timer into W
+    bz    lpend     ; If timer is zero, then all done
+    movwf OpTimr      ; Save timer value
+    comf  Opm2a,W     ; Get inverted mask for active output into W
+    movwf OpFlag      ; Save in flag byte
+    bra   trig
+
+; Trigger output 2b
+
+trig2b  bcf   OpTrig,3    ; Clear trigger bit
+    comf  Opm2a,W     ; Get inverted mask for other output into W
+    andwf PORTC,F     ; Set other output off
+    movf  Opm2b,W     ; Get mask for active output into W
+    iorwf PORTC,F     ; Active pair on
+    movf  T2b,W     ; Get timer into W
+    bz    lpend     ; If timer is zero, then all done
+    movwf OpTimr      ; Save timer value
+    comf  Opm2b,W     ; Get inverted mask for active output into W
+    movwf OpFlag      ; Save in flag byte
+    bra   trig
+
+; Trigger output 3a
+
+trig3a  bcf   OpTrig,4    ; Clear trigger bit
+    comf  Opm3b,W     ; Get inverted mask for other output into W
+    andwf PORTC,F     ; Set other output off
+    movf  Opm3a,W     ; Get mask for active output into W
+    iorwf PORTC,F     ; Active pair on
+    movf  T3a,W     ; Get timer into W
+    bz    lpend     ; If timer is zero, then all done
+    movwf OpTimr      ; Save timer value
+    comf  Opm3a,W     ; Get inverted mask for active output into W
+    movwf OpFlag      ; Save in flag byte
+    bra   trig
+
+; Trigger output 3b
+
+trig3b  bcf   OpTrig,5    ; Clear trigger bit
+    comf  Opm3a,W     ; Get inverted mask for other output into W
+    andwf PORTC,F     ; Set other output off
+    movf  Opm3b,W     ; Get mask for active output into W
+    iorwf PORTC,F     ; Active pair on
+    movf  T3b,W     ; Get timer into W
+    bz    lpend     ; If timer is zero, then all done
+    movwf OpTimr      ; Save timer value
+    comf  Opm3b,W     ; Get inverted mask for active output into W
+    movwf OpFlag      ; Save in flag byte
+    bra   trig
+
+; Trigger output 4a
+
+trig4a  bcf   OpTrig,6    ; Clear trigger bit
+    comf  Opm4b,W     ; Get inverted mask for other output into W
+    andwf PORTC,F     ; Set other output off
+    movf  Opm4a,W     ; Get mask for active output into W
+    iorwf PORTC,F     ; Active pair on
+    movf  T4a,W     ; Get timer into W
+    bz    lpend     ; If timer is zero, then all done
+    movwf OpTimr      ; Save timer value
+    comf  Opm4a,W     ; Get inverted mask for active output into W
+    movwf OpFlag      ; Save in flag byte
+    bra   trig
+
+; Trigger output 4b
+
+trig4b  bcf   OpTrig,7    ; Clear trigger bit
+    comf  Opm4a,W     ; Get inverted mask for other output into W
+    andwf PORTC,F     ; Set other output off
+    movf  Opm4b,W     ; Get mask for active output into W
+    iorwf PORTC,F     ; Active pair on
+    movf  T4b,W     ; Get timer into W
+    bz    lpend     ; If timer is zero, then all done
+    movwf OpTimr      ; Save timer value
+    comf  Opm4b,W     ; Get inverted mask for active output into W
+    movwf OpFlag      ; Save in flag byte
     
-off   bsf   Timbit,0        ;set rolling bit
-off1  movf  Timbit,W
-    andwf Timout,W
-    bnz   dobit         ;this timer is out
-off2  rlncf Timbit,F
-    bra   off1          ;try next timer
-dobit xorwf Timout,F        ;clear bit in Timout
-    andwf Timset,W        ;is this timer continuous
-    bz    donot         ;a zero is continuous
-        
-    xorwf Timset,F        ;ignore next time
-    call  map           ;for mapping
-    movwf Timtemp
-    comf  Timtemp,W
-    andwf PORTC,F         ;turn off output
-    bsf   PORTA,0         ;charger back on
-donot tstfsz  Timout          ;any more outputs to turn off?
-    bra   off2  
+trig  bcf   PORTA,0     ; Disable Charger
     
+;End of low priority interrupt
 lpend movff Bsr_tempL,BSR
     movf  W_tempL,W
     movff St_tempL,STATUS 
     retfie  
-            
+
+          
 
 ;*********************************************************************
 
@@ -1414,16 +1535,17 @@ readEV  btfss Datmode,4
 
 evns1 call  thisNN        ;read event numbers
     sublw 0
-    bnz   evns3
+    bnz   notNNx
     call  evns2
     bra   main2
-evns3 goto  notNN
+;evns3  goto  notNN
 
 reval call  thisNN        ;read event numbers
     sublw 0
     bnz   notNNx
     call  evsend
     bra   main2
+    
 notNNx  goto  notNN
 
 go_on_x goto  go_on
@@ -1432,6 +1554,13 @@ params  btfss Datmode,2   ;only in setup mode
     bra   main2
     call  parasend
     bra   main2
+    
+setNV call  thisNN
+    sublw 0
+    bnz   notNNx      ;not this node
+    call  putNV
+    bra   main2
+
     
 ;********************************************************************   
   
@@ -1455,6 +1584,9 @@ packet  movlw CMD_ON      ;on command?
     movlw 0x5C      ;reboot
     subwf Rx0d0,W
     bz    reboot
+    movlw 0x73
+    subwf Rx0d0,W
+    bz    para1a      ;read individual parameters
     btfss Mode,1      ;FLiM?
     bra   main2     ;no more if SLiM
     movlw 0x42      ;set NN on 0x42
@@ -1498,9 +1630,6 @@ packet  movlw CMD_ON      ;on command?
     movlw 0x72
     subwf Rx0d0,W
     bz    readENi     ;read event by index
-    movlw 0x73
-    subwf Rx0d0,W
-    bz    para1a      ;read individual parameters
     movlw 0x58
     subwf Rx0d0,W
     bz    evns
@@ -1521,7 +1650,7 @@ evns  goto  evns1
     bra   main2
 
 reboot  btfss Mode,1
-    bra   reboot1
+    bra   reboots     ;j if SLiM mode
     call  thisNN
     sublw 0
     bnz   notNN
@@ -1530,7 +1659,28 @@ reboot1 movlw 0xFF
     movlw 0xFF
     call  eewrite     ;set last EEPROM byte to 0xFF
     reset         ;software reset to bootloader
-      
+
+reboots
+    movf  Rx0d1,w     ; NN must be zero
+    addwf Rx0d2,w
+    bz    reboot1
+    bra   notNN
+  
+para1a  
+    btfss Mode,1      ;FLiM mode?
+    bra   para1s      ; j if SLiM mode
+    call  thisNN      ;read parameter by index
+    sublw 0
+    bnz   notNN
+    call  para1rd
+    bra   main2
+    
+para1s
+    movf  Rx0d1,w
+    addwf Rx0d2,w
+    bnz   notNN
+    call  para1rd
+    ; fall thro'  
 main2 bcf   Datmode,0
     goto  main      ;loop
     
@@ -1581,6 +1731,8 @@ clrens  call  thisNN
     btfss Datmode,4
     bra   clrerr
     call  enclear
+    movlw 0x59
+    call  nnrel
     bra   notln1
 notNN bra   main2
 clrerr  movlw 2     ;not in learn mode
@@ -1620,17 +1772,7 @@ readENi call  thisNN      ;read event by index
 paraerr movlw 3       ;error not in setup mode
     goto  errmsg
 
-para1a  call  thisNN      ;read parameter by index
-    sublw 0
-    bnz   notNN
-    call  para1rd
-    bra   main2
 
-setNV call  thisNN
-    sublw 0
-    bnz   notNN     ;not this node
-    call  putNV
-    bra   main2
 
 readNV  call  thisNN
     sublw 0
@@ -1795,6 +1937,8 @@ mod_EVf movff Rx0d5,EVtemp  ;store EV index
     bra   rdbak
     movf  EVtemp2,W
     call  eewrite       ;put in
+    movlw 0x59
+    call  nnrel
     bra   l_out2
 
 
@@ -1870,28 +2014,10 @@ un2   bsf   EECON1,RD
     call  eewrite     ;put back number in stack less 1
     call  en_ram      ;rewrite RAM stack
     bcf   Datmode,5
+    movlw 0x59
+    call  nnrel     ; send WRACK
     
     bra   l_out1
-        
-
-  
-
-  
-            
-    
-
-
-
-
-
-    
-
-
-    
-
-
-
-    
 
 
 ;***************************************************************************
@@ -1920,7 +2046,9 @@ setup clrf  INTCON      ;no interrupts yet
     movlw B'00000000'   ;Port C  set to outputs.
     movwf TRISC
     clrf  PORTC
-  
+    clrf  OpTimr      ;Clear low priority interrupt flags
+    clrf  OpTrig
+    clrf  OpFlag
     
 ; next segment is essential.
     
@@ -2028,6 +2156,8 @@ seten_f call  en_ram      ;put events in RAM
     goto  main
 
 slimset bcf   Mode,1
+    clrf  NN_temph
+    clrf  NN_templ
     ;test for clear all events
     btfss PORTB,LEARN   ;ignore the clear if learn is set
     goto  seten
@@ -2093,177 +2223,116 @@ shuffin movff Rx0sidl,IDtempl
     return
 
 
-;************************************************************************************
-;   sets an output  
-    
-
-do_out  movf  Opbit,W     ;Opbit has bit set for corresponding output number
-    call  map       ;remaps this bit to correspond with actual output pin.
-    bcf   PORTA,0     ;disable charger
-    iorwf PORTC,F     ;set output
-    movf  Opbit,W
-    iorwf Timset,F    ;set to timed for now
-    lfsr  2,T1a     ;get time
-    movf  Opnum,W
-    addlw LOW NVstart     ;EEPROM
-    movwf EEADR
-    bsf   EECON1,RD
-    movf  EEDATA,W
-    movwf Timtemp     ;hold value
-    bz    timcont     ;time was zero so continuous
-    movf  Opnum,W     ;get index
-    movff Timtemp,PLUSW2  ;put in
-    
-    bra   onback      ;done
-timcont comf  Opbit,W
-    andwf Timset,F    ;clear bit
-onback  return
-;************************************************************************
-;   turns an output off
-    
-out_off movf  Opbit,W
-    call  map
-    movwf Opbit1
-    comf  Opbit1,W
-    andwf PORTC,F     ;clear this output
-    comf  Opbit,W
-    andwf Timset,F    ;set to  no timer
-offback return  
-    
 ;********************************************************************
 ;   Do an event.  arrives with EV in EVtemp and POL in EVtemp2
 ;   Toggles outputs. Turns off before on.
 ;   Checks which outputs are active for the event
 ;   Checks command for ON or OFF and checks the POL bit for which way to set output
 
-ev_set    clrf  Opbit
-      btfss EVtemp,0
-      bra   ev_set1   ;no action on pair 1
-      btfss Rx0d0,0   ;on or off?
-      bra   ev1a
-      btfss EVtemp2,0 ;reverse?
-      bra   ev1_off
-      bra   ev1_on
-ev1a    btfss EVtemp2,0
-      bra   ev1_on
-      bra   ev1_off     
-ev1_on    movlw 0
-      movwf Opnum   ;output 1 is on
-      bsf   Opbit,1
-      call  out_off
-      rrncf Opbit,F
-      call  do_out
-      call  delay2
-      bra   ev_set1
-ev1_off   movlw 1
-      movwf Opnum   ;output 2 is on
-      bsf   Opbit,0
-      call  out_off
-      rlncf Opbit,F
-      call  do_out
-      call  delay2
-ev_set1   clrf  Opbit
-      btfss EVtemp,1
-      bra   ev_set2   ;no action on pair 2
-      btfss Rx0d0,0   ;on or off?
-      bra   ev2a
-      btfss EVtemp2,1 ;reverse?
-      bra   ev2_off
-      bra   ev2_on
-ev2a    btfss EVtemp2,1
-      bra   ev2_on
-      bra   ev2_off     
-ev2_on    movlw 2
-      movwf Opnum   ;output 3 is on
-      bsf   Opbit,3
-      call  out_off
-      rrncf Opbit,F
-      call  do_out
-      call  delay2
-      bra   ev_set2
-ev2_off   movlw 3
-      movwf Opnum   ;output 4 is on
-      bsf   Opbit,2
-      call  out_off
-      rlncf Opbit,F
-      call  do_out
-      call  delay2
-ev_set2   clrf  Opbit
-      btfss EVtemp,2
-      bra   ev_set3   ;no action on pair 3
-      btfss Rx0d0,0   ;on or off?
-      bra   ev3a
-      btfss EVtemp2,2 ;reverse?
-      bra   ev3_off
-      bra   ev3_on
-ev3a    btfss EVtemp2,2
-      bra   ev3_on
-      bra   ev3_off     
-ev3_on    movlw 4
-      movwf Opnum   ;output 5 is on
-      bsf   Opbit,5
-      call  out_off
-      rrncf Opbit,F
-      call  do_out
-      call  delay2
-      bra   ev_set3
-ev3_off   movlw 5
-      movwf Opnum   ;output 6 is on
-      bsf   Opbit,4
-      call  out_off
-      rlncf Opbit,F
-      call  do_out
-      call  delay2
-ev_set3   clrf  Opbit
-      btfss EVtemp,3
-      bra   ev_set4   ;no action on pair 4
-      btfss Rx0d0,0   ;on or off?
-      bra   ev4a
-      btfss EVtemp2,3 ;reverse?
-      bra   ev4_off
-      bra   ev4_on
-ev4a    btfss EVtemp2,3
-      bra   ev4_on
-      bra   ev4_off     
-ev4_on    movlw 6
-      movwf Opnum   ;output 7 is on
-      bsf   Opbit,7
-      call  out_off
-      rrncf Opbit,F
-      call  do_out
-      call  delay2
-      bra   ev_set4
-ev4_off   movlw 7
-      movwf Opnum   ;output 8 is on
-      bsf   Opbit,6
-      call  out_off
-      rlncf Opbit,F
-      call  do_out
-      call  delay2
-ev_set4   return      
-      
+ev_set
+    call  timload     ;Reload NV's into RAM (PJW: Not ideal place, but safe...)
+    btfss EVtemp,0
+    bra   ev_set2   ;no action on pair 1
+    btfss Rx0d0,0   ;on or off?
+    bra   ev1a
+    btfss EVtemp2,0 ;reverse?
+    bra   ev1_off
+    bra   ev1_on
 
-          
-    
-;******************************************************************
-;   maps logical output to real output  (PCB layout was a problem)
+ev1a  btfss EVtemp2,0
+    bra   ev1_on
+    bra   ev1_off     
 
-map   movwf Opbit1      ;save opbit 
-    clrf  Shift1
-map1  rrcf  Opbit1,F    ;which bit is set?
-    bc    map2      ;this one
-    incf  Shift1,F      ;add one
-    bra   map1
-map2  movf  Shift1,W
-    addlw LOW Opmap
-    movwf EEADR     ;get mapped value
-    bsf   EECON1,RD
-    movf  EEDATA,W    ;output bit in W
-    return
-    
+; Process pair 1
+
+ev1_on            ; Output 1 is on, 2 off
+    bcf   OpTrig,1  ; Clear other output trigger
+    bsf   OpTrig,0  ; Set output trigger
+    bra   ev_set2   ; All done for this pair
+
+ev1_off           ; Output 1 is off, 2 is on
+    bsf   OpTrig,1  ; Set active output trigger
+    bcf   OpTrig,0  ; Clear other output trigger
+              ; Drop through
+
+; Process pair 2
+
+ev_set2 btfss EVtemp,1
+    bra   ev_set3   ;no action on pair 2
+    btfss Rx0d0,0   ;on or off?
+    bra   ev2a
+    btfss EVtemp2,1 ;reverse?
+    bra   ev2_off
+    bra   ev2_on
+
+ev2a  btfss EVtemp2,1
+    bra   ev2_on
+    bra   ev2_off     
+
+ev2_on            ; Output 3 is on, 4 off
+    bcf   OpTrig,3  ; Clear other output trigger
+    bsf   OpTrig,2  ; Set active output trigger
+    bra   ev_set3   ; All done for this pair
+
+ev2_off           ; Output 3 is off, 4 is on
+    bsf   OpTrig,3  ; Set active output trigger
+    bcf   OpTrig,2  ; Clear other output trigger
+              ; Drop through
+
+; Process pair 3
+
+ev_set3 btfss EVtemp,2
+    bra   ev_set4   ;no action on pair 3
+    btfss Rx0d0,0   ;on or off?
+    bra   ev3a
+    btfss EVtemp2,2 ;reverse?
+    bra   ev3_off
+    bra   ev3_on
+
+ev3a  btfss EVtemp2,2
+    bra   ev3_on
+    bra   ev3_off     
+
+ev3_on            ; Output 5 is on, 6 off
+    bcf   OpTrig,5  ; Clear other output trigger
+    bsf   OpTrig,4  ; Set active output trigger
+    bra   ev_set4   ; All done for this pair
+
+ev3_off           ; Output 5 is off, 6 is on
+    bsf   OpTrig,5  ; Set active output trigger
+    bcf   OpTrig,4  ; Clear other output trigger
+              ; Drop through
+
+; Process pair 4
+
+ev_set4 btfss EVtemp,3
+    bra   ev_setx   ;no action on pair 4
+    btfss Rx0d0,0   ;on or off?
+    bra   ev4a
+    btfss EVtemp2,3 ;reverse?
+    bra   ev4_off
+    bra   ev4_on
+
+ev4a  btfss EVtemp2,3
+    bra   ev4_on
+    bra   ev4_off     
+
+ev4_on            ; Output 7 is on, 8 off
+    bcf   OpTrig,7  ; Clear other output trigger
+    bsf   OpTrig,6  ; Set active output trigger
+    bra   ev_setx   ; All done for this pair
+
+ev4_off           ; Output 7 is off, 8 is on
+    bsf   OpTrig,7  ; Set active output trigger
+    bcf   OpTrig,6  ; Clear other output trigger
+              ; Drop through
+
+; All done
+ev_setx return
+
+
 ;***************************************************************************
-
-;   reloads the timer settings from EEPROM to RAM
+;   reloads the timer settings and output masks from EEPROM to RAM
 
 timload movlw LOW NVstart     ;reloads timers
     movwf EEADR
@@ -2271,9 +2340,23 @@ timload movlw LOW NVstart     ;reloads timers
 timloop bsf   EECON1,RD
     movff EEDATA,POSTINC1
     incf  EEADR
-    movlw LOW NVstart+8
+    movlw LOW NVstart+9   ; 8 outputs and recharge time
     cpfseq  EEADR
     bra   timloop
+
+    movlw HIGH Opmap
+    movwf TBLPTRH
+    movlw LOW Opmap
+    movwf TBLPTRL 
+    clrf  TBLPTRU
+    movlw 8
+    movwf Count
+    lfsr  FSR1, Opm1a
+opmloop
+    tblrd*+
+    movff TABLAT, POSTINC1
+    decfsz  Count
+    bra   opmloop
     return
     
 
@@ -2869,6 +2952,19 @@ enloop  movlw 0
     incf  EEADR
     decfsz  Count
     bra   enloop
+    movlw LOW ENindex + 1
+    movwf EEADR
+    movlw 0
+    call  eewrite
+    
+    ;now clear shadow ram
+    movlw EN_NUM * 4
+    movwf Count
+    lfsr  FSR0, EN1
+ramloop
+    clrf  POSTINC0
+    decfsz  Count
+    bra   ramloop
     return  
 ;****************************************************************************
 
@@ -2894,7 +2990,7 @@ putNV movlw NV_NUM + 1    ;put new NV in EEPROM and the NV ram.
     movf  Rx0d4,W
   
     call  eewrite 
-    
+
 no_NV return
 
 ;************************************************************************
@@ -2923,7 +3019,7 @@ no_NV1  clrf  Tx1d3     ;if not valid NV
     clrf  Tx1d4
     bra   getNV2
 
-nv_rest movlw 8
+nv_rest movlw 9       ;8 output times + recharge time
     movwf Count
     movlw LOW Timers
     movwf Temp
@@ -2977,7 +3073,14 @@ segful    movlw 7   ;segment full, no CAN_ID allocated
       call  errsub
       setf  IDcount
       bcf   IDcount,7
-      return    
+      return  
+
+Opmap db  B'00000001',B'10000000'         ;output mapping
+    db  B'00000010',B'01000000'         ;don't change this
+    db  B'00100000',B'00000100'
+    db  B'00010000',B'00001000' 
+        
+      
 ;************************************************************************
   
   ORG 0xF00000      ;EEPROM data. Defaults
@@ -2992,12 +3095,13 @@ Timers  de  .5,.5       ;Timers (for now)
     de  .5,.5       ;These are for each output
     de  .5,.5                       
     de  .5,.5                       
-        
+    de  .30,.0        ;Recharge time (units of 10mS)
 
-Opmap de  B'00000001',B'10000000'         ;output mapping
-    de  B'00000010',B'01000000'         ;don't change this
-    de  B'00100000',B'00000100'
-    de  B'00010000',B'00001000' 
+; Opmap now in Flash Ram - version j
+;Opmap  de  B'00000001',B'10000000'         ;output mapping
+;   de  B'00000010',B'01000000'         ;don't change this
+;   de  B'00100000',B'00000100'
+;   de  B'00010000',B'00001000' 
     
     ORG 0xF00020
   
@@ -3012,7 +3116,7 @@ EVstart de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   ;event qualifiers
     de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 NVstart
-    de  5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0
+    de  5,5,5,5,5,5,5,5,.30,0,0,0,0,0,0,0
 ;   de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
     ORG 0xF000FE
