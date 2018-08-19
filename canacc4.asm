@@ -1,5 +1,5 @@
     TITLE   "Source for CAN accessory decoder using CBUS"
-; filename CANACC4_2_v2p.asm
+; filename CANACC4_2_v2q.asm
 ; use with ACC4_2 pcb rev A or with original ACC4 pcb
 
 ;ACC4_2 is a modified version of ACC4_h for use with a 12V system
@@ -50,6 +50,7 @@
 ; Rev v2n New self.enum as subroutine. New enum OPCs. 0x5D and 0x75
 ; Rev v2o (23Sep13) - Added configurable fire delay (Phil Wheeler)
 ; Rev v2p - 11-Dec-13, improved TMR1 setting, fixed some bugs, added charge delay (Phil Wheeler)
+; Rev v2q (6Apr16)- Fix SLiM learn mode issue
 
 ;end of comments for ACC4_2
 
@@ -103,7 +104,7 @@ CD_BIT    equ 4 ;CANACC2 Charger Doubler Drive
 UNLEARN   equ 5 ;setup jumper in port A (unlearn)
 
 LED_PORT  equ PORTB
-LEARN     equ 4 ;input bits in port B
+DOLEARN   equ 4 ;input bits in port B
 LED2    equ 7 ;PB7 is the green LED on the PCB
 LED1    equ 6 ;PB6 is the yellow LED on the PCB
 
@@ -117,7 +118,7 @@ DFCDLY  equ .3      ; Default CANACC2 Charge pump enable delay (units of 10mS)
 
 CHGFREQ equ .100    ; CANACC2 Charge pump frequency (50,100 or 200Hz only)
 LPINTI  equ CHGFREQ*2 ; Low Priority Interrupts per second
-TMR1CN  equ 10000-(.4000000/LPINTI) ;Timer 1 count (counts UP)
+TMR1CN  equ 0x10000-(.4000000/LPINTI) ;Timer 1 count (counts UP)
 
 CMD_ON  equ 0x90  ;on event
 CMD_OFF equ 0x91  ;off event
@@ -141,7 +142,7 @@ Modstat equ 1   ;address in EEPROM
 
 MAN_NO      equ MANU_MERG    ;manufacturer number
 MAJOR_VER   equ 2
-MINOR_VER   equ "P"
+MINOR_VER   equ "Q"
 MODULE_ID   equ MTYP_CANACC4_2 ; id to identify this type of module
 EVT_NUM     equ EN_NUM           ; Number of events
 EVperEVT    equ EV_NUM           ; Event variables per event
@@ -2093,7 +2094,7 @@ go_on1  call  enmatch
     bz    do_it
     bra   main2     ;not here
 
-go_on_s btfss S_PORT,LEARN
+go_on_s btfss PORTB,DOLEARN
     bra   learn2      ;is in learn mode
     bra   go_on1
 
@@ -2354,7 +2355,7 @@ slimset bcf   Mode,1
     clrf  NN_temph
     clrf  NN_templ
     ;test for clear all events
-    btfss PORTB,LEARN   ;ignore the clear if learn is set
+    btfss PORTB,DOLEARN   ;ignore the clear if learn is set
     goto  seten
     btfss S_PORT,UNLEARN
     call  initevdata      ;clear all events if unlearn is set during power up
