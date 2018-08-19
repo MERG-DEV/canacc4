@@ -1,5 +1,5 @@
     TITLE   "Source for CAN accessory decoder using CBUS"
-; filename ACC4_h.asm
+; filename ACC4_p.asm
 ; use with CANACC4 pcb rev C
 
 ; CANACC4 is a basic 'consumer only' turnout driver with 4 output pairs.
@@ -74,6 +74,12 @@
 ;prevent error messages in unset (OPC 0x95)  Rev f  (17/03/10)
 ;Rev g. Change to enum process  23/03/10
 ;Rev h. Clear of RX buffer overflow flags
+;Rev k. Boot only works with NN of zero in SLiM mode
+;       Read Params by index works with NN of zero in SLiM mode
+;No rev l
+;Rev m  clear NN_temph and NN_templ in slimset
+;Rev n  set number of events to zero in enclear
+;Rev p  clear shadow event ram in enclear and send WRACK after NNCLR and EVLRN
 
 ;end of comments for ACC4
 
@@ -149,7 +155,7 @@ Modstat equ 1   ;address in EEPROM
 ;module parameters  change as required
 
 Para1 equ .165  ;manufacturer number
-Para2 equ  "H"  ;for now
+Para2 equ  "P"  ;for now
 Para3 equ ACC4_ID
 Para4 equ EN_NUM    ;node descriptors (temp values)
 Para5 equ EV_NUM
@@ -1497,6 +1503,8 @@ params  btfss Datmode,2   ;only in setup mode
     call  parasend
     bra   main2
     
+setNVx  goto  setNV
+    
 ;********************************************************************   
   
     
@@ -1519,6 +1527,9 @@ packet  movlw CMD_ON      ;on command?
     movlw 0x5C      ;reboot
     subwf Rx0d0,W
     bz    reboot
+    movlw 0x73
+    subwf Rx0d0,W
+    bz    para1a      ;read individual parameters
     btfss Mode,1      ;FLiM?
     bra   main2     ;no more if SLiM
     movlw 0x42      ;set NN on 0x42
@@ -1555,16 +1566,13 @@ packet  movlw CMD_ON      ;on command?
     bz    readNVx
     movlw 0x96      ;set NV
     subwf Rx0d0,W
-    bz    setNV
+    bz    setNVx
     movlw 0x57      ;is it read events
     subwf Rx0d0,W
     bz    readENx
     movlw 0x72
     subwf Rx0d0,W
     bz    readENi     ;read event by index
-    movlw 0x73
-    subwf Rx0d0,W
-    bz    para1a      ;read individual parameters
     movlw 0x58
     subwf Rx0d0,W
     bz    evns
@@ -1585,7 +1593,7 @@ evns  goto  evns1
     bra   main2
 
 reboot  btfss Mode,1
-    bra   reboot1
+    bra   reboots
     call  thisNN
     sublw 0
     bnz   notNN
@@ -1594,7 +1602,28 @@ reboot1 movlw 0xFF
     movlw 0xFF
     call  eewrite     ;set last EEPROM byte to 0xFF
     reset         ;software reset to bootloader
-      
+    
+reboots movf  Rx0d1,w
+    addwf Rx0d2,w
+    bz    reboot1
+    bra   notNN
+    
+para1a
+    btfss Mode,1      ;FLiM mode?
+    bra   para1s      ;j if SLiM mode
+    call  thisNN      ;read parameter by index
+    sublw 0
+    bnz   notNN
+    call  para1rd
+    bra   main2
+    
+para1s
+    movf  Rx0d1,w
+    addwf Rx0d2,w
+    bnz   notNN
+    call  para1rd
+    ;fall thro'
+    
 main2 bcf   Datmode,0
     goto  main      ;loop
     
@@ -1645,6 +1674,8 @@ clrens  call  thisNN
     btfss Datmode,4
     bra   clrerr
     call  enclear
+    movlw 0x59
+    call  nnrel   ;send WRACK
     bra   notln1
 notNN bra   main2
 clrerr  movlw 2     ;not in learn mode
@@ -1684,11 +1715,7 @@ readENi call  thisNN      ;read event by index
 paraerr movlw 3       ;error not in setup mode
     goto  errmsg
 
-para1a  call  thisNN      ;read parameter by index
-    sublw 0
-    bnz   notNN
-    call  para1rd
-    bra   main2
+
 
 setNV call  thisNN
     sublw 0
@@ -1859,10 +1886,10 @@ mod_EVf movff Rx0d5,EVtemp  ;store EV index
     bra   rdbak
     movf  EVtemp2,W
     call  eewrite       ;put in
+    movlw 0x59
+    call  nnrel       ;send WRACK
     bra   l_out2
 
-
-      
 
 l_out bcf   Datmode,4
 ;   bcf   LED_PORT,LED2
@@ -2092,6 +2119,8 @@ seten_f call  en_ram      ;put events in RAM
     goto  main
 
 slimset bcf   Mode,1
+    clrf  NN_temph    ; set NN to zero
+    clrf  NN_templ
     ;test for clear all events
     btfss PORTB,LEARN   ;ignore the clear if learn is set
     goto  seten
@@ -2932,7 +2961,21 @@ enloop  movlw 0
     incf  EEADR
     decfsz  Count
     bra   enloop
+    movlw LOW ENindex+1
+    movwf EEADR
+    movlw 0
+    call  eewrite
+    
+    ;now clear the shadow ram
+    movlw EN_NUM * 4
+    movwf Count
+    lfsr  FSR0, EN1
+ramloop
+    clrf  POSTINC0
+    decfsz  Count
+    bra   ramloop
     return  
+    
 ;****************************************************************************
 
 nnack movlw 0x50      ;request frame for new NN or ack if not virgin
