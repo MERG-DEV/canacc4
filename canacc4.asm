@@ -1,5 +1,5 @@
     TITLE   "Source for CAN accessory decoder using CBUS"
-; filename CANACC4_2_v2m.asm
+; filename CANACC4_2_v2n.asm
 ; use with ACC4_2 pcb rev A and in original ACC4 pcb
 
 ;ACC4_2 is a modified version of ACC4_h for use with a 12V system
@@ -47,6 +47,7 @@
 ; Rev v2k - include file now evhndlr_e.asm, remove NEVER compied code
 ; No Rev l
 ; Rev v2m - New parameter format
+; Rev v2n New self.enum as subroutine. New enum OPCs. 0x5D and 0x75
 
 ;end of comments for ACC4_2
 
@@ -100,8 +101,8 @@ UNLEARN   equ 5 ;setup jumper in port A (unlearn)
 S_PORT    equ PORTA
 S_BIT   equ 3 ;PB input
 LED_PORT  equ PORTB
-LED2    equ 7
-LED1    equ 6
+LED2    equ 7 ;PB7 is the green LED on the PCB
+LED1    equ 6 ;PB6 is the yellow LED on the PCB
 
 
 
@@ -127,7 +128,7 @@ Modstat equ 1   ;address in EEPROM
 
 MAN_NO      equ MANU_MERG    ;manufacturer number
 MAJOR_VER   equ 2
-MINOR_VER   equ "M"
+MINOR_VER   equ "N"
 MODULE_ID   equ MTYP_CANACC4_2 ; id to identify this type of module
 EVT_NUM     equ EN_NUM           ; Number of events
 EVperEVT    equ EV_NUM           ; Event variables per event
@@ -1531,9 +1532,11 @@ lpend movff Bsr_tempL,BSR
 ; main waiting loop
 
 main  btfsc Mode,1      ;is it SLiM?
-    bra   mainf
+    bra   mainf     ;no
 
-mains btfss PIR2,TMR3IF   ;flash timer overflow?
+mains             ;is SLiM
+
+    btfss PIR2,TMR3IF   ;flash timer overflow?
     bra   nofl_s      ;no SLiM flash
     btg   PORTB,7     ;toggle green LED
     bcf   PIR2,TMR3IF
@@ -1616,7 +1619,6 @@ wait1 btfss S_PORT,S_BIT
     movwf EEADR
     movlw 0
     call  eewrite       ;mode back to SLiM
-    call  nv_rest       ;restore NVs for SLiM
     clrf  Datmode
     bcf   Mode,1
     bcf   PORTB,6
@@ -1624,50 +1626,56 @@ wait1 btfss S_PORT,S_BIT
   
     movlw B'11000000'
     movwf INTCON
-    goto  main        ;setloop
+    goto  main        ;
 
 main5 movlw Modstat
     movwf EEADR
     movlw 1
     call  eewrite       ;mode to FLiM in EEPROM
-;   bsf   PORTB,7       ;yellow will flash
-;   bsf   PORTB,7       ;green LED on still
     bsf   Mode,1        ;to FLiM
-    movlw B'11000000'
-    movwf INTCON
-    goto  setloop       ;setloop
+    call  self_en       ;self enumerate routine
+    bcf   Datmode,1
+    call  nnack       ;send request for NN
+    bsf   Datmode,2
+;   movlw Modstat       ;only if needed
+;   movwf EEADR
+;   movlw B'00000100'
+;   call  eewrite       ;mode to wait for NN in EEPROM
+    bra   main1
 
-main4 btfss Datmode,3   
-    bra   main3
+
+main4 ;btfss  Datmode,3   
+    ;bra    main3
     btfss Datmode,2
-    bra   set2
+    bra   mset2
     bcf   Datmode,2
     bsf   PORTB,6     ;LED on
+    movlw 0x52
+    call  nnrel
+    movlw Modstat
+    movwf EEADR
+    movlw B'00001000'
+    movwf Datmode     ;normal
+    call  eewrite
     bra   main3
-set2  bsf   Datmode,2
+    
+mset2 bsf   Datmode,2
+    call  self_en
+    bcf   Datmode,1
     call  nnack
+    bra   main1
 
 main3 btfss Datmode,1   ;setup mode ?
     bra   main1
-    btfss PIR2,TMR3IF   ;setup timer out?
-    bra   main3     ;fast loop till timer out (main3?)
-    bcf   T3CON,TMR3ON  ;timer off
-    bcf   PIR2,TMR3IF   ;clear flag
-    call  new_enum
-    movlw LOW CANid   ;put new ID in EEPROM
-    movwf EEADR
-    movf  IDcount,W
-    call  eewrite
-    call  newid_f     ;put new ID in various buffers
-    movlw Modstat
-    movwf EEADR
-    movlw 1
-    call  eewrite     ;set to normal status
+;   call  self_en
+
     bcf   Datmode,1   ;out of setup
     bsf   Datmode,2   ;wait for NN
-    call  nnack     ;send blank NN for config
+;   call  nnack     ;send blank NN for config
+  
+;   
 ;   bsf   PORTB,7     ;on light
-    bra   main      ;continue normally
+    bra   main1     ;continue normally
 
 go_FLiM bsf   Datmode,1   ;FLiM setup mode
     bcf   PORTB,7     ;green off
@@ -1675,11 +1683,14 @@ go_FLiM bsf   Datmode,1   ;FLiM setup mode
     
     
 
-; common to FLiM and SLiM         ;
+; common to FLiM and SLiM   
   
-main1 btfss Datmode,0   ;any new CAN frame received?
+  
+main1 
+    btfss Datmode,0   ;any new CAN frame received?
     bra   main
-    bra   packet
+    
+    bra   packet      ;yes
     
 ;   These are here as branch was too long
 
@@ -1745,38 +1756,45 @@ setNV call  thisNN
     call  putNV
     bra   main2
 
+short clrf  Rx0d1
+    clrf  Rx0d2
+    bra   go_on
+
 short1  goto  short     ;branches too long
+evns  goto  evns1   
+setNVx  goto  setNV
 readNVx goto  readNV
 readENx goto  readEN
+readEVx goto  readEV
+rden_x  goto  rden
 
-evns  goto  evns1   
     
 ;********************************************************************
-;   main packet handling is here
+                ;main packet handling is here
+                ;add more commands for incoming frames as needed
     
-packet  movlw CMD_ON      ;on command?
+packet  movlw CMD_ON  ;only ON, OFF  events supported
+    subwf Rx0d0,W 
+    bz    go_on_x
+    movlw CMD_OFF
     subwf Rx0d0,W
     bz    go_on_x
-    movlw CMD_OFF     ;off command?
-    subwf Rx0d0,W
-    bz    go_on_x   
+    
     movlw SCMD_ON
     subwf Rx0d0,W
-    bz    short1
+    bz    short
     movlw SCMD_OFF
     subwf Rx0d0,W
-    bz    short1
+    bz    short
+    
     movlw 0x5C      ;reboot
     subwf Rx0d0,W
     bz    reboot
     movlw 0x73
     subwf Rx0d0,W
     bz    para1a      ;read individual parameters
-    btfss Mode,1      ;FLiM?
-    bra   main2     ;no more if SLiM
-    movlw 0x42      ;set NN on 0x42
-    subwf Rx0d0,W
-    bz    setNN
+  
+    
     movlw 0x0d      ; QNN
     subwf Rx0d0,w
     bz    doQnn
@@ -1785,58 +1803,93 @@ packet  movlw CMD_ON      ;on command?
     bz    params      ;read node parameters
     movlw 0x11
     subwf Rx0d0,w
-    bz    name      ;read module name       
+    bz    name      ;read module name
+    btfss Mode,1      ;FLiM?
+    bra   main2
+    movlw 0x42      ;set NN on 0x42
+    subwf Rx0d0,W
+    bz    setNN
     movlw 0x53      ;set to learn mode on 0x53
     subwf Rx0d0,W
-    bz    setlrn    
+    bz    setlrn1   
     movlw 0x54      ;clear learn mode on 0x54
     subwf Rx0d0,W
-    bz    notlrn
+    bz    notlrn1
     movlw 0x55      ;clear all events on 0x55
     subwf Rx0d0,W
-    bz    clrens
+    bz    clrens1
     movlw 0x56      ;read number of events left
     subwf Rx0d0,W
-    bz    rden
-    movlw 0xD2      ;is it set event?
-    subwf Rx0d0,W
-    bz    chklrn      ;do it
-    movlw 0x95      ;is it unset event
-    subwf Rx0d0,W     
-    bz    unset
-    movlw 0xB2      ;read event variables
-    subwf Rx0d0,W
-    bz    readEV
-    
+    bz    rden_x
     movlw 0x71      ;read NVs
     subwf Rx0d0,W
     bz    readNVx
     movlw 0x96      ;set NV
     subwf Rx0d0,W
-    bz    setNV
+    bz    setNVx
+    movlw 0x5D      ;re-enumerate
+    subwf Rx0d0,W
+    bz    enum1
+    movlw 0x71      ;read NVs
+    subwf Rx0d0,W
+    bz    readNVx
+    movlw 0x75      ;force new CAN_ID
+    subwf Rx0d0,W
+    bz    newID1
+    movlw 0x96      ;set NV
+    subwf Rx0d0,W
+    bz    setNVx
+    movlw 0xD2      ;is it set event?
+    subwf Rx0d0,W
+    bz    chklrn1     ;do learn
+    movlw 0x95      ;is it unset event
+    subwf Rx0d0,W     
+    bz    unset1
+    movlw 0xB2      ;read event variables
+    subwf Rx0d0,W
+    bz    readEVx
+  
     movlw 0x57      ;is it read events
     subwf Rx0d0,W
     bz    readENx
     movlw 0x72
     subwf Rx0d0,W
-    bz    readENi     ;read event by index
+    bz    readENi1      ;read event by index
     movlw 0x58
     subwf Rx0d0,W
     bz    evns
-    movlw 0x9C      ;read event variables by EN#
+    movlw 0x9C        ;read event variables by EN#
     subwf Rx0d0,W
-    bz    reval
-    bra   main2     ;do nothing if OPC not supported
-;   call  thisNN    
-;   bnz   main2     ;not this node
-;   movlw 1       ;error 1 not supported by this node
-;   goto  errmsg  
+    bz    reval1
 
-reboot  btfss Mode,1
-    bra   reboots     ;j if SLiM mode
+    bra main2       ;end of events lookup
+
+enum1 goto  enum
+clrens1 goto  clrens  
+newID1  goto  newID
+notlrn1 goto  notlrn
+chklrn1 goto  chklrn
+setlrn1 goto  setlrn
+unset1  goto  unset
+readENi1 goto readENi
+reval1  goto  reval
+
+    bra   main2
+
+;short1 goto  short     ;branches too long
+;evns goto  evns1   
+;etNVx  goto  setNV
+;readNVx  goto  readNV
+;readENx  goto  readEN
+;eadEVx goto  readEV
+;rden_x goto  rden
+    
+reboot  btfss Mode,1      ;FLiM?
+    bra   reboots
     call  thisNN
     sublw 0
     bnz   notNN
+    
 reboot1 movlw 0xFF
     movwf EEADR
     movlw 0xFF
@@ -1844,14 +1897,13 @@ reboot1 movlw 0xFF
     reset         ;software reset to bootloader
 
 reboots
-    movf  Rx0d1,w     ; NN must be zero
+    movf  Rx0d1,w
     addwf Rx0d2,w
-    bz    reboot1
-    bra   notNN
+    bnz   notNN
+    bra   reboot1 
   
-para1a  
-    btfss Mode,1      ;FLiM mode?
-    bra   para1s      ; j if SLiM mode
+para1a  btfss Mode, 1
+    bra   para1s
     call  thisNN      ;read parameter by index
     sublw 0
     bnz   notNN
@@ -1863,7 +1915,8 @@ para1s
     addwf Rx0d2,w
     bnz   notNN
     call  para1rd
-    ; fall thro'  
+    bra   main2
+      
 main2 bcf   Datmode,0
     goto  main      ;loop
     
@@ -1876,9 +1929,21 @@ setNN btfss Datmode,2   ;in NN set mode?
     movwf Keepcnt     ;for keep alive
     movlw 0x52
     call  nnrel     ;confirm NN set
-    bsf   LED_PORT,LED1 ;yellow LED ON
-    bcf   LED_PORT,LED2
+    bcf   PORTB,7 
+    bsf   PORTB,6     ;LED ON
     bra   main2
+
+newID call  thisNN
+    sublw 0
+    bnz   notNN
+    movff Rx0d3,IDcount
+
+    call  here2       ;put in as if it was enumerated
+    movlw 0x52
+    call  nnrel       ;acknowledge new CAN_ID
+    goto  main2
+
+
     
 sendNN  btfss Datmode,2   ;in NN set mode?
     bra   main2     ;no
@@ -1890,12 +1955,12 @@ sendNN  btfss Datmode,2   ;in NN set mode?
     bra   main2
 
 rden  goto  rden1
-    
+  
 setlrn  call  thisNN
     sublw 0
     bnz   notNN
     bsf   Datmode,4
-;   bsf   LED_PORT,LED2     ;LED on
+    bsf   PORTB,6     ;LED on
     bra   main2
 
 notlrn  call  thisNN
@@ -1906,7 +1971,6 @@ notln1    ;leave in learn mode
     bcf   Datmode,5
 ;   bcf   LED_PORT,LED2
     bra   main2
-    
 clrens  call  thisNN
     sublw 0
     bnz   notNN
@@ -1914,24 +1978,15 @@ clrens  call  thisNN
     bra   clrerr
     call  initevdata
     movlw 0x59
-    call  nnrel
+    call  nnrel   ;send WRACK
     bra   notln1
-
-noEV1
-    movlw 6
-    goto  errmsg  
-
-readENi call  thisNN      ;read event by index
-    sublw 0
-    bnz   notNN
-    call  enrdi
-    bra   main2
-      
+    
 notNN bra   main2
 
 clrerr  movlw 2     ;not in learn mode
     goto  errmsg
 
+    
 chklrn  btfss Datmode,4   ;is in learn mode?
     bra   main2     ;j if not
     call  copyev
@@ -1942,11 +1997,30 @@ chklrn  btfss Datmode,4   ;is in learn mode?
     cpfslt  EVidx
     bra   noEV1
     bra   learn2
+    
+noEV1
+    movlw 6
+    goto  errmsg
 
-short clrf  Rx0d1
-    clrf  Rx0d2
-    bra   go_on 
+readENi call  thisNN      ;read event by index
+    sublw 0
+    bnz   notNN
+    call  enrdi
+    bra   main2
 
+
+
+enum  call  thisNN
+    sublw 0
+    bnz   notNN1
+    call  self_en
+    movlw 0x52
+    call  nnrel     ;send confirm frame
+    movlw B'00001000'   ;back to normal running
+    movwf Datmode
+    goto  main2
+notNN1  goto  notNN
+  
 copyev    ; copy event data to safe buffer
     movff Rx0d1, ev0
     movff Rx0d2, ev1
@@ -1955,24 +2029,24 @@ copyev    ; copy event data to safe buffer
     movff Rx0d5, EVidx    ; only used by learn and some read cmds
     movff Rx0d6, EVdata   ; only used by learn cmd
     return    
-      
-go_on movff Rx0d0, OpcCmd   ;save OPC command
-    call  copyev
+
+go_on call  copyev
     btfss Mode,1      ;FLiM?
     bra   go_on_s
-    
     
 go_on1  call  enmatch
     sublw 0
     bz    do_it
     bra   main2     ;not here
 
-go_on_s btfss PORTB,LEARN
-    bra   learn1      ;is in learn mode
+go_on_s btfss PORTA,LEARN
+    bra   learn2      ;is in learn mode
     bra   go_on1
 
 paraerr movlw 3       ;error not in setup mode
     goto  errmsg
+
+
 
 readNV  call  thisNN
     sublw 0
@@ -1986,16 +2060,13 @@ readEN  call  thisNN
     call  enread
     bra   main2
     
-do_it 
+do_it
     call  rdfbev
     movff POSTINC0, EVtemp
     movff POSTINC0, EVtemp2
-;   call  sendlog
     call  ev_set      ;do it -  for consumer action
     bra   main2
-    
-
-    
+      
 rden1 call  thisNN
     sublw 0
     bnz   notNN
@@ -2004,7 +2075,7 @@ rden1 call  thisNN
     
 learn1
     bra   learn2
-
+    
 learn2  call  enmatch     ;is it there already?
     sublw   0
     bz    isthere
@@ -2046,7 +2117,6 @@ isthere
     bra   l_out1
       
 isthf
-    
     btfsc Datmode, 6    ;is it read back
     bra   rdbak
     btfss Datmode,5   ;FLiM unlearn?
@@ -2060,7 +2130,8 @@ dolrn
     call  learnin
     bra   lrnend
     
-rdbak call  rdfbev      ; read event info
+rdbak
+    call  rdfbev      ; read event info
     movff EVidx,Tx1d5   ;Index for readout  
     incf  Tx1d5,F     ;add one back
     movf  EVidx,w
@@ -2075,20 +2146,17 @@ rdbak call  rdfbev      ; read event info
     movwf Dlc
     call  sendTXa 
     bra   l_out1
-    
+
 l_out bcf   Datmode,4
 ;   bcf   LED_PORT,LED2
 l_out1  bcf   Datmode,6
 l_out2  bcf   Datmode,0
     
-
     clrf  PCLATH
     goto  main2
-    
+
 noEV  movlw 6       ;invalid EV#
     goto  errmsg2
-                ;unlearn an EN. 
-
 
 ;***************************************************************************
 ;   main setup routine
@@ -2115,8 +2183,8 @@ nxtram  clrf  POSTINC0
                 ;RB6,7 for debug and ICSP and LEDs
                 ;PORTB has pullups enabled on inputs
     movwf TRISB
-    bcf   LED_PORT,LED2
-    bcf   LED_PORT,LED1
+    bcf   PORTB,6
+    bcf   PORTB,7
     bsf   PORTB,2     ;CAN recessive
     movlw B'00000000'   ;Port C  set to outputs.
     movwf TRISC
@@ -2223,8 +2291,8 @@ setid bsf   Mode,1      ;flag FLiM
 seten_f 
     movlw B'11000000'
     movwf INTCON      ;enable interrupts
-    bsf   LED_PORT,LED1 ;Yellow LED on.
-    bcf   LED_PORT,LED2     
+    bsf   PORTB,6   ;Yellow LED on.
+    bcf   PORTB,7     
     bcf   Datmode,0
     goto  main
 
@@ -2247,13 +2315,7 @@ seten
     goto  main
     
   
-setloop 
-    movlw B'11000000'
-    movwf INTCON      ;enable interrupts
-    bsf   Datmode,1   ;setup mode
-
-    call  enum      ;sends RTR frame
-    bra   main        
+        
   
     
 
@@ -2490,8 +2552,8 @@ newid_f movlw LOW CANid     ;put in stored ID. FLiM mode
     incf  EEADR
     call  eeread
     movwf NN_templ  
-    
     movlb .15       ;put ID into TXB2 for enumeration response to RTR
+
 new_1 btfsc TXB2CON,TXREQ
     bra   new_1
     clrf  TXB2SIDH
@@ -2503,7 +2565,7 @@ new_1 btfsc TXB2CON,TXREQ
     iorwf TXB2SIDH    ;set priority
     clrf  TXB2DLC     ;no data, no RTR
     movlb 0
-    btfsc Datmode,3   ;already set up?
+  
     return  
 
 ;**************************************************************************
@@ -2762,37 +2824,7 @@ tx1done movlb 0       ;bank 0
     return          ;successful send
 
 ;***************************************************************
-enum  clrf  Tx1con      ;CAN ID enumeration. Send RTR frame, start timer
-    movlw .14
-    movwf Count
-    lfsr  FSR0, Enum0
-clr_enum
-    clrf  POSTINC0
-    decfsz  Count
-    bra clr_enum
-    
-;   call  dely      ;wait a bit (didn't work without this!)
-    
-    movlw B'10111111'   ;fixed node, default ID  
-    movwf Tx1sidh
-    movlw B'11100000'
-    movwf Tx1sidl
-    movlw B'01000000'   ;RTR frame
-    movwf Dlc
-    
-    movlw 0x3C      ;set T3 to 100 mSec (may need more?)
-    movwf TMR3H
-    movlw 0xAF
-    movwf TMR3L
-    movlw B'10110001'
-    movwf T3CON     ;enable timer 3
-;   bsf   Datmode,1   ;used to flag setup state
-    movlw .10
-    movwf Latcount
-    
-    call  sendTXa     ;send RTR frame
-    clrf  Tx1dlc      ;prevent more RTR frames
-    return
+
     
 
 
@@ -2981,42 +3013,95 @@ nv_rest2 incf Temp,F
     movwf EEADR
     bra   nv_rest1
 
-;**********************************************************************
 
-;   new enumeration scheme
-;   here with enum array set
+
+;***************************************************************
 ;
-new_enum  movff FSR1L,Fsr_tmp1Le  ;save FSR1 just in case
-      movff FSR1H,Fsr_tmp1He 
-      clrf  IDcount
-      incf  IDcount,F     ;ID starts at 1
-      clrf  Roll
-      bsf   Roll,0
-      lfsr  FSR1,Enum0      ;set FSR to start
-here1   incf  INDF1,W       ;find a space
-      bnz   here
-      movlw 8
-      addwf IDcount,F
-      incf  FSR1L
-      bra   here1
-here    movf  Roll,W
-      andwf INDF1,W
-      bz    here2
-      rlcf  Roll,F
-      incf  IDcount,F
-      bra   here
-here2   movlw .99         ;limit to ID
-      cpfslt  IDcount
-      call  segful
-      movff Fsr_tmp1Le,FSR1L  ;
-      movff Fsr_tmp1He,FSR1H 
-      return
+;   self enumeration as separate subroutine
+
+self_en movff FSR1L,Fsr_tmp1Le  ;save FSR1 just in case
+    movff FSR1H,Fsr_tmp1He 
+    movlw B'11000000'
+    movwf INTCON      ;start interrupts if not already started
+    bsf   Datmode,1   ;set to 'setup' mode
+    clrf  Tx1con      ;CAN ID enumeration. Send RTR frame, start timer
+    movlw .14
+    movwf Count
+    lfsr  FSR0, Enum0
+clr_en
+    clrf  POSTINC0
+    decfsz  Count
+    bra   clr_en
+    
+    movlw B'10111111'   ;fixed node, default ID  
+    movwf Tx1sidh
+    movlw B'11100000'
+    movwf Tx1sidl
+    movlw B'01000000'   ;RTR frame
+    movwf Dlc
+    
+    movlw 0x3C      ;set T3 to 100 mSec (may need more?)
+    movwf TMR3H
+    movlw 0xAF
+    movwf TMR3L
+    movlw B'10110001'
+    movwf T3CON     ;enable timer 3
+
+    movlw .10
+    movwf Latcount
+    
+    call  sendTXa     ;send RTR frame
+    clrf  Tx1dlc      ;prevent more RTR frames
+
+self_en1    btfss PIR2,TMR3IF   ;setup timer out?
+    bra   self_en1      ;fast loop till timer out 
+    bcf   T3CON,TMR3ON  ;timer off
+    bcf   PIR2,TMR3IF   ;clear flag
+
+
+    clrf  IDcount
+    incf  IDcount,F     ;ID starts at 1
+    clrf  Roll
+    bsf   Roll,0
+    lfsr  FSR1,Enum0      ;set FSR to start
+here1 incf  INDF1,W       ;find a space
+    bnz   here
+    movlw 8
+    addwf IDcount,F
+    incf  FSR1L
+    bra   here1
+here  movf  Roll,W
+    andwf INDF1,W
+    bz    here2
+    rlcf  Roll,F
+    incf  IDcount,F
+    bra   here
+here2 movlw .100        ;limit to ID
+    cpfslt  IDcount
+    bra   segful        ;segment full
+    
+here3 movlw LOW CANid   ;put new ID in EEPROM
+    movwf EEADR
+    movf  IDcount,W
+    call  eewrite
+    call  newid_f     ;put new ID in various buffers
+;   movlw Modstat
+;   movwf EEADR
+;   movlw 1
+;   call  eewrite     ;set to normal status
+;   bcf   Datmode,1   ;out of setup
       
-segful    movlw 7   ;segment full, no CAN_ID allocated
-      call  errsub
-      setf  IDcount
-      bcf   IDcount,7
-      return    
+    movff Fsr_tmp1Le,FSR1L  ;
+    movff Fsr_tmp1He,FSR1H 
+    return
+
+segful  movlw 7   ;segment full, no CAN_ID allocated
+    call  errsub
+    setf  IDcount
+    bcf   IDcount,7
+    bra   here3
+
+
       
 Opmap db  B'00000001',B'10000000'         ;output mapping
     db  B'00000010',B'01000000'         ;don't change this
