@@ -56,7 +56,7 @@
 
 ; 
 ; Assembly options
-  LIST  P=18F2480,r=hex,N=75,C=120,T=ON
+  LIST  P=18F2480,r=dec,N=75,C=120,T=ON
 
   include   "p18f2480.inc"
   include   "cbuslib/cbusdefs.inc"
@@ -111,12 +111,12 @@ LED1    equ 6 ;PB6 is the yellow LED on the PCB
 POL     equ 5 ;Not apparently used
 
 ;Defaults
-DFFTIM  equ .5      ; Default fire time (units of 10mS)
-DFRDLY  equ .25     ; Default recharge delay (units of 10mS)
-DFFDLY  equ .0      ; Default fire delay (units of 10mS)
-DFCDLY  equ .3      ; Default CANACC2 Charge pump enable delay (units of 10mS)  
+DFFTIM  equ 5      ; Default fire time (units of 10mS)
+DFRDLY  equ 25     ; Default recharge delay (units of 10mS)
+DFFDLY  equ 0      ; Default fire delay (units of 10mS)
+DFCDLY  equ 3      ; Default CANACC2 Charge pump enable delay (units of 10mS)  
 
-CHGFREQ equ .100    ; CANACC2 Charge pump frequency (50,100 or 200Hz only)
+CHGFREQ equ 100    ; CANACC2 Charge pump frequency (50,100 or 200Hz only)
 LPINTI  equ CHGFREQ*2 ; Low Priority Interrupts per second
 TMR1CN  equ 0x10000-(.4000000/LPINTI) ;Timer 1 count (counts UP)
 
@@ -128,11 +128,11 @@ SCMD_OFF  equ 0x99
 SCMD_REQ  equ 0x9A
 OPC_PNN equ 0xB6  ;reply to QNN
 
-OLD_EN_NUM  equ .32
-EN_NUM  equ .128    ;number of allowed events
+OLD_EN_NUM  equ 32
+EN_NUM  equ 128    ;number of allowed events
 EV_NUM  equ 2   ;number of allowed EVs per event
 ACC4_2_ID equ 8
-HASH_SZ equ .8
+HASH_SZ equ 8
 
 CONSUMER  equ 1
 PRODUCER  equ 2
@@ -142,23 +142,23 @@ Modstat equ 1   ;address in EEPROM
 
 MAN_NO      equ MANU_MERG    ;manufacturer number
 MAJOR_VER   equ 2
-MINOR_VER   equ "Q"
+MINOR_VER   equ "r"
 MODULE_ID   equ MTYP_CANACC4_2 ; id to identify this type of module
 EVT_NUM     equ EN_NUM           ; Number of events
 EVperEVT    equ EV_NUM           ; Event variables per event
-NV_NUM      equ .16          ; Number of node variables
+NV_NUM      equ 16          ; Number of node variables
 NODEFLGS    equ B'00001001' ; Node flags  Consumer=Yes, Producer=No, 
               ;FliM=No, Boot=YES
 CPU_TYPE    equ P18F2480
 ;module parameters  change as required
 
-;Para1  equ .165  ;manufacturer number
+;Para1  equ 165  ;manufacturer number
 ;Para2  equ  "K"  ;for now
 ;Para3  equ ACC4_2_ID
 ;Para4  equ EN_NUM    ;node descriptors (temp values)
 ;Para5  equ EV_NUM
 ;Para6  equ NV_NUM
-;Para7  equ .2
+;Para7  equ 2
 
 ; definitions used by bootloader
 
@@ -1251,7 +1251,7 @@ rxb0int bcf   PIR3,RXB0IF
     
     ;error routine here. Only acts on lost arbitration  
 
-errint  movlb .15         ;change bank      
+errint  movlb 15         ;change bank      
     btfss TXB1CON,TXLARB
     bra   errbak        ;not lost arb.
   
@@ -1319,7 +1319,7 @@ isRTR btfsc Datmode,1   ;setup mode?
     bra   back      ;back
     btfss Mode,1      ;FLiM?
     bra   back
-    movlb .15
+    movlb 15
     
 isRTR1  btfsc TXB2CON,TXREQ ;send ID frame - preloaded in TXB2
     bra   isRTR1
@@ -1361,7 +1361,7 @@ enum_3  movf  Roll,W
 ;   cpfseq  IDcount
 ;   bra   back        ;not equal
 ;   incf  IDcount,F
-;   movlw .100
+;   movlw 100
 ;   cpfslt  IDcount       ;too many?
 ;   decf  IDcount,F     ;stay at 100
     bra   back    
@@ -1392,11 +1392,11 @@ lpint movwf W_tempL       ;used for output timers
     bnz   lpint0        ;Don't toggle doubler drive then
     btg   S_PORT,CD_BIT   ;doubler drive
 lpint0
-#if CHGFREQ > .50
+#if CHGFREQ > 50
     incf  LPintc,F      ;Increment count
     btfsc LPintc,0      ;skip alternate interrupts
     bra   lpend       ;all done
-#if CHGFREQ >= .200
+#if CHGFREQ >= 200
     btfsc LPintc,1      ;skip alternate interrupts
     bra   lpend       ;all done
 #endif
@@ -1610,14 +1610,14 @@ nofl1 bcf   INTCON,TMR0IF
     bra   noflash
     decfsz  Keepcnt     ;send keep alive?
     bra   noflash
-    movlw .10
+    movlw 10
     movwf Keepcnt
     movlw 0x52
 ;   call  nnrel     ;send keep alive frame (works OK, turn off for now)
 
 noflash btfsc S_PORT,S_BIT  ;setup button?
     bra   main3
-    movlw .100
+    movlw 100
     movwf Count
     clrf  Count1
     clrf  Count2
@@ -1980,7 +1980,7 @@ setNN btfss Datmode,2   ;in NN set mode?
     call  putNN     ;put in NN
     bcf   Datmode,2
     bsf   Datmode,3
-    movlw .10
+    movlw 10
     movwf Keepcnt     ;for keep alive
     movlw 0x52
     call  nnrel     ;confirm NN set
@@ -2266,7 +2266,7 @@ nxtram  clrf  POSTINC0
     movwf CIOCON      ;CAN to high when off
     movlw B'00100100'   ;B'00100100'
     movwf RXB0CON     ;enable double buffer of RX0
-    movlb .15
+    movlb 15
     movlw B'00100000'   ;reject extended frames
     movwf RXB1CON
     clrf  RXF0SIDL
@@ -2316,7 +2316,7 @@ mskloop clrf  POSTINC0
   
     clrf  PIR1
     clrf  PIR2
-    movlb .15
+    movlb 15
     bcf   RXB1CON,RXFUL
     movlb 0
     bcf   RXB0CON,RXFUL   ;ready for next
@@ -2613,7 +2613,7 @@ newid_f movlw LOW CANid     ;put in stored ID. FLiM mode
     incf  EEADR
     call  eeread
     movwf NN_templ  
-    movlb .15       ;put ID into TXB2 for enumeration response to RTR
+    movlb 15       ;put ID into TXB2 for enumeration response to RTR
 
 new_1 btfsc TXB2CON,TXREQ
     bra   new_1
@@ -2750,7 +2750,7 @@ numParams
     return
     
 pidxerr
-    movlw .10
+    movlw 10
     call  errsub
     return
     
@@ -2854,7 +2854,7 @@ sendTXa movf  Dlc,W       ;get data length
     andwf Tx1sidh,F
     movlw B'10110000'
     iorwf Tx1sidh     ;low priority
-    movlw .10
+    movlw 10
     movwf Latcount
     call  sendTX1     ;send frame
     return
@@ -2864,7 +2864,7 @@ sendTXa movf  Dlc,W       ;get data length
 sendTX1 lfsr  FSR0,Tx1con
     lfsr  FSR1,TXB1CON
     
-    movlb .15       ;check for buffer access
+    movlb 15       ;check for buffer access
 ldTX2 btfsc TXB1CON,TXREQ ; Tx buffer available...?
     bra   ldTX2     ;... not yet
     movlb 0
@@ -2876,7 +2876,7 @@ ldTX1 movf  POSTINC0,W
     bra   ldTX1
 
     
-    movlb .15       ;bank 15
+    movlb 15       ;bank 15
 tx1test btfsc TXB1CON,TXREQ ;test if clear to send
     bra   tx1test
     bsf   TXB1CON,TXREQ ;OK so send
@@ -2896,7 +2896,7 @@ tx1done movlb 0       ;bank 0
 ;   may be used to allow CDU to recharge between succesive outputs.
 ;   probably needs to be longer for this.
       
-dely  movlw .10
+dely  movlw 10
     movwf Count1
 dely2 clrf  Count
 dely1 decfsz  Count,F
@@ -2915,7 +2915,7 @@ del2  call  dely
 
 ;   longer delay
 
-ldely movlw .100
+ldely movlw 100
     movwf Count2
 ldely1  call  dely
     decfsz  Count2
@@ -3086,7 +3086,7 @@ self_en movff FSR1L,Fsr_tmp1Le  ;save FSR1 just in case
     movwf INTCON      ;start interrupts if not already started
     bsf   Datmode,1   ;set to 'setup' mode
     clrf  Tx1con      ;CAN ID enumeration. Send RTR frame, start timer
-    movlw .14
+    movlw 14
     movwf Count
     lfsr  FSR0, Enum0
 clr_en
@@ -3108,7 +3108,7 @@ clr_en
     movlw B'10110001'
     movwf T3CON     ;enable timer 3
 
-    movlw .10
+    movlw 10
     movwf Latcount
     
     call  sendTXa     ;send RTR frame
@@ -3137,7 +3137,7 @@ here  movf  Roll,W
     rlcf  Roll,F
     incf  IDcount,F
     bra   here
-here2 movlw .100        ;limit to ID
+here2 movlw 100        ;limit to ID
     cpfslt  IDcount
     bra   segful        ;segment full
     
@@ -3182,10 +3182,10 @@ ENindex de  0,0   ;ENindex contains free space
           ;hi byte + lo byte = EN_NUM
           ;initialised in initevdata
     
-Timers  de  .5,.5       ;Timers (for now)
-    de  .5,.5       ;These are for each output
-    de  .5,.5                       
-    de  .5,.5                       
+Timers  de  5,5       ;Timers (for now)
+    de  5,5       ;These are for each output
+    de  5,5                       
+    de  5,5                       
     
 FreeCh  de  0,0
 hashtab de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   
