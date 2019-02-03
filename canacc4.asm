@@ -59,7 +59,7 @@
   LIST  P=18F2480,r=hex,N=75,C=120,T=ON
 
   include   "p18f2480.inc"
-  include   "cbuslib/constants.inc"
+  include   "cbuslib/cbusdefs.inc"
 
 
 ;set config registers
