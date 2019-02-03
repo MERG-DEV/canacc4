@@ -160,6 +160,14 @@ CPU_TYPE    equ P18F2480
 ;Para6  equ NV_NUM
 ;Para7  equ 2
 
+#define HIGH_INT_VECT 0x0808  ;HP interrupt vector redirect. Change if target is different
+#define LOW_INT_VECT  0x0818  ;LP interrupt vector redirect. Change if target is different.
+#define RESET_VECT  0x0800  ;start of target
+#define TYPE_PARAM  0x0810
+#define NODE_PARAM  0x0820
+#define NUM_PARAM   24
+#define META_PARAM  NODE_PARAM + NUM_PARAM
+
 ;*******************************************************************
   include   "cbuslib/boot_loader.inc"
 ;****************************************************************
@@ -435,21 +443,21 @@ CPU_TYPE    equ P18F2480
 ;
 ;   start of program code
 
-    ORG   0800h
+    ORG   RESET_VECT
 loadadr
     nop           ;for debug
     goto  setup
 
-    ORG   0808h
+    ORG   HIGH_INT_VECT
     goto  hpint     ;high priority interrupt
 
-    ORG   0810h     ;node type parameters
+    ORG   TYPE_PARAM     ;node type parameters
 myName  db    "ACC4_2 "
 
-    ORG   0818h 
+    ORG   LOW_INT_VECT 
     goto  lpint     ;low priority interrupt
     
-    ORG   0820h
+    ORG   NODE_PARAM
 
 nodeprm     db  MAN_NO, MINOR_VER, MODULE_ID, EVT_NUM, EVperEVT, NV_NUM 
       db  MAJOR_VER,NODEFLGS,CPU_TYPE,PB_CAN    ; Main parameters
@@ -459,7 +467,7 @@ sparprm     fill 0,prmcnt-$ ; Unused parameter space set to zero
 
 PRMCOUNT    equ sparprm-nodeprm ; Number of parameter bytes implemented
 
-             ORG 0838h
+             ORG META_PARAM
 
 prmcnt      dw  PRMCOUNT    ; Number of parameters implemented
 nodenam     dw  myName      ; Pointer to module type name
@@ -474,7 +482,6 @@ cksum       dw  PRCKSUM     ; Checksum of parameters
 
 ;*******************************************************************
 
-    ORG   0840h     ;start of ACC4 program
 ; 
 ;
 ;   high priority interrupt. Used for CAN receive and transmit error.
