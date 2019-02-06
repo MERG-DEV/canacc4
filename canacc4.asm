@@ -59,13 +59,10 @@
   LIST  P=18F2480,r=dec,N=75,C=120,T=ON
 
   include   "p18f2480.inc"
-  include   "cbuslib/cbusdefs.inc"
 
-
-;set config registers
-
-; note. there seem to be differences in the naming of the CONFIG parameters between
-; versions of the p18F2480.inf files
+; Set CONFIG
+; NOTE.: There seem to be differences in the naming of the CONFIG parameters
+;        between versions of the p18F2480.inf files
 
   CONFIG  FCMEN = OFF, OSC = HSPLL, IESO = OFF
   CONFIG  PWRT = ON,BOREN = BOHW, BORV=0
@@ -76,89 +73,57 @@
   CONFIG  XINST = OFF,LVP = OFF,STVREN = ON,CP0 = OFF
   CONFIG  CP1 = OFF, CPB = OFF, CPD = OFF,WRT0 = OFF,WRT1 = OFF, WRTB = OFF
   CONFIG  WRTC = OFF,WRTD = OFF, EBTR0 = OFF, EBTR1 = OFF, EBTRB = OFF
-  
-;original CONFIG settings left here for reference
-  
-; __CONFIG  _CONFIG1H,  B'00100110' ;oscillator HS with PLL
-; __CONFIG  _CONFIG2L,  B'00001110' ;brown out voltage and PWT  
-; __CONFIG  _CONFIG2H,  B'00000000' ;watchdog time and enable (disabled for now)
-; __CONFIG  _CONFIG3H,  B'10000000' ;MCLR enable  
-; __CONFIG  _CONFIG4L,  B'10000001' ;B'10000001'  for   no debug
-; __CONFIG  _CONFIG5L,  B'00001111' ;code protection (off)  
-; __CONFIG  _CONFIG5H,  B'11000000' ;code protection (off)  
-; __CONFIG  _CONFIG6L,  B'00001111' ;write protection (off) 
-; __CONFIG  _CONFIG6H,  B'11100000' ;write protection (off) 
-; __CONFIG  _CONFIG7L,  B'00001111' ;table read protection (off)  
-; __CONFIG  _CONFIG7H,  B'01000000' ;boot block protection (off)
 
-
-; processor uses 4 MHz resonator but clock is 16 MHz.
+; Processor uses 4 MHz resonator but clock is 16 MHz.
 
 ;**************************************************************************
-;definitions
+; Definitions
 
-S_PORT    equ PORTA
-CE_BIT    equ 0 ;CANACC2 Charger Enable
-S_BIT   equ 3 ;PB input
-CD_BIT    equ 4 ;CANACC2 Charger Doubler Drive
-UNLEARN   equ 5 ;setup jumper in port A (unlearn)
+  include   "cbuslib/cbusdefs.inc"
 
-LED_PORT  equ PORTB
-DOLEARN   equ 4 ;input bits in port B
-LED2    equ 7 ;PB7 is the green LED on the PCB
-LED1    equ 6 ;PB6 is the yellow LED on the PCB
+MAN_NO      equ MANU_MERG      ; Manufacturer number
+MAJOR_VER   equ 2              ; Firmware major version (numeric)
+MINOR_VER   equ "r"            ; Firmware minor version (alpha)
+MODULE_ID   equ MTYP_CANACC4_2 ; Id to identify this type of module
+OLD_EVT_NUM equ 32             ; Old number of allowed events
+EVT_NUM     equ 128            ; Number of events
+EVperEVT    equ 2              ; Event variables per event
+HASH_SZ     equ 8
+NV_NUM      equ 16             ; Number of node variables
+NODEFLGS    equ B'00001001'    ; Node flags  Consumer=Yes, Producer=No, 
+                               ; FliM=No, Boot=YES
+CPU_TYPE    equ P18F2480
 
-POL     equ 5 ;Not apparently used
+S_PORT      equ PORTA
+CE_BIT      equ 0 ; CANACC2 Charger Enable
+S_BIT       equ 3 ; PB input
+CD_BIT      equ 4 ; CANACC2 Charger Doubler Drive
+UNLEARN     equ 5 ; Setup jumper in port A (unlearn)
 
-;Defaults
-DFFTIM  equ 5      ; Default fire time (units of 10mS)
-DFRDLY  equ 25     ; Default recharge delay (units of 10mS)
-DFFDLY  equ 0      ; Default fire delay (units of 10mS)
-DFCDLY  equ 3      ; Default CANACC2 Charge pump enable delay (units of 10mS)  
+LED_PORT    equ PORTB
+DOLEARN     equ 4 ; i=Input bits in port B
+LED2        equ 7 ; PB7 is the green LED on the PCB
+LED1        equ 6 ; PB6 is the yellow LED on the PCB
 
-CHGFREQ equ 100    ; CANACC2 Charge pump frequency (50,100 or 200Hz only)
-LPINTI  equ CHGFREQ*2 ; Low Priority Interrupts per second
-TMR1CN  equ 0x10000-(.4000000/LPINTI) ;Timer 1 count (counts UP)
+POL         equ 5 ; Not apparently used
 
-CMD_ON  equ 0x90  ;on event
-CMD_OFF equ 0x91  ;off event
-CMD_REQ equ 0x92
-SCMD_ON equ 0x98
-SCMD_OFF  equ 0x99
-SCMD_REQ  equ 0x9A
-OPC_PNN equ 0xB6  ;reply to QNN
+; Defaults
+DFFTIM      equ  5 ; Default fire time (units of 10mS)
+DFRDLY      equ 25 ; Default recharge delay (units of 10mS)
+DFFDLY      equ  0 ; Default fire delay (units of 10mS)
+DFCDLY      equ  3 ; Default CANACC2 Charge pump enable delay (units of 10mS)  
 
-OLD_EN_NUM  equ 32
-EN_NUM  equ 128    ;number of allowed events
-EV_NUM  equ 2   ;number of allowed EVs per event
-ACC4_2_ID equ 8
-HASH_SZ equ 8
+CHGFREQ     equ 100       ; CANACC2 Charge pump frequency (50, 100 or 200Hz)
+LPINTI      equ CHGFREQ*2 ; Low Priority Interrupts per second
+TMR1CN      equ 0x10000 - (4000000 / LPINTI) ;Timer 1 count (counts UP)
+
+ACC4_2_ID   equ 8
 
 CONSUMER  equ 1
 PRODUCER  equ 2
 COMBI   equ 3
 
 Modstat equ 1   ;address in EEPROM
-
-MAN_NO      equ MANU_MERG    ;manufacturer number
-MAJOR_VER   equ 2
-MINOR_VER   equ "r"
-MODULE_ID   equ MTYP_CANACC4_2 ; id to identify this type of module
-EVT_NUM     equ EN_NUM           ; Number of events
-EVperEVT    equ EV_NUM           ; Event variables per event
-NV_NUM      equ 16          ; Number of node variables
-NODEFLGS    equ B'00001001' ; Node flags  Consumer=Yes, Producer=No, 
-              ;FliM=No, Boot=YES
-CPU_TYPE    equ P18F2480
-;module parameters  change as required
-
-;Para1  equ 165  ;manufacturer number
-;Para2  equ  "K"  ;for now
-;Para3  equ ACC4_2_ID
-;Para4  equ EN_NUM    ;node descriptors (temp values)
-;Para5  equ EV_NUM
-;Para6  equ NV_NUM
-;Para7  equ 2
 
 #define HIGH_INT_VECT 0x0808  ;HP interrupt vector redirect. Change if target is different
 #define LOW_INT_VECT  0x0818  ;LP interrupt vector redirect. Change if target is different.
@@ -1033,7 +998,7 @@ readEV  btfss Datmode,4
     movf  EVidx,w     ;check EV index
     bz    rdev1
     decf  EVidx
-    movlw EV_NUM
+    movlw EVperEVT
     cpfslt  EVidx
 rdev1 bra   noEV1
     bsf   Datmode,6
@@ -1100,17 +1065,17 @@ rden_x  goto  rden
                 ;main packet handling is here
                 ;add more commands for incoming frames as needed
     
-packet  movlw CMD_ON  ;only ON, OFF  events supported
+packet  movlw OPC_ACON  ;only ON, OFF  events supported
     subwf Rx0d0,W 
     bz    go_on_x
-    movlw CMD_OFF
+    movlw OPC_ACOF
     subwf Rx0d0,W
     bz    go_on_x
     
-    movlw SCMD_ON
+    movlw OPC_ASON
     subwf Rx0d0,W
     bz    short
-    movlw SCMD_OFF
+    movlw OPC_ASOF
     subwf Rx0d0,W
     bz    short
     
@@ -1320,7 +1285,7 @@ chklrn  btfss Datmode,4   ;is in learn mode?
     movf  EVidx,w     ;check EV index
     bz    noEV1
     decf  EVidx
-    movlw EV_NUM
+    movlw EVperEVT
     cpfslt  EVidx
     bra   noEV1
     bra   learn2
@@ -2199,7 +2164,7 @@ ldely1  call  dely
 ;   loads ENs  and EVs from EEPROM to RAM for fast access
 ;   shifts all 32 even if less are used
 
-en_ram  movlw OLD_EN_NUM
+en_ram  movlw OLD_EVT_NUM
     movwf Count     ;number of ENs allowed 
     
     bcf   STATUS,C    ;clear carry
@@ -2214,7 +2179,7 @@ enload  bsf   EECON1,RD   ;get first byte
     decfsz  Count,F
     bra   enload
 
-ev_ram  movlw OLD_EN_NUM    ;now copy original EVs to RAM
+ev_ram  movlw OLD_EVT_NUM    ;now copy original EVs to RAM
     movwf Count     ;number of ENs allowed 
     bcf   STATUS,C
     rlncf Count     ; 2 EVs per event
@@ -2251,7 +2216,7 @@ shift2  return
     
     ;   clears all stored events
 
-enclear movlw OLD_EN_NUM * 6  ;number of locations in EEPROM
+enclear movlw OLD_EVT_NUM * 6  ;number of locations in EEPROM
     movwf Count
     movlw LOW ENstart
     movwf EEADR
@@ -2266,7 +2231,7 @@ enloop  movlw 0
     call  eewrite
     
     ;now clear shadow ram
-    movlw OLD_EN_NUM * 4
+    movlw OLD_EVT_NUM * 4
     movwf Count
     lfsr  FSR0, EN1
 ramloop
@@ -2451,7 +2416,7 @@ CANid de  B'01111111',0 ;CAN id default and module status
 NodeID  de  0,0   ;Node ID
 ENindex de  0,0   ;ENindex contains free space
           ;ENindex +1 contains number of events
-          ;hi byte + lo byte = EN_NUM
+          ;hi byte + lo byte = EVT_NUM
           ;initialised in initevdata
     
 Timers  de  5,5       ;Timers (for now)
