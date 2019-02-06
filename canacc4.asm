@@ -119,10 +119,6 @@ TMR1CN      equ 0x10000 - (4000000 / LPINTI) ;Timer 1 count (counts UP)
 
 ACC4_2_ID   equ 8
 
-CONSUMER  equ 1
-PRODUCER  equ 2
-COMBI   equ 3
-
 Modstat equ 1   ;address in EEPROM
 
 #define HIGH_INT_VECT 0x0808  ;HP interrupt vector redirect. Change if target is different
