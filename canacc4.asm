@@ -103,8 +103,8 @@ CD_BIT      equ 4 ; CANACC2 Charger Doubler Drive
 UNLEARN     equ 5 ; Setup jumper in port A (unlearn)
 #define     UNLEARN_INP  PORTA,UNLEARN
 
-DOLEARN     equ 4 ; i=Input bits in port B
-#define     LEARN_INP  PORTB,DOLEARN
+LEARN       equ 4 ; i=Input bits in port B
+#define     LEARN_INP  PORTB,LEARN
 LED2        equ 7 ; PB7 is the green LED on the PCB
 #define     LED2_OUT   PORTB,LED2
 LED1        equ 6 ; PB6 is the yellow LED on the PCB
