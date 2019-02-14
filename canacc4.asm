@@ -97,8 +97,8 @@ CPU_TYPE    equ P18F2480
 #define  CD_OUT       PORTA,4 ; CANACC2 Charger Doubler Drive
 #define  CE_OUT       PORTA,0 ; CANACC2 Charger Enable
 #define  LEARN_INP    PORTB,4
-#define  LED1_OUT     PORTB,6 ; Yellow LED
-#define  LED2_OUT     PORTB,7 ; Green LED
+#define  LEDY_OUT     PORTB,6 ; Yellow LED
+#define  LEDG_OUT     PORTB,7 ; Green LED
 #define  POL_INP      PORTB,5
 #define  S_INP        PORTA,3  ; Setup Switch
 #define  UNLEARN_INP  PORTA,5
@@ -446,9 +446,6 @@ cksum       dw  PRCKSUM     ; Checksum of parameters
 hpint movff CANCON,TempCANCON
     movff CANSTAT,TempCANSTAT
 
-  ; movff PCLATH,PCH_tempH    ;save PCLATH
-  ; clrf  PCLATH
-
     movff FSR0L,Fsr_temp0L    ;save FSR0
     movff FSR0H,Fsr_temp0H
     movff FSR1L,Fsr_temp1L    ;save FSR1
@@ -517,11 +514,8 @@ load  movff POSTINC1,POSTINC0
 
     btfsc Rx0dlc,RXRTR    ;is it RTR?
     bra   isRTR
-;   btfsc Datmode,1     ;setup mode?
-;   bra   setmode
     movf  Rx0dlc,F
     bz    back
-;   btfss Rx0sidl,3   ;ignore extended frames
     bsf   Datmode,0   ;valid message frame
 
 back  bcf   RXB0CON,RXFUL ;ready for next
@@ -533,7 +527,6 @@ back1 movlw B'00000011'
     iorwf TempCANCON,W
 
     movwf CANCON
-;   movff PCH_tempH,PCLATH
     movff Fsr_temp0L,FSR0L    ;recover FSR0
     movff Fsr_temp0H,FSR0H
     movff Fsr_temp1L,FSR1L    ;recover FSR1
@@ -584,15 +577,6 @@ enum_2  dcfsnz  IDcount,F
     bra   enum_2
 enum_3  movf  Roll,W
     iorwf INDF1,F
-
-
-;   call  shuffin       ;get CAN ID as a single byte in W
-;   cpfseq  IDcount
-;   bra   back        ;not equal
-;   incf  IDcount,F
-;   movlw 100
-;   cpfslt  IDcount       ;too many?
-;   decf  IDcount,F     ;stay at 100
     bra   back
 
 
@@ -609,10 +593,6 @@ enum_3  movf  Roll,W
 lpint movwf W_tempL       ;used for output timers
     movff STATUS,St_tempL
     movff BSR,Bsr_tempL
-
-;   movff PCLATH,PCH_tempL    ;save PCLATH
-;   clrf  PCLATH
-
 
     movlw LOW TMR1CN      ;Timer 1 lo byte. (adjust if needed)
     movwf TMR1L       ;reset timer 1
@@ -821,7 +801,7 @@ mains             ;is SLiM
 
     btfss PIR2,TMR3IF   ;flash timer overflow?
     bra   nofl_s      ;no SLiM flash
-    btg   LED2_OUT     ;toggle green LED
+    btg   LEDG_OUT     ;toggle green LED
     bcf   PIR2,TMR3IF
 nofl_s  bra   noflash       ;main1
 
@@ -832,7 +812,7 @@ mainf btfss INTCON,TMR0IF   ;is it flash?
     btfss Datmode,2
     bra   nofl1
 
-    btg   LED1_OUT     ;flash yellow LED
+    btg   LEDY_OUT     ;flash yellow LED
 
 nofl1 bcf   INTCON,TMR0IF
     btfss Datmode,3   ;running mode
@@ -842,7 +822,6 @@ nofl1 bcf   INTCON,TMR0IF
     movlw 10
     movwf Keepcnt
     movlw 0x52
-;   call  nnrel     ;send keep alive frame (works OK, turn off for now)
 
 noflash btfsc S_INP  ;setup button?
     bra   main3
@@ -856,7 +835,7 @@ wait  decfsz  Count2
     bra   wait2
     btfss INTCON,TMR0IF   ;is it flash?
     bra   wait2
-    btg   LED1_OUT     ;flash LED
+    btg   LEDY_OUT     ;flash LED
     bcf   INTCON,TMR0IF
 wait2 decfsz  Count1
     goto  wait
@@ -867,10 +846,9 @@ wait2 decfsz  Count1
     btfss Mode,1      ;is it in FLiM?
     bra   go_FLiM
     clrf  Datmode     ;back to virgin
-;   bcf   Mode,1      ;SLiM mode
-    bcf   LED1_OUT     ;yellow off
+    bcf   LEDY_OUT     ;yellow off
 
-    bsf   LED2_OUT     ;Green LED on
+    bsf   LEDG_OUT     ;Green LED on
     clrf  INTCON      ;interrupts off
     movlw 1
     movwf IDcount     ;back to start
@@ -904,8 +882,8 @@ wait1 btfss S_INP
     call  eewrite       ;mode back to SLiM
     clrf  Datmode
     bcf   Mode,1
-    bcf   LED1_OUT
-    bsf   LED2_OUT       ;green LED on
+    bcf   LEDY_OUT
+    bsf   LEDG_OUT       ;green LED on
 
     movlw B'11000000'
     movwf INTCON
@@ -920,19 +898,13 @@ main5 movlw Modstat
     bcf   Datmode,1
     call  nnack       ;send request for NN
     bsf   Datmode,2
-;   movlw Modstat       ;only if needed
-;   movwf EEADR
-;   movlw B'00000100'
-;   call  eewrite       ;mode to wait for NN in EEPROM
     bra   main1
 
 
-main4 ;btfss  Datmode,3
-    ;bra    main3
-    btfss Datmode,2
+main4 btfss Datmode,2
     bra   mset2
     bcf   Datmode,2
-    bsf   LED1_OUT     ;LED on
+    bsf   LEDY_OUT     ;LED on
     movlw 0x52
     call  nnrel
     movlw Modstat
@@ -950,18 +922,13 @@ mset2 bsf   Datmode,2
 
 main3 btfss Datmode,1   ;setup mode ?
     bra   main1
-;   call  self_en
 
     bcf   Datmode,1   ;out of setup
     bsf   Datmode,2   ;wait for NN
-;   call  nnack     ;send blank NN for config
-
-;
-;   bsf   LED2_OUT     ;on light
     bra   main1     ;continue normally
 
 go_FLiM bsf   Datmode,1   ;FLiM setup mode
-    bcf   LED2_OUT     ;green off
+    bcf   LEDG_OUT     ;green off
     bra   wait1
 
 
@@ -1001,7 +968,6 @@ evns1 call  thisNN        ;read event numbers
     bnz   notNNx
     call  evnsend
     bra   main2
-;evns3  goto  notNN
 
 reval call  thisNN        ;read event numbers
     sublw 0
@@ -1160,14 +1126,6 @@ reval1  goto  reval
 
     bra   main2
 
-;short1 goto  short     ;branches too long
-;evns goto  evns1
-;etNVx  goto  setNV
-;readNVx  goto  readNV
-;readENx  goto  readEN
-;eadEVx goto  readEV
-;rden_x goto  rden
-
 reboot  btfss Mode,1      ;FLiM?
     bra   reboots
     call  thisNN
@@ -1213,8 +1171,8 @@ setNN btfss Datmode,2   ;in NN set mode?
     movwf Keepcnt     ;for keep alive
     movlw 0x52
     call  nnrel     ;confirm NN set
-    bcf   LED2_OUT
-    bsf   LED1_OUT     ;LED ON
+    bcf   LEDG_OUT
+    bsf   LEDY_OUT     ;LED ON
     bra   main2
 
 newID call  thisNN
@@ -1244,7 +1202,7 @@ setlrn  call  thisNN
     sublw 0
     bnz   notNN
     bsf   Datmode,4
-    bsf   LED1_OUT     ;LED on
+    bsf   LEDY_OUT     ;LED on
     bra   main2
 
 notlrn  call  thisNN
@@ -1253,7 +1211,6 @@ notlrn  call  thisNN
     bcf   Datmode,4
 notln1    ;leave in learn mode
     bcf   Datmode,5
-;   bcf   LED2_OUT
     bra   main2
 clrens  call  thisNN
     sublw 0
@@ -1432,7 +1389,6 @@ rdbak
     bra   l_out1
 
 l_out bcf   Datmode,4
-;   bcf   LED2_OUT
 l_out1  bcf   Datmode,6
 l_out2  bcf   Datmode,0
 
@@ -1467,8 +1423,8 @@ nxtram  clrf  POSTINC0
                 ;RB6,7 for debug and ICSP and LEDs
                 ;PORTB has pullups enabled on inputs
     movwf TRISB
-    bcf   LED1_OUT
-    bcf   LED2_OUT
+    bcf   LEDY_OUT
+    bcf   LEDG_OUT
     bsf   PORTB,2     ;CAN recessive
     movlw B'00000000'   ;Port C  set to outputs.
     movwf TRISC
@@ -1574,8 +1530,8 @@ setid bsf   Mode,1      ;flag FLiM
 seten_f
     movlw B'11000000'
     movwf INTCON      ;enable interrupts
-    bsf   LED1_OUT   ;Yellow LED on.
-    bcf   LED2_OUT
+    bsf   LEDY_OUT   ;Yellow LED on.
+    bcf   LEDG_OUT
     bcf   Datmode,0
     call  timload     ;load stuff
     goto  main0
@@ -1594,8 +1550,8 @@ seten
 
     movlw B'11000000'
     movwf INTCON      ;enable interrupts
-    bcf   LED1_OUT
-    bsf   LED2_OUT     ;RUN LED on. Green for SLiM
+    bcf   LEDY_OUT
+    bsf   LEDG_OUT     ;RUN LED on. Green for SLiM
     goto  main0
 
 
@@ -2051,20 +2007,6 @@ errsub  movwf Tx1d3   ;main eror message send. Error no. in WREG
     call  sendTX
     return
 
-;sendlog
-;   movlw 0xF7
-;   movwf Tx1d0
-;   movff FSR0H, Tx1d3
-;   movff FSR0L, Tx1d4
-;   movff EVtemp, Tx1d5
-;   movff EVtemp2, Tx1d6
-;   clrf  Tx1d7
-;   movlw 8
-;   movwf Dlc
-;   call  sendTX
-;   call  ldely
-;   return
-
 
 ;*********************************************************************
 ;   send a CAN frame
@@ -2375,11 +2317,6 @@ here3 movlw LOW CANid   ;put new ID in EEPROM
     movf  IDcount,W
     call  eewrite
     call  newid_f     ;put new ID in various buffers
-;   movlw Modstat
-;   movwf EEADR
-;   movlw 1
-;   call  eewrite     ;set to normal status
-;   bcf   Datmode,1   ;out of setup
 
     movff Fsr_tmp1Le,FSR1L  ;
     movff Fsr_tmp1He,FSR1H
