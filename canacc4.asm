@@ -100,7 +100,7 @@ CPU_TYPE    equ P18F2480
 #define  LEDY_OUT     PORTB,6 ; Yellow LED
 #define  LEDG_OUT     PORTB,7 ; Green LED
 #define  POL_INP      PORTB,5
-#define  SETUP_INP        PORTA,3  ; Setup Switch
+#define  SETUP_INP    PORTA,3  ; Setup Switch
 #define  UNLEARN_INP  PORTA,5
 
 ; Defaults
@@ -394,7 +394,7 @@ Modstat     equ 1   ; Address in EEPROM
 
 ; processor uses  4 MHz. Resonator with HSPLL to give a clock of 16MHz
 
-;********************************************************************************
+;*******************************************************************************
 
 
 
@@ -402,61 +402,71 @@ Modstat     equ 1   ; Address in EEPROM
 ;
 ;   start of program code
 
+    ORG   TYPE_PARAM     ;node type parameters
+myName
+    db    "ACC4_2 "
+
+
+    ORG   NODE_PARAM
+nodeprm
+    db  MAN_NO, MINOR_VER, MODULE_ID, EVT_NUM, EVperEVT, NV_NUM
+    db  MAJOR_VER,NODEFLGS,CPU_TYPE,PB_CAN    ; Main parameters
+    dw  RESET_VECT     ; Load address for module code above bootloader
+    dw  0           ; Top 2 bytes of 32 bit address not used
+
+sparprm
+    fill 0,prmcnt-$ ; Unused parameter space set to zero
+
+PRMCOUNT    equ sparprm-nodeprm ; Number of parameter bytes implemented
+
+PRCKSUM     equ MAN_NO+MINOR_VER+MODULE_ID+EVT_NUM+EVperEVT+NV_NUM+MAJOR_VER+NODEFLGS+CPU_TYPE+PB_CAN+HIGH myName+LOW myName+HIGH RESET_VECT+LOW RESET_VECT+PRMCOUNT
+
+
     ORG   RESET_VECT
 loadadr
     nop           ;for debug
     goto  setup
 
+
     ORG   HIGH_INT_VECT
     goto  hpint     ;high priority interrupt
 
-    ORG   TYPE_PARAM     ;node type parameters
-myName  db    "ACC4_2 "
 
     ORG   LOW_INT_VECT
     goto  lpint     ;low priority interrupt
 
-    ORG   NODE_PARAM
 
-nodeprm     db  MAN_NO, MINOR_VER, MODULE_ID, EVT_NUM, EVperEVT, NV_NUM
-      db  MAJOR_VER,NODEFLGS,CPU_TYPE,PB_CAN    ; Main parameters
-            dw  RESET_VECT     ; Load address for module code above bootloader
-            dw  0           ; Top 2 bytes of 32 bit address not used
-sparprm     fill 0,prmcnt-$ ; Unused parameter space set to zero
+    ORG META_PARAM
+prmcnt
+    dw  PRMCOUNT    ; Number of parameters implemented
 
-PRMCOUNT    equ sparprm-nodeprm ; Number of parameter bytes implemented
+nodenam
+    dw  myName      ; Pointer to module type name
+    dw  0 ; Top 2 bytes of 32 bit address not used
 
-             ORG META_PARAM
-
-prmcnt      dw  PRMCOUNT    ; Number of parameters implemented
-nodenam     dw  myName      ; Pointer to module type name
-            dw  0 ; Top 2 bytes of 32 bit address not used
-
-
-PRCKSUM     equ MAN_NO+MINOR_VER+MODULE_ID+EVT_NUM+EVperEVT+NV_NUM+MAJOR_VER+NODEFLGS+CPU_TYPE+PB_CAN+HIGH myName+LOW myName+HIGH loadadr+LOW loadadr+PRMCOUNT
-
-cksum       dw  PRCKSUM     ; Checksum of parameters
+cksum
+    dw  PRCKSUM     ; Checksum of parameters
 
 
 
 ;*******************************************************************
-
-;
-;
 ;   high priority interrupt. Used for CAN receive and transmit error.
-
-hpint movff CANCON,TempCANCON
+hpint
+    movff CANCON,TempCANCON
     movff CANSTAT,TempCANSTAT
 
     movff FSR0L,Fsr_temp0L    ;save FSR0
     movff FSR0H,Fsr_temp0H
     movff FSR1L,Fsr_temp1L    ;save FSR1
     movff FSR1H,Fsr_temp1H
-    movlw 8
+
+    movlw HIGH cstatab
     movwf PCLATH
     movf  TempCANSTAT,W     ;Jump table
     andlw B'00001110'
     addwf PCL,F     ;jump
+
+cstatab 
     bra   back
     bra   errint      ;error interrupt
     bra   back
@@ -466,390 +476,473 @@ hpint movff CANCON,TempCANCON
     bra   rxb0int
     bra   back
 
-rxb1int bcf   PIR3,RXB1IF   ;uses RB0 to RB1 rollover so may never use this
-                ;may need bank switch?
-    lfsr  FSR0,Rx0con   ;
-    goto  access
 
-rxb0int bcf   PIR3,RXB0IF
-    btfsc Datmode,1     ;setup mode?
-    bra   setmode
+rxb1int
+    bcf   PIR3,RXB1IF       ; uses RB0 to RB1 rollover so may never use this
+                            ; may need bank switch?
     lfsr  FSR0,Rx0con
     goto  access
 
+rxb0int
+    bcf   PIR3,RXB0IF
+    btfsc Datmode,1     ;setup mode?
+    bra   setmode
+
+    lfsr  FSR0,Rx0con
+    goto  access
+
+
     ;error routine here. Only acts on lost arbitration
+errint
+    movlb   15         ;change bank
+    btfss   TXB1CON,TXLARB
+    bra     errbak        ;not lost arb.
 
-errint  movlb 15         ;change bank
-    btfss TXB1CON,TXLARB
-    bra   errbak        ;not lost arb.
+    movf    Latcount,F      ;is it already at zero?
+    bz      errbak
 
-    movf  Latcount,F      ;is it already at zero?
-    bz    errbak
     decfsz  Latcount,F
-    bra   errbak
-    bcf   TXB1CON,TXREQ
-    movlw B'00111111'
-    andwf TXB1SIDH,F      ;change priority
-txagain bsf   TXB1CON,TXREQ   ;try again
+    bra     errbak
 
-errbak    bcf   RXB1CON,RXFUL
-    movlb 0
-    bcf   RXB0CON,RXFUL   ;ready for next
-    bcf   COMSTAT,RXB0OVFL  ;clear overflow flags if set
-    bcf   COMSTAT,RXB1OVFL
-    bra   back1
+    bcf     TXB1CON,TXREQ
+    movlw   B'00111111'
+    andwf   TXB1SIDH,F      ;change priority
 
+txagain
+    bsf     TXB1CON,TXREQ   ;try again
 
-access  movf  CANCON,W
-    andlw B'11110001'
-    movwf CANCON
-    movf  TempCANSTAT,W
-    andlw B'00001110'
-    iorwf CANCON
+errbak
+    bcf     RXB1CON,RXFUL
+    movlb   0
+    bcf     RXB0CON,RXFUL   ;ready for next
+    bcf     COMSTAT,RXB0OVFL  ;clear overflow flags if set
+    bcf     COMSTAT,RXB1OVFL
+    bra     back1
 
-    lfsr  FSR1,RXB0CON  ;this is switched bank
-load  movff POSTINC1,POSTINC0
-    movlw 0x6E      ;end of access buffer lo byte
+access
+    movf    CANCON,W
+    andlw   B'11110001'
+    movwf   CANCON
+    movf    TempCANSTAT,W
+    andlw   B'00001110'
+    iorwf   CANCON
+    lfsr    FSR1,RXB0CON  ;this is switched bank
+
+load
+    movff   POSTINC1,POSTINC0
+    movlw   0x6E      ;end of access buffer lo byte
     cpfseq  FSR1L
-    bra   load
-    bcf   RXB0CON,RXFUL
+    bra     load
 
-    btfsc Rx0dlc,RXRTR    ;is it RTR?
-    bra   isRTR
-    movf  Rx0dlc,F
-    bz    back
-    bsf   Datmode,0   ;valid message frame
+    btfsc   Rx0dlc,RXRTR    ;is it RTR?
+    bra     isRTR
 
-back  bcf   RXB0CON,RXFUL ;ready for next
+    movf    Rx0dlc,F
+    bz      back
 
-back1 movlw B'00000011'
-    andwf PIR3      ;clear any other flags
-    movf  CANCON,W
-    andlw B'11110001'
-    iorwf TempCANCON,W
+    bsf     Datmode,0   ;valid message frame
 
-    movwf CANCON
-    movff Fsr_temp0L,FSR0L    ;recover FSR0
-    movff Fsr_temp0H,FSR0H
-    movff Fsr_temp1L,FSR1L    ;recover FSR1
-    movff Fsr_temp1H,FSR1H
+#ifdef AUTOID
+    ; Include automatic CAN ID enumeration (may cause problems with CANCAN)
+    btfss   FLiM_MODE       ;FLim Mode?
+    bra     back        ; dont do Can ID check if SLiM mode
 
+    ;check for ID conflict
+    movf    Rx0sidh,w   ;get received IDHi
+    xorwf   Tx1sidh,w   ;compare with our IDHi
+    andlw   0x0f      ;Bob's update
+    bnz     back      ;skip if not matched
 
+    movf    Rx0sidl,w   ;get received IDLo
+    xorwf   Tx1sidl,w   ;compare with our IDLo
+    andlw   0xe0      ;Bob's revised update
+    bnz     back      ;skip if not matched
+
+    bsf     Datmode,MD_IDCONF ;flag ID conflict
+#endif
+
+back
+    bcf     RXB0CON,RXFUL ;ready for next
+
+back1
+    clrf    PIR3      ;clear all flags
+
+    movf    CANCON,W
+    andlw   B'11110001'
+    iorwf   TempCANCON,W
+    movwf   CANCON
+
+    movff   Fsr_temp0L,FSR0L    ;recover FSR0
+    movff   Fsr_temp0H,FSR0H
+    movff   Fsr_temp1L,FSR1L    ;recover FSR1
+    movff   Fsr_temp1H,FSR1H
 
     retfie  1       ;use shadow registers
 
 
-isRTR btfsc Datmode,1   ;setup mode?
-    bra   back      ;back
-    btfss FLiM_MODE      ;FLiM?
-    bra   back
-    movlb 15
+isRTR
+    btfsc   Datmode,1   ;setup mode?
+    bra     back      ;back
 
-isRTR1  btfsc TXB2CON,TXREQ ;send ID frame - preloaded in TXB2
-    bra   isRTR1
-    bsf   TXB2CON,TXREQ
-    movlb 0
-    bra   back
+    btfss   FLiM_MODE      ;FLiM?
+    bra     back
 
-setmode tstfsz  RXB0DLC
-    bra   back        ;only zero length frames for setup
-
-    swapf RXB0SIDH,W      ;get ID into one byte
-    rrcf  WREG
-    andlw B'01111000'     ;mask
-    movwf Temp
-    swapf RXB0SIDL,W
-    rrncf WREG
-    andlw B'00000111'
-    iorwf Temp,W
-    movwf IDcount       ;has current incoming CAN_ID
-
-    lfsr  FSR1,Enum0      ;set enum to table
-enum_st clrf  Roll        ;start of enum sequence
-    bsf   Roll,0
-    movlw 8
-enum_1  cpfsgt  IDcount
-    bra   enum_2
-    subwf IDcount,F     ;subtract 8
-    incf  FSR1L       ;next table byte
-    bra   enum_1
-enum_2  dcfsnz  IDcount,F
-    bra   enum_3
-    rlncf Roll,F
-    bra   enum_2
-enum_3  movf  Roll,W
-    iorwf INDF1,F
-    bra   back
+    movlb   15
 
 
+isRTR1
+    btfsc   TXB2CON,TXREQ ;send ID frame - preloaded in TXB2
+    bra     isRTR1
 
+    bsf     TXB2CON,TXREQ
+    movlb   0
+    bra     back
+
+
+setmode
+    tstfsz  RXB0DLC
+    bra     back        ;only zero length frames for setup
+
+    swapf   RXB0SIDH,W      ;get ID into one byte
+    rrcf    WREG
+    andlw   B'01111000'     ;mask
+    movwf   Temp
+    swapf   RXB0SIDL,W
+    rrncf   WREG
+    andlw   B'00000111'
+    iorwf   Temp,W
+    movwf   IDcount       ;has current incoming CAN_ID
+    lfsr    FSR1,Enum0      ;set enum to table
+
+enum_st
+    clrf    Roll        ;start of enum sequence
+    bsf     Roll,0
+    movlw   8
+
+enum_1
+    cpfsgt  IDcount
+    bra     enum_2
+
+    subwf   IDcount,F     ;subtract 8
+    incf    FSR1L       ;next table byte
+    bra     enum_1
+
+enum_2
+    dcfsnz  IDcount,F
+    bra     enum_3
+
+    rlncf   Roll,F
+    bra     enum_2
+
+enum_3
+    movf    Roll,W
+    iorwf   INDF1,F
+    bra     back
 
 
 
 ;**************************************************************
-;
-;
 ;   low priority interrupt. Used by output timer overflow. Every 10 millisecs.
-;
+lpint
+    movwf   W_tempL       ;used for output timers
+    movff   STATUS,St_tempL
+    movff   BSR,Bsr_tempL
 
-lpint movwf W_tempL       ;used for output timers
-    movff STATUS,St_tempL
-    movff BSR,Bsr_tempL
+    movlw   LOW TMR1CN      ;Timer 1 lo byte. (adjust if needed)
+    movwf   TMR1L       ;reset timer 1
+    clrf    PIR1        ;clear all timer flags
 
-    movlw LOW TMR1CN      ;Timer 1 lo byte. (adjust if needed)
-    movwf TMR1L       ;reset timer 1
-    clrf  PIR1        ;clear all timer flags
-    movf  OpCdly,W      ;Is charge delay active?
-    bnz   lpint0        ;Don't toggle doubler drive then
-    btg   CD_OUT   ;doubler drive
+    movf    OpCdly,W      ;Is charge delay active?
+    bnz     lpint0        ;Don't toggle doubler drive then
+
+    btg     CD_OUT   ;doubler drive
+
 lpint0
 #if CHGFREQ > 50
-    incf  LPintc,F      ;Increment count
-    btfsc LPintc,0      ;skip alternate interrupts
-    bra   lpend       ;all done
+    incf    LPintc,F      ;Increment count
+    btfsc   LPintc,0      ;skip alternate interrupts
+    bra     lpend       ;all done
 #if CHGFREQ >= 200
-    btfsc LPintc,1      ;skip alternate interrupts
-    bra   lpend       ;all done
-#endif
-#endif
+    btfsc   LPintc,1      ;skip alternate interrupts
+    bra     lpend       ;all done
+#endif ; if CHGFREQ >= 200
+#endif ; if CHGFREQ > 50
 
 ; We get here once every 10mS, no matter what interrupt rate is in use
 ; Countdown fire delay (time between an event received and an output firing)
+    movf    OpFdly,W    ; Get fire delay, is it zero?
+    bz      lpint1      ; Inactive, check for next operation
 
-    movf  OpFdly,W    ; Get fire delay, is it zero?
-    bz    lpint1      ; Inactive, check for next operation
-    decf  OpFdly,F    ; Decrement fire delay
+    decf    OpFdly,F    ; Decrement fire delay
+
 lpint1
+    ; Countdown charge delay (time between an output firing and the doubler restarting)
+    movf    OpCdly,W    ; Get fire delay, is it zero?
+    bz      lpint2      ; Inactive, check for next operation
 
-; Countdown charge delay (time between an output firing and the doubler restarting)
+    decf    OpCdly,F    ; Decrement fire delay
 
-    movf  OpCdly,W    ; Get fire delay, is it zero?
-    bz    lpint2      ; Inactive, check for next operation
-    decf  OpCdly,F    ; Decrement fire delay
 lpint2
+    ; Control PORTC (trigger) outputs
+    movf    OpTimr,W    ; Get timer value, is it zero?
+    bz      donext      ; Inactive, check for next operation
 
-; Control PORTC (trigger) outputs
-
-    movf  OpTimr,W    ; Get timer value, is it zero?
-    bz    donext      ; Inactive, check for next operation
     decfsz  OpTimr,F    ; Decrement timer, skip if zero (expired)
-    bra   lpend     ; Timer not expired, all done for now
+    bra     lpend     ; Timer not expired, all done for now
 
-; Process expired timer
+    ; Process expired timer
+    bsf     CE_OUT ; Enable Charging
+    movf    OpFlag,W    ; Get output flag to W and set/reset Z
+    bz      donext      ; Not recharging, do next output
 
-    bsf   CE_OUT ; Enable Charging
-    movf  OpFlag,W    ; Get output flag to W and set/reset Z
-    bz    donext      ; Not recharging, do next output
-    andwf PORTC,F     ; Turn off last outputs
-    clrf  OpFlag      ; Clear output flag
-    movf  Trchg,W     ; Get recharge time
-    bz    donext      ; None, do next output
-    movwf OpTimr      ; Store timer value
-    bra   lpend
+    andwf   PORTC,F     ; Turn off last outputs
+    clrf    OpFlag      ; Clear output flag
+    movf    Trchg,W     ; Get recharge time
+    bz      donext      ; None, do next output
 
-; Find next bit to trigger
+    movwf   OpTimr      ; Store timer value
+    bra     lpend
 
-donext  movf  OpTrig,F    ; Check trigger
-    bz    lpend     ; All done
-    movf  OpFdly,F    ; Check fire delay
-    bnz   lpend     ; Wait until zero
-    btfsc OpTrig,0    ; Do output 1a?
-    bra   trig1a
-    btfsc OpTrig,1    ; Do output 1b?
-    bra   trig1b
-    btfsc OpTrig,2    ; Do output 2a?
-    bra   trig2a
-    btfsc OpTrig,3    ; Do output 2b?
-    bra   trig2b
-    btfsc OpTrig,4    ; Do output 3a?
-    bra   trig3a
-    btfsc OpTrig,5    ; Do output 3b?
-    bra   trig3b
-    btfsc OpTrig,6    ; Do output 4a?
-    bra   trig4a
-    bra   trig4b      ; Do output 4b
+    ; Find next bit to trigger
+donext
+    movf    OpTrig,F    ; Check trigger
+    bz      lpend     ; All done
+
+    movf    OpFdly,F    ; Check fire delay
+    bnz     lpend     ; Wait until zero
+
+    btfsc   OpTrig,0    ; Do output 1a?
+    bra     trig1a
+
+    btfsc   OpTrig,1    ; Do output 1b?
+    bra     trig1b
+
+    btfsc   OpTrig,2    ; Do output 2a?
+    bra     trig2a
+
+    btfsc   OpTrig,3    ; Do output 2b?
+    bra     trig2b
+
+    btfsc   OpTrig,4    ; Do output 3a?
+    bra     trig3a
+
+    btfsc   OpTrig,5    ; Do output 3b?
+    bra     trig3b
+
+    btfsc   OpTrig,6    ; Do output 4a?
+    bra     trig4a
+    bra     trig4b      ; Do output 4b
 
 ; Trigger output 1a
+trig1a
+    bcf     OpTrig,0    ; Clear trigger bit
+    comf    Opm1b,W     ; Get inverted mask for other output into W
+    andwf   PORTC,F     ; Set other output off
+    movf    Opm1a,W     ; Get mask for active output into W
+    iorwf   PORTC,F     ; Active pair on
+    movf    T1a,W     ; Get timer into W
+    bz      lpend     ; If timer is zero, then all done
 
-trig1a  bcf   OpTrig,0    ; Clear trigger bit
-    comf  Opm1b,W     ; Get inverted mask for other output into W
-    andwf PORTC,F     ; Set other output off
-    movf  Opm1a,W     ; Get mask for active output into W
-    iorwf PORTC,F     ; Active pair on
-    movf  T1a,W     ; Get timer into W
-    bz    lpend     ; If timer is zero, then all done
-    movwf OpTimr      ; Save timer value
-    comf  Opm1a,W     ; Get inverted mask for active output into W
-    movwf OpFlag      ; Save in flag byte
-    bra   trig
+    movwf   OpTimr      ; Save timer value
+    comf    Opm1a,W     ; Get inverted mask for active output into W
+    movwf   OpFlag      ; Save in flag byte
+    bra     trig
 
 ; Trigger output 1b
+trig1b
+    bcf     OpTrig,1    ; Clear trigger bit
+    comf    Opm1a,W     ; Get inverted mask for other output into W
+    andwf   PORTC,F     ; Set other output off
+    movf    Opm1b,W     ; Get mask for active output into W
+    iorwf   PORTC,F     ; Active pair on
+    movf    T1b,W     ; Get timer into W
+    bz      lpend     ; If timer is zero, then all done
 
-trig1b  bcf   OpTrig,1    ; Clear trigger bit
-    comf  Opm1a,W     ; Get inverted mask for other output into W
-    andwf PORTC,F     ; Set other output off
-    movf  Opm1b,W     ; Get mask for active output into W
-    iorwf PORTC,F     ; Active pair on
-    movf  T1b,W     ; Get timer into W
-    bz    lpend     ; If timer is zero, then all done
-    movwf OpTimr      ; Save timer value
-    comf  Opm1b,W     ; Get inverted mask for active output into W
-    movwf OpFlag      ; Save in flag byte
-    bra   trig
+    movwf   OpTimr      ; Save timer value
+    comf    Opm1b,W     ; Get inverted mask for active output into W
+    movwf   OpFlag      ; Save in flag byte
+    bra     trig
 
 ; Trigger output 2a
+trig2a
+    bcf     OpTrig,2    ; Clear trigger bit
+    comf    Opm2b,W     ; Get inverted mask for other output into W
+    andwf   PORTC,F     ; Set other output off
+    movf    Opm2a,W     ; Get mask for active output into W
+    iorwf   PORTC,F     ; Active pair on
+    movf    T2a,W     ; Get timer into W
+    bz      lpend     ; If timer is zero, then all done
 
-trig2a  bcf   OpTrig,2    ; Clear trigger bit
-    comf  Opm2b,W     ; Get inverted mask for other output into W
-    andwf PORTC,F     ; Set other output off
-    movf  Opm2a,W     ; Get mask for active output into W
-    iorwf PORTC,F     ; Active pair on
-    movf  T2a,W     ; Get timer into W
-    bz    lpend     ; If timer is zero, then all done
-    movwf OpTimr      ; Save timer value
-    comf  Opm2a,W     ; Get inverted mask for active output into W
-    movwf OpFlag      ; Save in flag byte
-    bra   trig
+    movwf   OpTimr      ; Save timer value
+    comf    Opm2a,W     ; Get inverted mask for active output into W
+    movwf   OpFlag      ; Save in flag byte
+    bra     trig
 
 ; Trigger output 2b
+trig2b
+    bcf     OpTrig,3    ; Clear trigger bit
+    comf    Opm2a,W     ; Get inverted mask for other output into W
+    andwf   PORTC,F     ; Set other output off
+    movf    Opm2b,W     ; Get mask for active output into W
+    iorwf   PORTC,F     ; Active pair on
+    movf    T2b,W     ; Get timer into W
+    bz      lpend     ; If timer is zero, then all done
 
-trig2b  bcf   OpTrig,3    ; Clear trigger bit
-    comf  Opm2a,W     ; Get inverted mask for other output into W
-    andwf PORTC,F     ; Set other output off
-    movf  Opm2b,W     ; Get mask for active output into W
-    iorwf PORTC,F     ; Active pair on
-    movf  T2b,W     ; Get timer into W
-    bz    lpend     ; If timer is zero, then all done
-    movwf OpTimr      ; Save timer value
-    comf  Opm2b,W     ; Get inverted mask for active output into W
-    movwf OpFlag      ; Save in flag byte
-    bra   trig
+    movwf   OpTimr      ; Save timer value
+    comf    Opm2b,W     ; Get inverted mask for active output into W
+    movwf   OpFlag      ; Save in flag byte
+    bra     trig
 
 ; Trigger output 3a
+trig3a
+    bcf     OpTrig,4    ; Clear trigger bit
+    comf    Opm3b,W     ; Get inverted mask for other output into W
+    andwf   PORTC,F     ; Set other output off
+    movf    Opm3a,W     ; Get mask for active output into W
+    iorwf   PORTC,F     ; Active pair on
+    movf    T3a,W     ; Get timer into W
+    bz      lpend     ; If timer is zero, then all done
 
-trig3a  bcf   OpTrig,4    ; Clear trigger bit
-    comf  Opm3b,W     ; Get inverted mask for other output into W
-    andwf PORTC,F     ; Set other output off
-    movf  Opm3a,W     ; Get mask for active output into W
-    iorwf PORTC,F     ; Active pair on
-    movf  T3a,W     ; Get timer into W
-    bz    lpend     ; If timer is zero, then all done
-    movwf OpTimr      ; Save timer value
-    comf  Opm3a,W     ; Get inverted mask for active output into W
-    movwf OpFlag      ; Save in flag byte
-    bra   trig
+    movwf   OpTimr      ; Save timer value
+    comf    Opm3a,W     ; Get inverted mask for active output into W
+    movwf   OpFlag      ; Save in flag byte
+    bra     trig
 
 ; Trigger output 3b
+trig3b
+    bcf     OpTrig,5    ; Clear trigger bit
+    comf    Opm3a,W     ; Get inverted mask for other output into W
+    andwf   PORTC,F     ; Set other output off
+    movf    Opm3b,W     ; Get mask for active output into W
+    iorwf   PORTC,F     ; Active pair on
+    movf    T3b,W     ; Get timer into W
+    bz      lpend     ; If timer is zero, then all done
 
-trig3b  bcf   OpTrig,5    ; Clear trigger bit
-    comf  Opm3a,W     ; Get inverted mask for other output into W
-    andwf PORTC,F     ; Set other output off
-    movf  Opm3b,W     ; Get mask for active output into W
-    iorwf PORTC,F     ; Active pair on
-    movf  T3b,W     ; Get timer into W
-    bz    lpend     ; If timer is zero, then all done
-    movwf OpTimr      ; Save timer value
-    comf  Opm3b,W     ; Get inverted mask for active output into W
-    movwf OpFlag      ; Save in flag byte
-    bra   trig
+    movwf   OpTimr      ; Save timer value
+    comf    Opm3b,W     ; Get inverted mask for active output into W
+    movwf   OpFlag      ; Save in flag byte
+    bra     trig
 
 ; Trigger output 4a
+trig4a
+    bcf     OpTrig,6    ; Clear trigger bit
+    comf    Opm4b,W     ; Get inverted mask for other output into W
+    andwf   PORTC,F     ; Set other output off
+    movf    Opm4a,W     ; Get mask for active output into W
+    iorwf   PORTC,F     ; Active pair on
+    movf    T4a,W     ; Get timer into W
+    bz      lpend     ; If timer is zero, then all done
 
-trig4a  bcf   OpTrig,6    ; Clear trigger bit
-    comf  Opm4b,W     ; Get inverted mask for other output into W
-    andwf PORTC,F     ; Set other output off
-    movf  Opm4a,W     ; Get mask for active output into W
-    iorwf PORTC,F     ; Active pair on
-    movf  T4a,W     ; Get timer into W
-    bz    lpend     ; If timer is zero, then all done
-    movwf OpTimr      ; Save timer value
-    comf  Opm4a,W     ; Get inverted mask for active output into W
-    movwf OpFlag      ; Save in flag byte
-    bra   trig
+    movwf   OpTimr      ; Save timer value
+    comf    Opm4a,W     ; Get inverted mask for active output into W
+    movwf   OpFlag      ; Save in flag byte
+    bra     trig
 
 ; Trigger output 4b
+trig4b
+    bcf     OpTrig,7    ; Clear trigger bit
+    comf    Opm4a,W     ; Get inverted mask for other output into W
+    andwf   PORTC,F     ; Set other output off
+    movf    Opm4b,W     ; Get mask for active output into W
+    iorwf   PORTC,F     ; Active pair on
+    movf    T4b,W     ; Get timer into W
+    bz      lpend     ; If timer is zero, then all done
 
-trig4b  bcf   OpTrig,7    ; Clear trigger bit
-    comf  Opm4a,W     ; Get inverted mask for other output into W
-    andwf PORTC,F     ; Set other output off
-    movf  Opm4b,W     ; Get mask for active output into W
-    iorwf PORTC,F     ; Active pair on
-    movf  T4b,W     ; Get timer into W
-    bz    lpend     ; If timer is zero, then all done
-    movwf OpTimr      ; Save timer value
-    comf  Opm4b,W     ; Get inverted mask for active output into W
-    movwf OpFlag      ; Save in flag byte
+    movwf   OpTimr      ; Save timer value
+    comf    Opm4b,W     ; Get inverted mask for active output into W
+    movwf   OpFlag      ; Save in flag byte
 
-trig  bcf   CE_OUT ; Disable Charging
-    movf  OpTimr,W    ; Get output timer setting
+trig
+    bcf     CE_OUT ; Disable Charging
+    movf      OpTimr,W    ; Get output timer setting
     addwf Tcdly,W     ; Add a bit more delay
-    movwf OpCdly      ; Set charge delay
+    movwf   OpCdly      ; Set charge delay
 
-lpend movff Bsr_tempL,BSR
-    movf  W_tempL,W
-    movff St_tempL,STATUS
+lpend
+    movff   Bsr_tempL,BSR
+    movf    W_tempL,W
+    movff   St_tempL,STATUS
+
     retfie
 
 
+
 ;*********************************************************************
-
-
 ; main waiting loop
+main_loop
+    btfsc FLiM_MODE      ;is it SLiM?
+    bra   flim_loop     ;no
 
-main0 btfsc FLiM_MODE      ;is it SLiM?
-    bra   mainf     ;no
-
-mains             ;is SLiM
-
+slim_loop             ;is SLiM
     btfss PIR2,TMR3IF   ;flash timer overflow?
     bra   nofl_s      ;no SLiM flash
+
     btg   LEDG_OUT     ;toggle green LED
     bcf   PIR2,TMR3IF
-nofl_s  bra   noflash       ;main1
+
+nofl_s
+    bra   noflash       ;main1
+
 
 ; here if FLiM mde
-
-mainf btfss INTCON,TMR0IF   ;is it flash?
+flim_loop
+    btfss INTCON,TMR0IF   ;is it flash?
     bra   noflash
+
     btfss Datmode,2
     bra   nofl1
 
     btg   LEDY_OUT     ;flash yellow LED
 
-nofl1 bcf   INTCON,TMR0IF
+nofl1
+    bcf   INTCON,TMR0IF
     btfss Datmode,3   ;running mode
     bra   noflash
+
     decfsz  Keepcnt     ;send keep alive?
     bra   noflash
+
     movlw 10
     movwf Keepcnt
     movlw 0x52
 
-noflash btfsc SETUP_INP  ;setup button?
+noflash
+    btfsc SETUP_INP  ;setup button?
     bra   main3
+
     movlw 100
     movwf Count
     clrf  Count1
     clrf  Count2
-wait  decfsz  Count2
+
+wait
+    decfsz  Count2
     goto  wait
+
     btfss Datmode,2
     bra   wait2
+
     btfss INTCON,TMR0IF   ;is it flash?
     bra   wait2
+
     btg   LEDY_OUT     ;flash LED
     bcf   INTCON,TMR0IF
-wait2 decfsz  Count1
+
+wait2
+    decfsz  Count1
     goto  wait
+
     btfsc SETUP_INP
     bra   main4     ;not held long enough
+
     decfsz  Count
     goto  wait
+
     btfss FLiM_MODE      ;is it in FLiM?
     bra   go_FLiM
+
     clrf  Datmode     ;back to virgin
     bcf   LEDY_OUT     ;yellow off
-
     bsf   LEDG_OUT     ;Green LED on
     clrf  INTCON      ;interrupts off
     movlw 1
@@ -862,12 +955,14 @@ wait2 decfsz  Count1
     call  nnrel
     clrf  NN_temph
     clrf  NN_templ
-wait1 btfss SETUP_INP
+
+wait1
+    btfss SETUP_INP
     bra   wait1     ;wait till release
+
     call  ldely
     btfss SETUP_INP
     bra   wait1
-
 
     movlw LOW NodeID      ;put NN back to 0000
     movwf EEADR
@@ -878,6 +973,7 @@ wait1 btfss SETUP_INP
     call  eewrite
     btfss FLiM_MODE
     bra   main5       ;FLiM setup
+
     movlw Modstat
     movwf EEADR
     movlw 0
@@ -889,9 +985,10 @@ wait1 btfss SETUP_INP
 
     movlw B'11000000'
     movwf INTCON
-    goto  main0       ;
+    goto  main_loop
 
-main5 movlw Modstat
+main5
+    movlw Modstat
     movwf EEADR
     movlw 1
     call  eewrite       ;mode to FLiM in EEPROM
@@ -902,9 +999,10 @@ main5 movlw Modstat
     bsf   Datmode,2
     bra   main1
 
-
-main4 btfss Datmode,2
+main4
+    btfss Datmode,2
     bra   mset2
+
     bcf   Datmode,2
     bsf   LEDY_OUT     ;LED on
     movlw OPC_NNACK
@@ -916,115 +1014,154 @@ main4 btfss Datmode,2
     call  eewrite
     bra   main3
 
-mset2 bsf   Datmode,2
+mset2
+    bsf   Datmode,2
     call  self_en
     bcf   Datmode,1
     call  nnack
     bra   main1
 
-main3 btfss Datmode,1   ;setup mode ?
+main3
+    btfss Datmode,1   ;setup mode ?
     bra   main1
 
     bcf   Datmode,1   ;out of setup
     bsf   Datmode,2   ;wait for NN
     bra   main1     ;continue normally
 
-go_FLiM bsf   Datmode,1   ;FLiM setup mode
+go_FLiM
+    bsf   Datmode,1   ;FLiM setup mode
     bcf   LEDG_OUT     ;green off
     bra   wait1
 
 
-
 ; common to FLiM and SLiM
-
-
 main1
     btfss Datmode,0   ;any new CAN frame received?
-    bra   main0
-
+    bra   main_loop
     bra   packet      ;yes
 
-;   These are here as branch was too long
 
+
+;********************************************************************
 unset
     btfss Datmode,4     ;Roger's mod
-    bra   main2       ;no error message on OPC 0x95
+    bra   main_end       ;no error message on OPC 0x95
+
     bsf   Datmode,5
     call  copyev
     bra   learn2
 
-readEV  btfss Datmode,4
-    bra   main2     ;prevent error message
+
+
+;********************************************************************
+readEV
+    btfss Datmode,4
+    bra   main_end     ;prevent error message
+
     call  copyev
     movf  EVidx,w     ;check EV index
     bz    rdev1
+
     decf  EVidx
     movlw EVperEVT
     cpfslt  EVidx
-rdev1 bra   noEV1
+rdev1
+    bra   noEV1
+
     bsf   Datmode,6
     bra   learn2
 
-evns1 call  thisNN        ;read event numbers
-    sublw 0
-    bnz   notNNx
-    call  evnsend
-    bra   main2
 
-reval call  thisNN        ;read event numbers
+
+;********************************************************************
+evns1 
+    call  thisNN        ;read event numbers
     sublw 0
     bnz   notNNx
+
+    call  evnsend
+    bra   main_end
+
+
+
+;********************************************************************
+reval
+    call  thisNN        ;read event numbers
+    sublw 0
+    bnz   notNNx
+
     movff Rx0d3,ENidx
     movff Rx0d4,EVidx
     call  evsend
-    bra   main2
+    bra   main_end
 
-notNNx  goto  notNN
+notNNx
+    goto  notNN
 
+
+
+;********************************************************************
 name
-    btfss Datmode,2   ;only in setup mode
-    bra   main2
+    btfsc Datmode,2   ;only in setup mode
     call  namesend
-    bra   main2
+    bra   main_end
 
+
+
+;********************************************************************
 doQnn
     movf  NN_temph,w    ;respond if NN is not zero
     addwf NN_templ,w
     btfss STATUS,Z
     call  whoami
-    bra   main2
+    bra   main_end
 
-go_on_x goto  go_on
 
-params  btfss Datmode,2   ;only in setup mode
-    bra   main2
-    call  parasend
-    bra   main2
 
-setNV call  thisNN
-    sublw 0
-    bnz   notNNx      ;not this node
-    call  putNV
-    call  timload     ;Reload NV's into RAM
-    bra   main2
+; When jump is too far for direct bra branch via these gotos
+go_on_x goto go_on
 
-short clrf  Rx0d1
-    clrf  Rx0d2
-    bra   go_on
-
-short1  goto  short     ;branches too long
-evns  goto  evns1
-setNVx  goto  setNV
-readNVx goto  readNV
-readENx goto  readEN
-readEVx goto  readEV
-rden_x  goto  rden
 
 
 ;********************************************************************
-                ;main packet handling is here
-                ;add more commands for incoming frames as needed
+params
+    btfss Datmode,2   ;only in setup mode
+    bra   main_end
 
+    call  parasend
+    bra   main_end
+
+setNV
+    call  thisNN
+    sublw 0
+    bnz   notNNx      ;not this node
+
+    call  putNV
+    call  timload     ;Reload NV's into RAM
+    bra   main_end
+
+short
+    clrf  Rx0d1
+    clrf  Rx0d2
+    bra   go_on
+
+
+
+; When jump is too far for direct bra branch via these gotos
+short1  goto short
+evns    goto evns1
+setNVx  goto setNV
+readNVx goto readNV
+readENx goto readEN
+readEVx goto readEV
+rden_x  goto rden
+
+
+
+;********************************************************************
+;main packet handling is here
+;add more commands for incoming frames as needed
 packet
     movlw OPC_ACON  ;only ON, OFF  events supported
     subwf Rx0d0,W
@@ -1050,7 +1187,6 @@ packet
     subwf Rx0d0,W
     bz    para1a      ;read individual parameters
 
-
     movlw OPC_QNN      ; QNN
     subwf Rx0d0,w
     bz    doQnn
@@ -1064,7 +1200,7 @@ packet
     bz    name      ;read module name
 
     btfss FLiM_MODE      ;FLiM?
-    bra   main2
+    bra   main_end
 
     movlw OPC_SNN      ;set NN on 0x42
     subwf Rx0d0,W
@@ -1137,28 +1273,41 @@ packet
     movlw OPC_REVAL        ;read event variables by EN#
     subwf Rx0d0,W
     bz    reval1
+    bra   main_end       ;end of events lookup
 
-    bra main2       ;end of events lookup
 
-enum1 goto  enum
-clrens1 goto  clrens
-newID1  goto  newID
-notlrn1 goto  notlrn
-chklrn1 goto  chklrn
-setlrn1 goto  setlrn
-unset1  goto  unset
+
+; When jump is too far for direct bra branch via these gotos
+enum1    goto enum
+clrens1  goto clrens
+newID1   goto newID
+notlrn1  goto notlrn
+chklrn1  goto chklrn
+setlrn1  goto setlrn
+unset1   goto unset
 readENi1 goto readENi
-reval1  goto  reval
+reval1   goto reval
 
-    bra   main2
 
-reboot  btfss FLiM_MODE      ;FLiM?
+
+;********************************************************************
+main_end
+    bcf   Datmode,0
+    goto  main_loop     ;loop
+
+
+
+;********************************************************************
+reboot
+    btfss FLiM_MODE      ;FLiM?
     bra   reboots
+
     call  thisNN
     sublw 0
     bnz   notNN
 
-reboot1 movlw 0xFF
+reboot1
+    movlw 0xFF
     movwf EEADR
     movlw 0xFF
     call  eewrite     ;set last EEPROM byte to 0xFF
@@ -1168,28 +1317,35 @@ reboots
     movf  Rx0d1,w
     addwf Rx0d2,w
     bnz   notNN
+
     bra   reboot1
 
-para1a  btfss FLiM_MODE
+
+;********************************************************************
+para1a
+    btfss FLiM_MODE
     bra   para1s
+
     call  thisNN      ;read parameter by index
     sublw 0
     bnz   notNN
+
     call  para1rd
-    bra   main2
+    bra   main_end
 
 para1s
     movf  Rx0d1,w
     addwf Rx0d2,w
     bnz   notNN
+
     call  para1rd
-    bra   main2
 
-main2 bcf   Datmode,0
-    goto  main0     ;loop
 
-setNN btfss Datmode,2   ;in NN set mode?
-    bra   main2     ;no
+;********************************************************************
+setNN
+    btfss Datmode,2   ;in NN set mode?
+    bra   main_end     ;no
+
     call  putNN     ;put in NN
     bcf   Datmode,2
     bsf   Datmode,3
@@ -1199,95 +1355,152 @@ setNN btfss Datmode,2   ;in NN set mode?
     call  nnrel     ;confirm NN set
     bcf   LEDG_OUT
     bsf   LEDY_OUT     ;LED ON
-    bra   main2
+    bra   main_end
 
-newID call  thisNN
+
+
+;********************************************************************
+newID 
+    call  thisNN
     sublw 0
     bnz   notNN
-    movff Rx0d3,IDcount
 
+    movff Rx0d3,IDcount
     call  here2       ;put in as if it was enumerated
     movlw OPC_NNACK
     call  nnrel       ;acknowledge new CAN_ID
-    goto  main2
+    goto  main_end
 
 
 
-sendNN  btfss Datmode,2   ;in NN set mode?
-    bra   main2     ;no
+;********************************************************************
+sendNN
+    btfss Datmode,2   ;in NN set mode?
+    bra   main_end     ;no
+
     movlw OPC_RQNN      ;send back NN
     movwf Tx1d0
     movlw 3
     movwf Dlc
     call  TX_with_NN
-    bra   main2
+    bra   main_end
 
-rden  goto  rden1
 
-setlrn  call  thisNN
+
+; When jump is too far for direct bra branch via these gotos
+rden goto rden1
+
+
+
+;********************************************************************
+setlrn
+    call  thisNN
     sublw 0
     bnz   notNN
+
     bsf   Datmode,4
     bsf   LEDY_OUT     ;LED on
-    bra   main2
+    bra   main_end
 
-notlrn  call  thisNN
+
+
+;********************************************************************
+notlrn  
+    call  thisNN
     sublw 0
     bnz   notNN
+
     bcf   Datmode,4
 notln1    ;leave in learn mode
     bcf   Datmode,5
-    bra   main2
-clrens  call  thisNN
+    bra   main_end
+
+
+
+;********************************************************************
+clrens
+    call  thisNN
     sublw 0
     bnz   notNN
+
     btfss Datmode,4
     bra   clrerr
+
     call  initevdata
     movlw OPC_WRACK
     call  nnrel   ;send WRACK
     bra   notln1
 
-notNN bra   main2
 
-clrerr  movlw 2     ;not in learn mode
+
+; When jump is too far for direct bra branch via these gotos
+notNN bra main_end
+
+
+
+;********************************************************************
+clrerr
+    movlw 2     ;not in learn mode
     goto  errmsg
 
 
-chklrn  btfss Datmode,4   ;is in learn mode?
-    bra   main2     ;j if not
+
+;********************************************************************
+chklrn
+    btfss Datmode,4   ;is in learn mode?
+    bra   main_end     ;j if not
+
     call  copyev
     movf  EVidx,w     ;check EV index
     bz    noEV1
+
     decf  EVidx
     movlw EVperEVT
     cpfslt  EVidx
     bra   noEV1
     bra   learn2
 
+
+
+;********************************************************************
 noEV1
     movlw 6
     goto  errmsg
 
-readENi call  thisNN      ;read event by index
+
+
+;********************************************************************
+readENi
+    call  thisNN      ;read event by index
     sublw 0
     bnz   notNN
+
     call  enrdi
-    bra   main2
+    bra   main_end
 
 
 
-enum  call  thisNN
+;********************************************************************
+enum
+    call  thisNN
     sublw 0
     bnz   notNN1
+
     call  self_en
     movlw OPC_NNACK
     call  nnrel     ;send confirm frame
     movlw B'00001000'   ;back to normal running
     movwf Datmode
-    goto  main2
-notNN1  goto  notNN
+    goto  main_end
 
+
+
+; When jump is too far for direct bra branch via these gotos
+notNN1 goto notNN
+
+
+
+;********************************************************************
 copyev    ; copy event data to safe buffer
     movff Rx0d1, ev0
     movff Rx0d2, ev1
@@ -1297,79 +1510,114 @@ copyev    ; copy event data to safe buffer
     movff Rx0d6, EVdata   ; only used by learn cmd
     return
 
-go_on call  copyev
+
+
+;********************************************************************
+go_on
+    call  copyev
     btfss FLiM_MODE      ;FLiM?
     bra   go_on_s
 
-go_on1  call  enmatch
+go_on1
+    call  enmatch
     sublw 0
     bz    do_it
-    bra   main2     ;not here
+    bra   main_end     ;not here
 
-go_on_s btfss LEARN_INP
+go_on_s
+    btfss LEARN_INP
     bra   learn2      ;is in learn mode
     bra   go_on1
 
-paraerr movlw 3       ;error not in setup mode
+
+
+;********************************************************************
+paraerr
+    movlw 3       ;error not in setup mode
     goto  errmsg
 
 
 
-readNV  call  thisNN
+;********************************************************************
+readNV
+    call  thisNN
     sublw 0
     bnz   notNN     ;not this node
-    call  getNV
-    bra   main2
 
-readEN  call  thisNN
+    call  getNV
+    bra   main_end
+
+
+
+;********************************************************************
+readEN
+    call  thisNN
     sublw 0
     bnz   notNN
-    call  enread
-    bra   main2
 
+    call  enread
+    bra   main_end
+
+
+
+;********************************************************************
 do_it
     call  rdfbev
     movff POSTINC0, EVtemp
     movff POSTINC0, EVtemp2
     call  ev_set      ;do it -  for consumer action
-    bra   main2
+    bra   main_end
 
-rden1 call  thisNN
+
+
+;********************************************************************
+rden1
+    call  thisNN
     sublw 0
     bnz   notNN
+
     call  rdFreeSp
-    bra   main2
+    bra   main_end
 
-learn1
-    bra   learn2
 
-learn2  call  enmatch     ;is it there already?
+
+;********************************************************************
+learn2
+    call  enmatch     ;is it there already?
     sublw   0
     bz    isthere
+
     btfsc FLiM_MODE      ;FLiM?
     bra   learn3
+
     btfss UNLEARN_INP  ;if unset and not here
     bra   l_out2      ;do nothing else
+
     call  learnin     ;put EN into stack and RAM
     sublw 0
     bz    lrnend
+
     movlw 4
     goto  errmsg1     ;too many
 
     ;here if FLiM
-learn3  btfsc Datmode,6   ;read EV?
+learn3
+    btfsc Datmode,6   ;read EV?
     bra   rdbak1      ;not here
+
     btfsc Datmode,5   ;if unset and not here
     bra   l_out1      ;do nothing else
 
-learn4  call  learnin     ;put EN into stack and RAM
+learn4
+    call  learnin     ;put EN into stack and RAM
     sublw 0
     bz    lrnend
 
     movlw 4
     goto  errmsg2
 
-rdbak1  movlw 5       ;no match
+rdbak1
+    movlw 5       ;no match
     goto  errmsg2
 
 lrnend
@@ -1378,16 +1626,20 @@ lrnend
 isthere
     btfsc FLiM_MODE
     bra   isthf     ;j if FLiM mode
+
     btfsc UNLEARN_INP  ;is it here and unlearn...
     bra   dolrn
+
     call  unlearn     ;...goto unlearn
     bra   l_out1
 
 isthf
     btfsc Datmode, 6    ;is it read back
     bra   rdbak
+
     btfss Datmode,5   ;FLiM unlearn?
     bra   dolrn
+
     call  unlearn
     movlw OPC_WRACK
     call  nnrel
@@ -1395,7 +1647,7 @@ isthf
 
 dolrn
     call  learnin
-    bra   lrnend
+    bra   go_on1
 
 rdbak
     call  rdfbev      ; read event info
@@ -1414,22 +1666,35 @@ rdbak
     call  TX_data
     bra   l_out1
 
-l_out bcf   Datmode,4
-l_out1  bcf   Datmode,6
-l_out2  bcf   Datmode,0
 
+
+;********************************************************************
+l_out   
+    bcf   Datmode,4
+l_out1  
+    bcf   Datmode,6
+l_out2  
+    bcf   Datmode,0
     clrf  PCLATH
-    goto  main2
+    goto  main_end
 
-noEV  movlw 6       ;invalid EV#
+
+
+;********************************************************************
+noEV
+    movlw 6       ;invalid EV#
     goto  errmsg2
+
+
 
 ;***************************************************************************
 ;   main setup routine
 ;*************************************************************************
+setup
+    lfsr  FSR0, 0     ; clear 128 bytes of ram
 
-setup lfsr  FSR0, 0     ; clear 128 bytes of ram
-nxtram  clrf  POSTINC0
+nxtram
+    clrf  POSTINC0
     btfss FSR0L, 7
     bra   nxtram
 
@@ -1441,7 +1706,6 @@ nxtram  clrf  POSTINC0
     ;port settings will be hardware dependent. RB2 and RB3 are for CAN.
     ;set S_PORT and S_BIT to correspond to port used for setup.
     ;rest are hardware options
-
 
     movlw B'00101000'   ;Port A. PA3 is setup PB
     movwf TRISA     ;
@@ -1456,9 +1720,7 @@ nxtram  clrf  POSTINC0
     movwf TRISC
     clrf  PORTC
 
-
-; next segment is essential.
-
+    ; next segment is essential.
     bsf   RCON,IPEN   ;enable interrupt priority levels
     clrf  BSR       ;set to bank 0
     clrf  EECON1      ;no accesses to program memory
@@ -1484,11 +1746,11 @@ nxtram  clrf  POSTINC0
     clrf  RXF1SIDL
     movlb 0
 
+mskload
+    lfsr  0,RXM0SIDH    ;Clear masks, point to start
 
-
-
-mskload lfsr  0,RXM0SIDH    ;Clear masks, point to start
-mskloop clrf  POSTINC0
+mskloop
+    clrf  POSTINC0
     movlw LOW RXM1EIDL+1    ;end of masks
     cpfseq  FSR0L
     bra   mskloop
@@ -1511,15 +1773,12 @@ mskloop clrf  POSTINC0
     movlw B'00000001'
     movwf PIE1      ;enable interrupt for timer 1
 
-
-;next segment required
-
+    ;next segment required
     movlw B'00000001'
     movwf IDcount     ;set at lowest value for starters
 
-    clrf  INTCON2     ;
-    clrf  INTCON3     ;
-
+    clrf  INTCON2
+    clrf  INTCON3
 
     movlw B'00100011'   ;B'00100011'  Rx0 and RX1 interrupt and Tx error
 
@@ -1548,10 +1807,9 @@ mskloop clrf  POSTINC0
     bnz   setid
     bra   slimset     ;wait for setup PB
 
-
-setid bsf   FLiM_MODE      ;flag FLiM
+setid
+    bsf   FLiM_MODE      ;flag FLiM
     call  newid_f     ;put ID into Tx1buf, TXB2 and ID number store
-
 
 seten_f
     movlw B'11000000'
@@ -1560,9 +1818,11 @@ seten_f
     bcf   LEDG_OUT
     bcf   Datmode,0
     call  timload     ;load stuff
-    goto  main0
+    goto  main_loop
 
-slimset bcf   FLiM_MODE
+
+slimset
+    bcf   FLiM_MODE
     clrf  NN_temph
     clrf  NN_templ
     ;test for clear all events
@@ -1570,6 +1830,7 @@ slimset bcf   FLiM_MODE
     goto  seten
     btfss UNLEARN_INP
     call  initevdata      ;clear all events if unlearn is set during power up
+
 seten
     call  nv_rest     ;if SLiM put default NVs in.
     call  timload     ;Load NV's into RAM
@@ -1578,19 +1839,18 @@ seten
     movwf INTCON      ;enable interrupts
     bcf   LEDY_OUT
     bsf   LEDG_OUT     ;RUN LED on. Green for SLiM
-    goto  main0
-
+    goto  main_loop
 
 
 
 ;****************************************************************************
 ;   start of subroutines
-;*************************************************************************
+;****************************************************************************
 
-
-;
-;   shuffle for standard ID. Puts 7 bit ID into IDtemph and IDtempl for CAN frame
-shuffle movff CanID_tmp,IDtempl   ;get 7 bit ID
+;****************************************************************************
+; shuffle for standard ID. Puts 7 bit ID into IDtemph and IDtempl for CAN frame
+shuffle
+    movff CanID_tmp,IDtempl   ;get 7 bit ID
     swapf IDtempl,F
     rlncf IDtempl,W
     andlw B'11100000'
@@ -1603,11 +1863,12 @@ shuffle movff CanID_tmp,IDtempl   ;get 7 bit ID
     movwf IDtemph         ;has sidh
     return
 
-;*********************************************************************************
 
+
+;****************************************************************************
 ;   reverse shuffle for incoming ID. sidh and sidl into one byte.
-
-shuffin movff Rx0sidl,IDtempl
+shuffin
+    movff Rx0sidl,IDtempl
     swapf IDtempl,F
     rrncf IDtempl,W
     andlw B'00000111'
@@ -1621,16 +1882,16 @@ shuffin movff Rx0sidl,IDtempl
     return
 
 
-;************************************************************************************
+
+;****************************************************************************
 ;   sets an output
 
-
 ;********************************************************************
-;   Do an event.  arrives with EV in EVtemp and POL in EVtemp2
-;   Toggles outputs. Turns off before on.
-;   Checks which outputs are active for the event
-;   Checks command for ON or OFF and checks the POL bit for which way to set output
-
+; Do an event.  arrives with EV in EVtemp and POL in EVtemp2
+; Toggles outputs. Turns off before on.
+; Checks which outputs are active for the event
+; Checks command for ON or OFF and checks the POL bit for which way to set
+; output
 ev_set
     movff Tfdly,OpFdly  ;Reload fire delay counter
     btfss EVtemp,0
@@ -1641,12 +1902,12 @@ ev_set
     bra   ev1_off
     bra   ev1_on
 
-ev1a  btfss EVtemp2,0
+ev1a
+    btfss EVtemp2,0
     bra   ev1_on
     bra   ev1_off
 
-; Process pair 1
-
+    ; Process pair 1
 ev1_on            ; Output 1 is on, 2 off
     bcf   OpTrig,1  ; Clear other output trigger
     bsf   OpTrig,0  ; Set output trigger
@@ -1657,9 +1918,9 @@ ev1_off           ; Output 1 is off, 2 is on
     bcf   OpTrig,0  ; Clear other output trigger
               ; Drop through
 
-; Process pair 2
-
-ev_set2 btfss EVtemp,1
+    ; Process pair 2
+ev_set2
+    btfss EVtemp,1
     bra   ev_set3   ;no action on pair 2
     btfss Rx0d0,0   ;on or off?
     bra   ev2a
@@ -1667,7 +1928,8 @@ ev_set2 btfss EVtemp,1
     bra   ev2_off
     bra   ev2_on
 
-ev2a  btfss EVtemp2,1
+ev2a
+    btfss EVtemp2,1
     bra   ev2_on
     bra   ev2_off
 
@@ -1681,9 +1943,9 @@ ev2_off           ; Output 3 is off, 4 is on
     bcf   OpTrig,2  ; Clear other output trigger
               ; Drop through
 
-; Process pair 3
-
-ev_set3 btfss EVtemp,2
+    ; Process pair 3
+ev_set3
+    btfss EVtemp,2
     bra   ev_set4   ;no action on pair 3
     btfss Rx0d0,0   ;on or off?
     bra   ev3a
@@ -1691,7 +1953,8 @@ ev_set3 btfss EVtemp,2
     bra   ev3_off
     bra   ev3_on
 
-ev3a  btfss EVtemp2,2
+ev3a
+    btfss EVtemp2,2
     bra   ev3_on
     bra   ev3_off
 
@@ -1705,9 +1968,9 @@ ev3_off           ; Output 5 is off, 6 is on
     bcf   OpTrig,4  ; Clear other output trigger
               ; Drop through
 
-; Process pair 4
-
-ev_set4 btfss EVtemp,3
+    ; Process pair 4
+ev_set4
+    btfss EVtemp,3
     bra   ev_setx   ;no action on pair 4
     btfss Rx0d0,0   ;on or off?
     bra   ev4a
@@ -1715,7 +1978,8 @@ ev_set4 btfss EVtemp,3
     bra   ev4_off
     bra   ev4_on
 
-ev4a  btfss EVtemp2,3
+ev4a
+    btfss EVtemp2,3
     bra   ev4_on
     bra   ev4_off
 
@@ -1729,17 +1993,22 @@ ev4_off           ; Output 7 is off, 8 is on
     bcf   OpTrig,6  ; Clear other output trigger
               ; Drop through
 
-; All done
-ev_setx return
+
+    ; All done
+ev_setx
+    return
+
 
 
 ;***************************************************************************
 ;   reloads the timer settings and output masks from EEPROM/Flash to RAM
-
-timload movlw LOW NVstart     ;reloads timers
+timload
+    movlw LOW NVstart     ;reloads timers
     movwf EEADR
     lfsr  FSR1,T1a
-timloop bsf   EECON1,RD
+
+timloop
+    bsf   EECON1,RD
     movff EEDATA,POSTINC1
     incf  EEADR
     movlw LOW NVstart+.11   ; 8 outputs and 3 timers
@@ -1753,6 +2022,7 @@ timloop bsf   EECON1,RD
     movlw 8
     movwf Count
     lfsr  FSR1, Opm1a
+
 opmloop
     tblrd*+
     movff TABLAT, POSTINC1
@@ -1760,10 +2030,13 @@ opmloop
     bra   opmloop
     return
 
+
+
 ;**************************************************************************
 ; Clear key variables used for output timing
 ;**************************************************************************
-clrvar  clrf  WREG
+clrvar
+    clrf  WREG
     movwf OpTimr        ; Clear working variables
     movwf OpTrig
     movwf OpFlag
@@ -1771,10 +2044,13 @@ clrvar  clrf  WREG
     movwf OpCdly
     return
 
+
+
 ;**************************************************************************
 ;   write to EEPROM, EEADR must be set before this sub.
 ;   data to write comes in W
-eewrite movwf EEDATA
+eewrite
+    movwf EEDATA
     bcf   EECON1,EEPGD
     bcf   EECON1,CFGS
     bsf   EECON1,WREN
@@ -1785,27 +2061,31 @@ eewrite movwf EEDATA
     movlw 0xAA
     movwf EECON2
     bsf   EECON1,WR
-eetest  btfsc EECON1,WR
+
+eetest
+    btfsc EECON1,WR
     bra   eetest
     bcf   PIR2,EEIF
     bcf   EECON1,WREN
     movlw B'11000000'
     movwf INTCON    ;reenable interrupts
-
     return
 
-;************************************************************************************
-;
-eeread  bcf   EECON1,EEPGD  ;read a EEPROM byte, EEADR must be set before this sub.
+
+
+;****************************************************************************
+eeread
+    bcf   EECON1,EEPGD  ;read a EEPROM byte, EEADR must be set before this sub.
     bcf   EECON1,CFGS   ;returns with data in W
     bsf   EECON1,RD
     movf  EEDATA,W
     return
 
 
-;***************************************************************************
 
-newid_f movlw LOW CANid     ;put in stored ID. FLiM mode
+;***************************************************************************
+newid_f
+    movlw LOW CANid     ;put in stored ID. FLiM mode
     movwf EEADR
     bsf   EECON1,RD
     movf  EEDATA,W
@@ -1826,7 +2106,8 @@ newid_f movlw LOW CANid     ;put in stored ID. FLiM mode
     movwf NN_templ
     movlb 15       ;put ID into TXB2 for enumeration response to RTR
 
-new_1 btfsc TXB2CON,TXREQ
+new_1
+    btfsc TXB2CON,TXREQ
     bra   new_1
     clrf  TXB2SIDH
     movf  IDtemph,W
@@ -1837,21 +2118,24 @@ new_1 btfsc TXB2CON,TXREQ
     iorwf TXB2SIDH    ;set priority
     clrf  TXB2DLC     ;no data, no RTR
     movlb 0
-
     return
 
-;**************************************************************************
 
+
+;****************************************************************************
 ;   check if command is for this node
-
-thisNN  movf  NN_temph,W
+thisNN
+    movf  NN_temph,W
     subwf Rx0d1,W
     bnz   not_NN
     movf  NN_templ,W
     subwf Rx0d2,W
     bnz   not_NN
     retlw   0     ;returns 0 if match
-not_NN  retlw 1
+
+not_NN
+    retlw 1
+
 
 
 #include "cbuslib/evhndlr.asm"
@@ -1860,7 +2144,6 @@ not_NN  retlw 1
 
 ;**************************************************************************
 ;   send node parameter bytes (7 maximum)
-
 parasend
     movlw 0xEF
     movwf Tx1d0
@@ -1873,7 +2156,8 @@ parasend
     movwf Count
     bsf   EECON1,EEPGD
 
-para1 tblrd*+
+para1
+    tblrd*+
     movff TABLAT,POSTINC0
     decfsz  Count
     bra   para1
@@ -1883,9 +2167,10 @@ para1 tblrd*+
     call  TX_data
     return
 
+
+
 ;**************************************************************************
 ;   send module name - 7 bytes
-
 namesend
     movlw 0xE2
     movwf Tx1d0
@@ -1898,7 +2183,8 @@ namesend
     movwf Count
     bsf   EECON1,EEPGD
 
-name1 tblrd*+
+name1
+    tblrd*+
     movff TABLAT,POSTINC0
     decfsz  Count
     bra   name1
@@ -1909,13 +2195,12 @@ name1 tblrd*+
     return
 
 
-;**********************************************************
 
+;****************************************************************************
 ;   send individual parameter
-
 ;   Index 0 sends no of parameters
-
-para1rd movf  Rx0d3,w
+para1rd
+    movf  Rx0d3,w
     sublw 0
     bz    numParams
     movlw PRMCOUNT
@@ -1931,6 +2216,7 @@ para1rd movf  Rx0d3,w
     call  getflags
     movwf Tx1d4
     bra   addflags
+
 notFlags
     movlw LOW nodeprm
     movwf TBLPTRL
@@ -1942,6 +2228,7 @@ notFlags
     bsf   EECON1,EEPGD
     tblrd*
     movff TABLAT,Tx1d4
+
 addflags
     movff Rx0d3,Tx1d3
     movlw 5
@@ -1975,10 +2262,9 @@ getflags    ; create flags byte
     return
 
 
-;**********************************************************
 
+;****************************************************************************
 ; returns Node Number, Manufacturer Id, Module Id and Flags
-
 whoami
     call  ldely   ;wait for other nodes
     movlw OPC_PNN
@@ -1998,7 +2284,6 @@ whoami
 
 ;*********************************************************************
 ;   put in NN from command
-
 putNN movff Rx0d1,NN_temph
     movff Rx0d2,NN_templ
     movlw LOW NodeID
@@ -2014,24 +2299,31 @@ putNN movff Rx0d1,NN_temph
     call  eewrite
     return
 
+
+
 ;***********************************************************
-
 ; error message send
+errmsg
+    call  errsub
+    goto  main_end
 
-errmsg  call  errsub
-    goto  main2
-errmsg1 call  errsub
+errmsg1
+    call  errsub
     goto  l_out2
-errmsg2 call  errsub
+
+errmsg2
+    call  errsub
     goto  l_out1
 
-errsub  movwf Tx1d3   ;main eror message send. Error no. in WREG
+errsub
+    movwf Tx1d3   ;main eror message send. Error no. in WREG
     movlw 0x6F
     movwf Tx1d0
     movlw 4
     movwf Dlc
     call  TX_with_NN
     return
+
 
 
 ;*********************************************************************
@@ -2041,11 +2333,12 @@ errsub  movwf Tx1d3   ;main eror message send. Error no. in WREG
 ;   Latcount is the number of CAN send retries before priority is increased
 ;   the CAN-ID is pre-loaded in the Tx1 buffer
 ;   Dlc must be loaded by calling source to the data length value
-
-TX_with_NN  movff NN_temph,Tx1d1
+TX_with_NN
+    movff NN_temph,Tx1d1
     movff NN_templ,Tx1d2
 
-TX_data movf  Dlc,W       ;get data length
+TX_data
+    movf  Dlc,W       ;get data length
     movwf Tx1dlc
     movlw B'00001111'   ;clear old priority
     andwf Tx1sidh,F
@@ -2053,38 +2346,34 @@ TX_data movf  Dlc,W       ;get data length
     iorwf Tx1sidh     ;low priority
     movlw 10
     movwf Latcount
-    call  TX_frame     ;send frame
-    return
 
 ;   Send contents of Tx1 buffer via CAN TXB1
-
-TX_frame lfsr  FSR0,Tx1con
+TX_frame
+    lfsr  FSR0,Tx1con
     lfsr  FSR1,TXB1CON
-
     movlb 15       ;check for buffer access
-ldTX2 btfsc TXB1CON,TXREQ ; Tx buffer available...?
+
+ldTX2
+    btfsc TXB1CON,TXREQ ; Tx buffer available...?
     bra   ldTX2     ;... not yet
     movlb 0
 
-ldTX1 movf  POSTINC0,W
+ldTX1
+    movf  POSTINC0,W
     movwf POSTINC1  ;load TXB1
     movlw Tx1d7+1
     cpfseq  FSR0L
     bra   ldTX1
 
-
     movlb 15       ;bank 15
-tx1test btfsc TXB1CON,TXREQ ;test if clear to send
+tx1test
+    btfsc TXB1CON,TXREQ ;test if clear to send
     bra   tx1test
     bsf   TXB1CON,TXREQ ;OK so send
 
-tx1done movlb 0       ;bank 0
+tx1done
+    movlb 0       ;bank 0
     return          ;successful send
-
-;***************************************************************
-
-
-
 
 
 
@@ -2092,39 +2381,52 @@ tx1done movlb 0       ;bank 0
 ;   a delay routine
 ;   may be used to allow CDU to recharge between succesive outputs.
 ;   probably needs to be longer for this.
-
-dely  movlw 10
+dely
+    movlw 10
     movwf Count1
-dely2 clrf  Count
-dely1 decfsz  Count,F
+
+dely2
+    clrf  Count
+
+dely1
+    decfsz  Count,F
     goto  dely1
     decfsz  Count1
     bra   dely2
     return
 
-delay2  clrf  Count2    ;long delay for CDU recharge
-del2  call  dely
+
+
+delay2
+    clrf  Count2    ;long delay for CDU recharge
+
+del2
+    call  dely
     decfsz  Count2
     bra   del2
     return
 
+
+
 ;****************************************************************
-
 ;   longer delay
-
-ldely movlw 100
+ldely
+    movlw 100
     movwf Count2
-ldely1  call  dely
+
+ldely1
+    call  dely
     decfsz  Count2
     bra   ldely1
-
     return
+
+
 
 ;**********************************************************************
 ;   loads ENs  and EVs from EEPROM to RAM for fast access
 ;   shifts all 32 even if less are used
-
-en_ram  movlw OLD_EVT_NUM
+en_ram
+    movlw OLD_EVT_NUM
     movwf Count     ;number of ENs allowed
 
     bcf   STATUS,C    ;clear carry
@@ -2133,19 +2435,23 @@ en_ram  movlw OLD_EVT_NUM
     lfsr  FSR0,EN1    ;set FSR0 to start of ram buffer
     movlw LOW ENstart     ;load ENs from EEPROM to RAM
     movwf EEADR
-enload  bsf   EECON1,RD   ;get first byte
+
+enload
+    bsf   EECON1,RD   ;get first byte
     movff EEDATA,POSTINC0
     incf  EEADR
     decfsz  Count,F
     bra   enload
 
-ev_ram  movlw OLD_EVT_NUM    ;now copy original EVs to RAM
+ev_ram
+    movlw OLD_EVT_NUM    ;now copy original EVs to RAM
     movwf Count     ;number of ENs allowed
     bcf   STATUS,C
     rlncf Count     ; 2 EVs per event
     lfsr  FSR0, EV1
     movlw LOW EVstart
     movwf EEADR
+
 ev_load
     bsf   EECON1,RD   ;get first byte
     movf  EEDATA,W
@@ -2153,34 +2459,42 @@ ev_load
     incf  EEADR
     decfsz  Count,F
     bra   ev_load
-
     return
 
-;***************************************************************
 
-getop movlw B'00000011'   ;get DIP switch setting for output
+
+;***************************************************************
+getop
+    movlw B'00000011'   ;get DIP switch setting for output
     andwf PORTB,W     ;mask
 
     movwf Shift
     movlw 1
     movwf EVtemp
-shift movf  Shift,F     ;is it zero?
+
+shift
+    movf  Shift,F     ;is it zero?
     bz    shift2
     rlncf EVtemp,F    ;put rolling bit into EVtemp
     decf  Shift,F
     bra   shift
 
-shift2  return
+shift2
+    return
+
+
 
 ;****************************************************************
-
-    ;   clears all stored events
-
-enclear movlw OLD_EVT_NUM * 6  ;number of locations in EEPROM
+;
+; clears all stored events
+enclear
+    movlw OLD_EVT_NUM * 6  ;number of locations in EEPROM
     movwf Count
     movlw LOW ENstart
     movwf EEADR
-enloop  movlw 0
+
+enloop
+    movlw 0
     call  eewrite
     incf  EEADR
     decfsz  Count
@@ -2194,15 +2508,20 @@ enloop  movlw 0
     movlw OLD_EVT_NUM * 4
     movwf Count
     lfsr  FSR0, EN1
+
 ramloop
     clrf  POSTINC0
     decfsz  Count
     bra   ramloop
     return
-;****************************************************************************
 
-nnack movlw OPC_RQNN      ;request frame for new NN or ack if not virgin
-nnrel movwf Tx1d0
+
+;****************************************************************************
+nnack
+    movlw OPC_RQNN      ;request frame for new NN or ack if not virgin
+
+nnrel
+    movwf Tx1d0
     movff NN_temph,Tx1d1
     movff NN_templ,Tx1d2
     movlw 3
@@ -2210,9 +2529,10 @@ nnrel movwf Tx1d0
     call  TX_with_NN
     return
 
-;**************************************************************************
 
-putNV movlw NV_NUM + 1    ;put new NV in EEPROM and the NV ram.
+;**************************************************************************
+putNV
+    movlw NV_NUM + 1    ;put new NV in EEPROM and the NV ram.
     cpfslt  Rx0d3
     return
     movf  Rx0d3,W
@@ -2221,14 +2541,16 @@ putNV movlw NV_NUM + 1    ;put new NV in EEPROM and the NV ram.
     addlw LOW NVstart
     movwf EEADR
     movf  Rx0d4,W
-
     call  eewrite
 
-no_NV return
+no_NV
+    return
+
+
 
 ;************************************************************************
-
-getNV movlw NV_NUM + 1    ;get NV from EEPROM and send.
+getNV
+    movlw NV_NUM + 1    ;get NV from EEPROM and send.
     cpfslt  Rx0d3
     bz    no_NV1
     movf  Rx0d3,W
@@ -2238,8 +2560,12 @@ getNV movlw NV_NUM + 1    ;get NV from EEPROM and send.
     movwf EEADR
     call  eeread
     movwf Tx1d4     ;NV value
-getNV1  movff Rx0d3,Tx1d3   ;NV index
-getNV2  movff Rx0d1,Tx1d1
+
+getNV1
+    movff Rx0d3,Tx1d3   ;NV index
+
+getNV2
+    movff Rx0d1,Tx1d1
     movff Rx0d2,Tx1d2
     movlw OPC_NVANS      ;NV answer
     movwf Tx1d0
@@ -2248,16 +2574,21 @@ getNV2  movff Rx0d1,Tx1d1
     call  TX_data
     return
 
-no_NV1  clrf  Tx1d3     ;if not valid NV
+
+no_NV1
+    clrf  Tx1d3     ;if not valid NV
     clrf  Tx1d4
     bra   getNV2
 
-nv_rest movlw 8
+nv_rest
+    movlw 8
     movwf Count
     movlw LOW Timers
     movwf Temp
     movwf EEADR
-nv_rest1 call eeread
+
+nv_rest1
+    call eeread
     movwf Temp1
     movlw LOW NVstart - LOW Timers
     addwf EEADR,F
@@ -2266,7 +2597,9 @@ nv_rest1 call eeread
     decfsz  Count
     bra   nv_rest2
     return
-nv_rest2 incf Temp,F
+
+nv_rest2
+    incf Temp,F
     movf  Temp,W
     movwf EEADR
     bra   nv_rest1
@@ -2276,8 +2609,8 @@ nv_rest2 incf Temp,F
 ;***************************************************************
 ;
 ;   self enumeration as separate subroutine
-
-self_en movff FSR1L,Fsr_tmp1Le  ;save FSR1 just in case
+self_en
+    movff FSR1L,Fsr_tmp1Le  ;save FSR1 just in case
     movff FSR1H,Fsr_tmp1He
     movlw B'11000000'
     movwf INTCON      ;start interrupts if not already started
@@ -2286,6 +2619,7 @@ self_en movff FSR1L,Fsr_tmp1Le  ;save FSR1 just in case
     movlw 14
     movwf Count
     lfsr  FSR0, Enum0
+
 clr_en
     clrf  POSTINC0
     decfsz  Count
@@ -2311,34 +2645,41 @@ clr_en
     call  TX_data     ;send RTR frame
     clrf  Tx1dlc      ;prevent more RTR frames
 
-self_en1    btfss PIR2,TMR3IF   ;setup timer out?
+self_en1
+    btfss PIR2,TMR3IF   ;setup timer out?
     bra   self_en1      ;fast loop till timer out
     bcf   T3CON,TMR3ON  ;timer off
     bcf   PIR2,TMR3IF   ;clear flag
-
 
     clrf  IDcount
     incf  IDcount,F     ;ID starts at 1
     clrf  Roll
     bsf   Roll,0
     lfsr  FSR1,Enum0      ;set FSR to start
-here1 incf  INDF1,W       ;find a space
+
+here1
+    incf  INDF1,W       ;find a space
     bnz   here
     movlw 8
     addwf IDcount,F
     incf  FSR1L
     bra   here1
-here  movf  Roll,W
+
+here
+    movf  Roll,W
     andwf INDF1,W
     bz    here2
     rlcf  Roll,F
     incf  IDcount,F
     bra   here
-here2 movlw 100        ;limit to ID
+
+here2
+    movlw 100        ;limit to ID
     cpfslt  IDcount
     bra   segful        ;segment full
 
-here3 movlw LOW CANid   ;put new ID in EEPROM
+here3
+    movlw LOW CANid   ;put new ID in EEPROM
     movwf EEADR
     movf  IDcount,W
     call  eewrite
@@ -2348,26 +2689,30 @@ here3 movlw LOW CANid   ;put new ID in EEPROM
     movff Fsr_tmp1He,FSR1H
     return
 
-segful  movlw 7   ;segment full, no CAN_ID allocated
+segful
+    movlw 7   ;segment full, no CAN_ID allocated
     call  errsub
     setf  IDcount
     bcf   IDcount,7
     bra   here3
 
 
-
-Opmap db  B'00000001',B'10000000'         ;output mapping
+Opmap
+    db  B'00000001',B'10000000'         ;output mapping
     db  B'00000010',B'01000000'         ;don't change this
     db  B'00100000',B'00000100'
     db  B'00010000',B'00001000'
 
+
+
     ORG 0x3000
+
 evdata
-;************************************************************************
+
 
   ORG 0xF00000      ;EEPROM data. Defaults
 
-CANid de  B'01111111',0 ;CAN id default and module status
+CANid   de  B'01111111',0 ;CAN id default and module status
 NodeID  de  0,0   ;Node ID
 ENindex de  0,0   ;ENindex contains free space
           ;ENindex +1 contains number of events
@@ -2375,31 +2720,35 @@ ENindex de  0,0   ;ENindex contains free space
           ;initialised in initevdata
 
 Timers  de  5,5       ;Timers (for now)
-    de  5,5       ;These are for each output
-    de  5,5
-    de  5,5
+        de  5,5       ;These are for each output
+        de  5,5
+        de  5,5
 
 FreeCh  de  0,0
 hashtab de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
 
     ORG 0xF00020
 
 ENstart ;start of 32 event numbers. 128 bytes
 
+
     ORG 0xF000A0
 
 EVstart de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   ;event qualifiers
-    de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   ;clear EEPROM
-    de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-    de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   ;clear EEPROM
+        de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        de  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 NVstart
     de  DFFTIM,DFFTIM,DFFTIM,DFFTIM     ;NV 1..4
     de  DFFTIM,DFFTIM,DFFTIM,DFFTIM     ;NV 5..8
     de  DFRDLY,DFFDLY,DFCDLY,0        ;NV 9..11
     de  0,0,0,0               ;NV 12..16
+
 hashnum
     de  0,0,0,0,0,0,0,0
+
 
     ORG 0xF000FE
     de  0,0                 ;for boot.
