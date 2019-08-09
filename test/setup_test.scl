@@ -1,0 +1,32 @@
+configuration for "PIC18F2480" is
+  shared label _CANInit;
+  shared label setup;
+end configuration;
+--
+testbench for "PIC18F2480" is
+begin
+  test_timeout: process is
+    begin
+      wait for 1 ms;
+      report("setup_test: TIMEOUT");
+      report(PC);
+      PC <= 0;
+      wait;
+    end process test_timeout;
+    --
+  setup_test: process is
+    begin
+      report("setup_test: START");
+      --
+      wait until PC == _CANInit;
+      report("setup_test: Reached _CANInit");
+      accessin("boot_setup.eedata", hex_mode, EEDATA, false);
+      --
+      wait until PC == setup;
+      report("setup_test: Reached setup");
+      --
+      report("setup_test: PASS");
+      PC <= 0;
+      wait;
+    end process setup_test;
+end testbench;

@@ -1,5 +1,6 @@
 *.cof
 *.err
+*.log
 *.lst
 *.map
 *.mcs
@@ -11,6 +12,7 @@
 **/build/
 **/default/
 **/dist/
+**/logs/
 **/nbproject/private/
 **/nbproject/Makefile*
 **/nbproject/Package*

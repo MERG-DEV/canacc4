@@ -1,0 +1,32 @@
+configuration for "PIC18F2480" is
+  shared label _CANInit;
+  shared label _CANMain;
+  shared label _CANMainJp1;
+end configuration;
+--
+testbench for "PIC18F2480" is
+begin
+  test_timeout: process is
+    begin
+      wait for 1 ms;
+      report("bootload_test: TIMEOUT");
+      report(PC);
+      PC <= 0;
+      wait;
+    end process test_timeout;
+  bootload_test: process is
+    begin
+      report("bootload_test: START");
+      --
+      wait until PC == _CANInit;
+      report("bootload_test: Reached _CANInit");
+      accessin("boot_bootload.eedata", hex_mode, EEDATA, false);
+      --
+      wait until PC == _CANMain;
+      report("bootload_test: Reached _CANMain");
+      --
+      report("bootload_test: PASS");
+      PC <= 0;
+      wait;
+    end process bootload_test;
+end testbench;
