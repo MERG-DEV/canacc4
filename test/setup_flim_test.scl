@@ -1,0 +1,48 @@
+configuration for "PIC18F2480" is
+  shared label _CANInit;
+  shared label setup;
+  shared label copyEVs;
+  shared label initevdata;
+  shared label setid;
+end configuration;
+--
+testbench for "PIC18F2480" is
+begin
+  test_timeout: process is
+    begin
+      wait for 1000 ms;
+      report("setup_flim_test: TIMEOUT");
+      report(PC); -- Crashes simulator, MDB will report current source line
+      PC <= 0;
+      wait;
+    end process test_timeout;
+    --
+  setup_flim_test: process is
+    begin
+      report("setup_flim_test: START");
+      --
+      wait until PC == _CANInit;
+      report("setup_flim_test: Reached _CANInit");
+      --
+      accessin("eedata/boot_setup", hex_mode, EEDATA, false);
+      --
+      wait until PC == setup;
+      report("setup_flim_test: Reached setup");
+      --
+      accessin("eedata/no_freechain_0_events", hex_mode, EEDATA, false);
+      --
+      wait until PC == copyEVs;
+      report("setup_flim_test: Reached copyEVs");
+      wait until PC == initevdata;
+      report("setup_flim_test: Reached initevdata");
+      --
+      accessin("eedata/modstat_flim", hex_mode, EEDATA, false);
+      --
+      wait until PC == setid;
+      report("setup_flim_test: Reached setid");
+      --
+      report("setup_flim_test: PASS");
+      PC <= 0;
+      wait;
+    end process setup_flim_test;
+end testbench;
