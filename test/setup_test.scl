@@ -9,7 +9,7 @@ begin
     begin
       wait for 1 ms;
       report("setup_test: TIMEOUT");
-      report(PC);
+      report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
@@ -20,7 +20,8 @@ begin
       --
       wait until PC == _CANInit;
       report("setup_test: Reached _CANInit");
-      accessin("boot_setup.eedata", hex_mode, EEDATA, false);
+      --
+      accessin("eedata/boot_setup", hex_mode, EEDATA, false);
       --
       wait until PC == setup;
       report("setup_test: Reached setup");

@@ -1,7 +1,6 @@
 configuration for "PIC18F2480" is
   shared label _CANInit;
   shared label _CANMain;
-  shared label _CANMainJp1;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -10,17 +9,19 @@ begin
     begin
       wait for 1 ms;
       report("bootload_test: TIMEOUT");
-      report(PC);
+      report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
   bootload_test: process is
     begin
       report("bootload_test: START");
+      EECON1 <= 1;
       --
       wait until PC == _CANInit;
       report("bootload_test: Reached _CANInit");
-      accessin("boot_bootload.eedata", hex_mode, EEDATA, false);
+      --
+      accessin("eedata/boot_bootload", hex_mode, EEDATA, false);
       --
       wait until PC == _CANMain;
       report("bootload_test: Reached _CANMain");
