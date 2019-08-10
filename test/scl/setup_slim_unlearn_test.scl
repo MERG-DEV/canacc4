@@ -34,20 +34,17 @@ begin
       --
       wait until PC == copyEVs;
       report("setup_slim_unlearn_test: Reached copyEVs");
-      accessin("eedata/no_freechain_0_events", hex_mode, EEDATA, false);
-      wait until PC == initevdata;
-      report("setup_slim_unlearn_test: Reached initevdata");
+      accessin("eedata/8_events_slim", hex_mode, EEDATA, false);
       --
-      accessin("eedata/modstat_slim", hex_mode, EEDATA, false);
       --
       wait until PC == slimset;
       report("setup_slim_unlearn_test: Reached slimset");
       --
       RB4 <= '1'; -- DOLEARN off
-      RA5 <= '0'; -- LEARN on
+      RA5 <= '0'; -- UNLEARN on
       --
       wait until PC == initevdata;
-      report("setup_slim_unlearn_test: Reached initevdata again");
+      report("setup_slim_unlearn_test: Reached initevdata");
       --
       wait until PC == nv_rest;
       report("setup_slim_unlearn_test: Reached nv_rest");

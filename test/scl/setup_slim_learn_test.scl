@@ -3,6 +3,7 @@ configuration for "PIC18F2480" is
   shared label setup;
   shared label copyEVs;
   shared label initevdata;
+  shared label slimset;
   shared label nv_rest;
   shared label timload;
   shared label main0;
@@ -13,59 +14,58 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("setup_slim_test: TIMEOUT");
+      report("setup_slim_learn_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  setup_slim_test: process is
+  setup_slim_learn_test: process is
     begin
-      report("setup_slim_test: START");
-      --
-      RB4 <= '1'; -- DOLEARN off
-      RA5 <= '1'; -- LEARN off
+      report("setup_slim_learn_test: START");
       --
       wait until PC == _CANInit;
-      report("setup_slim_test: Reached _CANInit");
+      report("setup_slim_learn_test: Reached _CANInit");
       --
       accessin("eedata/boot_setup", hex_mode, EEDATA, false);
       --
       wait until PC == setup;
-      report("setup_slim_test: Reached setup");
+      report("setup_slim_learn_test: Reached setup");
       --
       wait until PC == copyEVs;
-      report("setup_slim_test: Reached copyEVs");
-      accessin("eedata/no_freechain_0_events", hex_mode, EEDATA, false);
-      wait until PC == initevdata;
-      report("setup_slim_test: Reached initevdata");
+      report("setup_slim_learn_test: Reached copyEVs");
+      accessin("eedata/8_events_slim", hex_mode, EEDATA, false);
       --
-      accessin("eedata/modstat_slim", hex_mode, EEDATA, false);
+      wait until PC == slimset;
+      report("setup_slim_learn_test: Reached slimset");
+      --
+      RB4 <= '0'; -- DOLEARN on
+      RA5 <= '0'; -- UNLEARN on
       --
       wait until PC == nv_rest;
-      report("setup_slim_test: Reached nv_rest");
+      report("setup_slim_learn_test: Reached nv_rest");
       accessin("eedata/default_timers", dec_mode, EEDATA, false);
       --
       wait until PC == timload;
-      report("setup_slim_test: Reached timload");
+      report("setup_slim_learn_test: Reached timload");
       accessin("eedata/default_nv", dec_mode, EEDATA, false);
       --
       wait until PC == main0;
-      report("setup_slim_test: Reached main0");
+      report("setup_slim_learn_test: Reached main0");
       --
       if RB6 == '1' then
-        report("setup_slim_test: FAIL Yellow LED (FLiM) on");
+        report("setup_slim_learn_test: FAIL Yellow LED (FLiM) on");
         PC <= 0;
         wait;
       end if;
       if RB7 == '0' then
-        report("setup_slim_test: FAIL Green LED (SLiM) off");
+        report("setup_slim_learn_test: FAIL Green LED (SLiM) off");
         PC <= 0;
         wait;
       end if;
       --
-      report("setup_slim_test: PASS");
+      report("setup_slim_learn_test: PASS");
       PC <= 0;
       wait;
-    end process setup_slim_test;
+    end process setup_slim_learn_test;
 end testbench;
