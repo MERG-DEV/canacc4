@@ -3,7 +3,9 @@ configuration for "PIC18F2480" is
   shared label setup;
   shared label copyEVs;
   shared label initevdata;
-  shared label setid;
+  shared label newid_f;
+  shared label timload;
+  shared label main0;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -29,17 +31,39 @@ begin
       wait until PC == setup;
       report("setup_flim_test: Reached setup");
       --
-      accessin("eedata/no_freechain_0_events", hex_mode, EEDATA, false);
-      --
       wait until PC == copyEVs;
       report("setup_flim_test: Reached copyEVs");
+      accessin("eedata/no_freechain_0_events", hex_mode, EEDATA, false);
       wait until PC == initevdata;
       report("setup_flim_test: Reached initevdata");
       --
       accessin("eedata/modstat_flim", hex_mode, EEDATA, false);
       --
-      wait until PC == setid;
-      report("setup_flim_test: Reached setid");
+      wait until PC == newid_f;
+      report("setup_flim_test: Reached newid_f");
+      accessin("eedata/default_canid_nodeid", dec_mode, EEDATA, false);
+      --
+      wait until PC == timload;
+      report("setup_flim_test: Reached timload");
+      accessin("eedata/default_nv", dec_mode, EEDATA, false);
+      --
+      wait until PC == main0;
+      report("setup_flim_test: Reached main0");
+      --
+      if RB6 == '0' then
+        report("setup_flim_test: Yellow LED (FLiM) off");
+        report("setup_flim_test: FAIL");
+        report(PC); -- Crashes simulator, MDB will report current source line
+        PC <= 0;
+        wait;
+      end if;
+      if RB7 == '1' then
+        report("setup_flim_test: Green LED (SLiM) on");
+        report("setup_flim_test: FAIL");
+        report(PC); -- Crashes simulator, MDB will report current source line
+        PC <= 0;
+        wait;
+      end if;
       --
       report("setup_flim_test: PASS");
       PC <= 0;

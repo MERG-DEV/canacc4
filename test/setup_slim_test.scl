@@ -3,14 +3,16 @@ configuration for "PIC18F2480" is
   shared label setup;
   shared label copyEVs;
   shared label initevdata;
-  shared label slimset;
+  shared label nv_rest;
+  shared label timload;
+  shared label main0;
 end configuration;
 --
 testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 1000 ms;
+      wait for 2000 ms;
       report("setup_slim_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -21,6 +23,9 @@ begin
     begin
       report("setup_slim_test: START");
       --
+      RB4 <= '1'; -- DOLEARN off
+      RA5 <= '1'; -- LEARN off
+      --
       wait until PC == _CANInit;
       report("setup_slim_test: Reached _CANInit");
       --
@@ -29,17 +34,39 @@ begin
       wait until PC == setup;
       report("setup_slim_test: Reached setup");
       --
-      accessin("eedata/no_freechain_0_events", hex_mode, EEDATA, false);
-      --
       wait until PC == copyEVs;
       report("setup_slim_test: Reached copyEVs");
+      accessin("eedata/no_freechain_0_events", hex_mode, EEDATA, false);
       wait until PC == initevdata;
       report("setup_slim_test: Reached initevdata");
       --
       accessin("eedata/modstat_slim", hex_mode, EEDATA, false);
       --
-      wait until PC == slimset;
-      report("setup_slim_test: Reached slimset");
+      wait until PC == nv_rest;
+      report("setup_flim_test: Reached nv_rest");
+      accessin("eedata/default_timers", dec_mode, EEDATA, false);
+      --
+      wait until PC == timload;
+      report("setup_flim_test: Reached timload");
+      accessin("eedata/default_nv", dec_mode, EEDATA, false);
+      --
+      wait until PC == main0;
+      report("setup_flim_test: Reached main0");
+      --
+      if RB6 == '1' then
+        report("setup_flim_test: Yellow LED (FLiM) on");
+        report("setup_flim_test: FAIL");
+        report(PC); -- Crashes simulator, MDB will report current source line
+        PC <= 0;
+        wait;
+      end if;
+      if RB7 == '0' then
+        report("setup_flim_test: Green LED (SLiM) off");
+        report("setup_flim_test: FAIL");
+        report(PC); -- Crashes simulator, MDB will report current source line
+        PC <= 0;
+        wait;
+      end if;
       --
       report("setup_slim_test: PASS");
       PC <= 0;
