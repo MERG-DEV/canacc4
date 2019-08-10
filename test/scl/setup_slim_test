@@ -43,25 +43,23 @@ begin
       accessin("eedata/modstat_slim", hex_mode, EEDATA, false);
       --
       wait until PC == nv_rest;
-      report("setup_flim_test: Reached nv_rest");
+      report("setup_slim_test: Reached nv_rest");
       accessin("eedata/default_timers", dec_mode, EEDATA, false);
       --
       wait until PC == timload;
-      report("setup_flim_test: Reached timload");
+      report("setup_slim_test: Reached timload");
       accessin("eedata/default_nv", dec_mode, EEDATA, false);
       --
       wait until PC == main0;
-      report("setup_flim_test: Reached main0");
+      report("setup_slim_test: Reached main0");
       --
       if RB6 == '1' then
-        report("setup_flim_test: FAIL Yellow LED (FLiM) on");
-        report(PC); -- Crashes simulator, MDB will report current source line
+        report("setup_slim_test: FAIL Yellow LED (FLiM) on");
         PC <= 0;
         wait;
       end if;
       if RB7 == '0' then
-        report("setup_flim_test: FAIL Green LED (SLiM) off");
-        report(PC); -- Crashes simulator, MDB will report current source line
+        report("setup_slim_test: FAIL Green LED (SLiM) off");
         PC <= 0;
         wait;
       end if;

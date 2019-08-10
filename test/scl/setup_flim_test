@@ -52,13 +52,11 @@ begin
       --
       if RB6 == '0' then
         report("setup_flim_test: FAIL Yellow LED (FLiM) off");
-        report(PC); -- Crashes simulator, MDB will report current source line
         PC <= 0;
         wait;
       end if;
       if RB7 == '1' then
         report("setup_flim_test: FAIL Green LED (SLiM) on");
-        report(PC); -- Crashes simulator, MDB will report current source line
         PC <= 0;
         wait;
       end if;
