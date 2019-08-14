@@ -1,11 +1,7 @@
 configuration for "PIC18F2480" is
   shared label _CANInit;
-  shared label setup;
-  shared label copyEVs;
-  shared label initevdata;
   shared label slimset;
-  shared label nv_rest;
-  shared label timload;
+  shared label initevdata;
   shared label main0;
 end configuration;
 --
@@ -14,68 +10,55 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("setup_slim_ignore_unlearn_test: TIMEOUT");
+      report("setup_slim_ignore__unlearn_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  setup_slim_ignore_unlearn_test: process is
+  setup_slim_ignore__unlearn_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("setup_slim_ignore_unlearn_test: START");
+      report("setup_slim_ignore__unlearn_test: START");
       test_state := pass;
-      --
-      wait until PC == _CANInit;
-      report("setup_slim_ignore_unlearn_test: Reached _CANInit");
-      --
-      accessin("eedata/boot_setup", hex_mode, EEDATA, false);
-      --
-      wait until PC == setup;
-      report("setup_slim_ignore_unlearn_test: Reached setup");
-      --
-      wait until PC == copyEVs;
-      report("setup_slim_ignore_unlearn_test: Reached copyEVs");
-      accessin("eedata/8_events_slim", hex_mode, EEDATA, false);
-      --
-      --
-      wait until PC == slimset;
-      report("setup_slim_ignore_unlearn_test: Reached slimset");
       --
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '0'; -- UNLEARN on
       --
-      wait until PC == initevdata;
-      report("setup_slim_ignore_unlearn_test: Reached initevdata");
+      wait until PC == _CANInit;
+      report("setup_slim_ignore__unlearn_test: Reached _CANInit");
       --
-      wait until PC == nv_rest;
-      report("setup_slim_ignore_unlearn_test: Reached nv_rest");
-      accessin("eedata/default_timers", dec_mode, EEDATA, false);
+      wait until PC == slimset;
+      report("setup_slim_ignore__unlearn_test: Reached slimset");
       --
-      wait until PC == timload;
-      report("setup_slim_ignore_unlearn_test: Reached timload");
-      accessin("eedata/default_nv", dec_mode, EEDATA, false);
-      --
-      wait until PC == main0;
-      report("setup_slim_ignore_unlearn_test: Reached main0");
+      loop
+        wait for 1 ic;
+        if PC == initevdata then
+          report("setup_slim_ignore__unlearn_test: Unexpectedly reached initevdata");
+          test_state := fail;
+          wait for 1 ic;
+        end if;
+        exit when PC == main0;
+      end loop;
+      report("setup_slim_ignore__unlearn_test: Reached main0");
       --
       if RB6 == '1' then
-        report("setup_slim_ignore_unlearn_test: Yellow LED (FLiM) on");
+        report("setup_slim_ignore__unlearn_test: Yellow LED (FLiM) on");
         test_state := fail;
       end if;
       if RB7 == '0' then
-        report("setup_slim_ignore_unlearn_test: Green LED (SLiM) off");
+        report("setup_slim_ignore__unlearn_test: Green LED (SLiM) off");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("setup_slim_ignore_unlearn_test: PASS");
+        report("setup_slim_ignore__unlearn_test: PASS");
       else
-        report("setup_slim_ignore_unlearn_test: FAIL");
+        report("setup_slim_ignore__unlearn_test: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
-      end if;
+      end if;          
       PC <= 0;
       wait;
-    end process setup_slim_ignore_unlearn_test;
+    end process setup_slim_ignore__unlearn_test;
 end testbench;

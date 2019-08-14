@@ -1,11 +1,7 @@
 configuration for "PIC18F2480" is
   shared label _CANInit;
-  shared label setup;
-  shared label copyEVs;
-  shared label initevdata;
   shared label slimset;
-  shared label nv_rest;
-  shared label timload;
+  shared label initevdata;
   shared label main0;
 end configuration;
 --
@@ -27,35 +23,17 @@ begin
       report("setup_slim_unlearn_test: START");
       test_state := pass;
       --
+      RB4 <= '1'; -- DOLEARN off
+      RA5 <= '0'; -- UNLEARN on
+      --
       wait until PC == _CANInit;
       report("setup_slim_unlearn_test: Reached _CANInit");
-      --
-      accessin("eedata/boot_setup", hex_mode, EEDATA, false);
-      --
-      wait until PC == setup;
-      report("setup_slim_unlearn_test: Reached setup");
-      --
-      wait until PC == copyEVs;
-      report("setup_slim_unlearn_test: Reached copyEVs");
-      accessin("eedata/8_events_slim", hex_mode, EEDATA, false);
-      --
       --
       wait until PC == slimset;
       report("setup_slim_unlearn_test: Reached slimset");
       --
-      RB4 <= '1'; -- DOLEARN off
-      RA5 <= '0'; -- UNLEARN on
-      --
       wait until PC == initevdata;
       report("setup_slim_unlearn_test: Reached initevdata");
-      --
-      wait until PC == nv_rest;
-      report("setup_slim_unlearn_test: Reached nv_rest");
-      accessin("eedata/default_timers", dec_mode, EEDATA, false);
-      --
-      wait until PC == timload;
-      report("setup_slim_unlearn_test: Reached timload");
-      accessin("eedata/default_nv", dec_mode, EEDATA, false);
       --
       wait until PC == main0;
       report("setup_slim_unlearn_test: Reached main0");
@@ -74,7 +52,7 @@ begin
       else
         report("setup_slim_unlearn_test: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
-      end if;
+      end if;          
       PC <= 0;
       wait;
     end process setup_slim_unlearn_test;

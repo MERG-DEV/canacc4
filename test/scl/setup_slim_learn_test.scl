@@ -1,11 +1,7 @@
 configuration for "PIC18F2480" is
   shared label _CANInit;
-  shared label setup;
-  shared label copyEVs;
-  shared label initevdata;
+  shared label noFreeCh;
   shared label slimset;
-  shared label nv_rest;
-  shared label timload;
   shared label main0;
 end configuration;
 --
@@ -27,31 +23,22 @@ begin
       report("setup_slim_learn_test: START");
       test_state := pass;
       --
-      wait until PC == _CANInit;
-      report("setup_slim_learn_test: Reached _CANInit");
-      --
-      accessin("eedata/boot_setup", hex_mode, EEDATA, false);
-      --
-      wait until PC == setup;
-      report("setup_slim_learn_test: Reached setup");
-      --
-      wait until PC == copyEVs;
-      report("setup_slim_learn_test: Reached copyEVs");
-      accessin("eedata/8_events_slim", hex_mode, EEDATA, false);
-      --
-      wait until PC == slimset;
-      report("setup_slim_learn_test: Reached slimset");
-      --
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '1'; -- UNLEARN off
       --
-      wait until PC == nv_rest;
-      report("setup_slim_learn_test: Reached nv_rest");
-      accessin("eedata/default_timers", dec_mode, EEDATA, false);
+      wait until PC == _CANInit;
+      report("setup_slim_learn_test: Reached _CANInit");
       --
-      wait until PC == timload;
-      report("setup_slim_learn_test: Reached timload");
-      accessin("eedata/default_nv", dec_mode, EEDATA, false);
+      loop
+        wait for 1 ic;
+        if PC == noFreeCh then
+          report("setup_slim_learn_test: Unexpectedly reached noFreeCh");
+          test_state := fail;
+          wait for 1 ic;
+        end if;
+        exit when PC == slimset;
+      end loop;
+      report("setup_slim_learn_test: Reached slimset");
       --
       wait until PC == main0;
       report("setup_slim_learn_test: Reached main0");
