@@ -1,3 +1,5 @@
+# Test first time boot into FLiM mode initialises with no events.
+#
 Device PIC18F2480
 Hwtool SIM
 Program "../dist/default/production/canacc4.production.cof"

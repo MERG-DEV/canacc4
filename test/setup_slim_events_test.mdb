@@ -1,3 +1,5 @@
+# Test boot into SLiM mode with events does not initialise events.
+#
 Device PIC18F2480
 Hwtool SIM
 Program "../dist/default/production/canacc4.production.cof"
