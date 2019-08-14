@@ -1,6 +1,5 @@
 configuration for "PIC18F2480" is
-  shared label _CANInit;
-  shared label _CANMain;
+  shared label    _CANMain;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -19,10 +18,6 @@ begin
     begin
       report("bootload_test: START");
       test_state := pass;
-      EECON1 <= 1;
-      --
-      wait until PC == _CANInit;
-      report("bootload_test: Reached _CANInit");
       --
       wait until PC == _CANMain;
       report("bootload_test: Reached _CANMain");
