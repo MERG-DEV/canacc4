@@ -14,8 +14,11 @@ begin
       wait;
     end process test_timeout;
   bootload_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
     begin
       report("bootload_test: START");
+      test_state := pass;
       EECON1 <= 1;
       --
       wait until PC == _CANInit;
@@ -26,7 +29,12 @@ begin
       wait until PC == _CANMain;
       report("bootload_test: Reached _CANMain");
       --
-      report("bootload_test: PASS");
+      if test_state == pass then
+        report("bootload_test: PASS");
+      else
+        report("bootload_test: FAIL");
+        report(PC); -- Crashes simulator, MDB will report current source line
+      end if;
       PC <= 0;
       wait;
     end process bootload_test;

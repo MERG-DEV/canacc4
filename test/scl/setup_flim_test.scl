@@ -20,8 +20,11 @@ begin
     end process test_timeout;
     --
   setup_flim_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
     begin
       report("setup_flim_test: START");
+      test_state := pass;
       --
       wait until PC == _CANInit;
       report("setup_flim_test: Reached _CANInit");
@@ -51,17 +54,20 @@ begin
       report("setup_flim_test: Reached main0");
       --
       if RB6 == '0' then
-        report("setup_flim_test: FAIL Yellow LED (FLiM) off");
-        PC <= 0;
-        wait;
+        report("setup_flim_test: Yellow LED (FLiM) off");
+        test_state := fail;
       end if;
       if RB7 == '1' then
-        report("setup_flim_test: FAIL Green LED (SLiM) on");
-        PC <= 0;
-        wait;
+        report("setup_flim_test: Green LED (SLiM) on");
+        test_state := fail;
       end if;
       --
-      report("setup_flim_test: PASS");
+      if test_state == pass then
+        report("setup_flim_test: PASS");
+      else
+        report("setup_flim_test: FAIL");
+        report(PC); -- Crashes simulator, MDB will report current source line
+      end if;
       PC <= 0;
       wait;
     end process setup_flim_test;

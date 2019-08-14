@@ -21,11 +21,11 @@ begin
     end process test_timeout;
     --
   setup_slim_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
     begin
       report("setup_slim_test: START");
-      --
-      RB4 <= '1'; -- DOLEARN off
-      RA5 <= '1'; -- LEARN off
+      test_state := pass;
       --
       wait until PC == _CANInit;
       report("setup_slim_test: Reached _CANInit");
@@ -46,7 +46,7 @@ begin
       report("setup_slim_test: Reached slimset");
       --
       RB4 <= '1'; -- DOLEARN off
-      RA5 <= '0'; -- UNLEARN on
+      RA5 <= '1'; -- UNLEARN off
       --
       wait until PC == nv_rest;
       report("setup_slim_test: Reached nv_rest");
@@ -60,17 +60,20 @@ begin
       report("setup_slim_test: Reached main0");
       --
       if RB6 == '1' then
-        report("setup_slim_test: FAIL Yellow LED (FLiM) on");
-        PC <= 0;
-        wait;
+        report("setup_slim_test: Yellow LED (FLiM) on");
+        test_state := fail;
       end if;
       if RB7 == '0' then
-        report("setup_slim_test: FAIL Green LED (SLiM) off");
-        PC <= 0;
-        wait;
+        report("setup_slim_test: Green LED (SLiM) off");
+        test_state := fail;
       end if;
       --
-      report("setup_slim_test: PASS");
+      if test_state == pass then
+        report("setup_slim_test: PASS");
+      else
+        report("setup_slim_test: FAIL");
+        report(PC); -- Crashes simulator, MDB will report current source line
+      end if;          
       PC <= 0;
       wait;
     end process setup_slim_test;

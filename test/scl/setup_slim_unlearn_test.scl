@@ -21,8 +21,11 @@ begin
     end process test_timeout;
     --
   setup_slim_unlearn_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
     begin
       report("setup_slim_unlearn_test: START");
+      test_state := pass;
       --
       wait until PC == _CANInit;
       report("setup_slim_unlearn_test: Reached _CANInit");
@@ -58,17 +61,20 @@ begin
       report("setup_slim_unlearn_test: Reached main0");
       --
       if RB6 == '1' then
-        report("setup_slim_unlearn_test: FAIL Yellow LED (FLiM) on");
-        PC <= 0;
-        wait;
+        report("setup_slim_unlearn_test: Yellow LED (FLiM) on");
+        test_state := fail;
       end if;
       if RB7 == '0' then
-        report("setup_slim_unlearn_test: FAIL Green LED (SLiM) off");
-        PC <= 0;
-        wait;
+        report("setup_slim_unlearn_test: Green LED (SLiM) off");
+        test_state := fail;
       end if;
       --
-      report("setup_slim_unlearn_test: PASS");
+      if test_state == pass then
+        report("setup_slim_unlearn_test: PASS");
+      else
+        report("setup_slim_unlearn_test: FAIL");
+        report(PC); -- Crashes simulator, MDB will report current source line
+      end if;
       PC <= 0;
       wait;
     end process setup_slim_unlearn_test;
