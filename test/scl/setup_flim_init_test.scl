@@ -1,10 +1,7 @@
 configuration for "PIC18F2480" is
   shared label _CANInit;
-  shared label setup;
-  shared label copyEVs;
-  shared label initevdata;
-  shared label newid_f;
-  shared label timload;
+  shared label noFreeCh;
+  shared label setid;
   shared label main0;
 end configuration;
 --
@@ -12,63 +9,51 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 1000 ms;
-      report("setup_flim_test: TIMEOUT");
+      wait for 2000 ms;
+      report("setup_flim_init_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  setup_flim_test: process is
+  setup_flim_init_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("setup_flim_test: START");
+      report("setup_flim_init_test: START");
       test_state := pass;
       --
+      RB4 <= '1'; -- DOLEARN off
+      RA5 <= '1'; -- UNLEARN off
+      --
       wait until PC == _CANInit;
-      report("setup_flim_test: Reached _CANInit");
+      report("setup_flim_init_test: Reached _CANInit");
       --
-      accessin("eedata/boot_setup", hex_mode, EEDATA, false);
+      wait until PC == noFreeCh;
+      report("setup_flim_init_test: Reached noFreeCh");
       --
-      wait until PC == setup;
-      report("setup_flim_test: Reached setup");
-      --
-      wait until PC == copyEVs;
-      report("setup_flim_test: Reached copyEVs");
-      accessin("eedata/no_freechain_0_events", hex_mode, EEDATA, false);
-      wait until PC == initevdata;
-      report("setup_flim_test: Reached initevdata");
-      --
-      accessin("eedata/modstat_flim", hex_mode, EEDATA, false);
-      --
-      wait until PC == newid_f;
-      report("setup_flim_test: Reached newid_f");
-      accessin("eedata/default_canid_nodeid", dec_mode, EEDATA, false);
-      --
-      wait until PC == timload;
-      report("setup_flim_test: Reached timload");
-      accessin("eedata/default_nv", dec_mode, EEDATA, false);
+      wait until PC == setid;
+      report("setup_flim_init_test: Reached setid");
       --
       wait until PC == main0;
-      report("setup_flim_test: Reached main0");
+      report("setup_flim_init_test: Reached main0");
       --
       if RB6 == '0' then
-        report("setup_flim_test: Yellow LED (FLiM) off");
+        report("setup_flim_init_test: Yellow LED (FLiM) off");
         test_state := fail;
       end if;
       if RB7 == '1' then
-        report("setup_flim_test: Green LED (SLiM) on");
+        report("setup_flim_init_test: Green LED (SLiM) on");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("setup_flim_test: PASS");
+        report("setup_flim_init_test: PASS");
       else
-        report("setup_flim_test: FAIL");
+        report("setup_flim_init_test: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
-      end if;
+      end if;          
       PC <= 0;
       wait;
-    end process setup_flim_test;
+    end process setup_flim_init_test;
 end testbench;

@@ -1,11 +1,7 @@
 configuration for "PIC18F2480" is
   shared label _CANInit;
-  shared label setup;
-  shared label copyEVs;
-  shared label initevdata;
+  shared label noFreeCh;
   shared label slimset;
-  shared label nv_rest;
-  shared label timload;
   shared label main0;
 end configuration;
 --
@@ -27,28 +23,17 @@ begin
       report("setup_slim_init_test: START");
       test_state := pass;
       --
-      wait until PC == _CANInit;
-      report("setup_slim_init_test: Reached _CANInit");
-      --
-      wait until PC == setup;
-      report("setup_slim_init_test: Reached setup");
-      --
-      wait until PC == copyEVs;
-      report("setup_slim_init_test: Reached copyEVs");
-      wait until PC == initevdata;
-      report("setup_slim_init_test: Reached initevdata");
-      --
-      wait until PC == slimset;
-      report("setup_slim_init_test: Reached slimset");
-      --
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
-      wait until PC == nv_rest;
-      report("setup_slim_init_test: Reached nv_rest");
+      wait until PC == _CANInit;
+      report("setup_slim_init_test: Reached _CANInit");
       --
-      wait until PC == timload;
-      report("setup_slim_init_test: Reached timload");
+      wait until PC == noFreeCh;
+      report("setup_slim_init_test: Reached noFreeCh");
+      --
+      wait until PC == slimset;
+      report("setup_slim_init_test: Reached slimset");
       --
       wait until PC == main0;
       report("setup_slim_init_test: Reached main0");
