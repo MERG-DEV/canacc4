@@ -24,8 +24,6 @@ begin
       wait until PC == _CANInit;
       report("bootload_test: Reached _CANInit");
       --
-      accessin("eedata/boot_bootload", hex_mode, EEDATA, false);
-      --
       wait until PC == _CANMain;
       report("bootload_test: Reached _CANMain");
       --
