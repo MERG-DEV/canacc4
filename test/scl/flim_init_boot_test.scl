@@ -2,7 +2,7 @@ configuration for "PIC18F2480" is
   shared label _CANInit;
   shared label noFreeCh;
   shared label setid;
-  shared label main0;
+  shared label mainf;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -35,8 +35,8 @@ begin
       wait until PC == setid;
       report("flim_init_boot_test: Reached setid");
       --
-      wait until PC == main0;
-      report("flim_init_boot_test: Reached main0");
+      wait until PC == mainf;
+      report("flim_init_boot_test: Reached mainf");
       --
       if test_state == pass then
         report("flim_init_boot_test: PASS");

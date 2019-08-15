@@ -2,7 +2,7 @@ configuration for "PIC18F2480" is
   shared label _CANInit;
   shared label noFreeCh;
   shared label slimset;
-  shared label main0;
+  shared label mains;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -35,8 +35,8 @@ begin
       wait until PC == slimset;
       report("slim_init_boot_test: Reached slimset");
       --
-      wait until PC == main0;
-      report("slim_init_boot_test: Reached main0");
+      wait until PC == mains;
+      report("slim_init_boot_test: Reached mains");
       --
       if test_state == pass then
         report("slim_init_boot_test: PASS");

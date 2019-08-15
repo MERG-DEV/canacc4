@@ -1,4 +1,5 @@
 configuration for "PIC18F2480" is
+  shared label mains;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -23,7 +24,10 @@ begin
       --
       wait until RB7 == '1';
       report("slim_boot_test: Green LED (SLiM) on");
-      wait for 4 ic;
+      --
+      wait until PC == mains;
+      report("slim_boot_test: Reached mains");
+      --
       if RB6 == '1' then
         report("slim_boot_test: Yellow LED (FLiM) on");
         test_state := fail;

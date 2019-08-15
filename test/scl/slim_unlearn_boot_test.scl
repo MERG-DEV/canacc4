@@ -2,7 +2,7 @@ configuration for "PIC18F2480" is
   shared label _CANInit;
   shared label slimset;
   shared label initevdata;
-  shared label main0;
+  shared label mains;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -35,8 +35,8 @@ begin
       wait until PC == initevdata;
       report("slim_unlearn_boot_test: Reached initevdata");
       --
-      wait until PC == main0;
-      report("slim_unlearn_boot_test: Reached main0");
+      wait until PC == mains;
+      report("slim_unlearn_boot_test: Reached mains");
       --
       if test_state == pass then
         report("slim_unlearn_boot_test: PASS");
