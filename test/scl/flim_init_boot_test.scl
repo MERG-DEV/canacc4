@@ -10,50 +10,50 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("setup_flim_init_test: TIMEOUT");
+      report("flim_init_boot_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  setup_flim_init_test: process is
+  flim_init_boot_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("setup_flim_init_test: START");
+      report("flim_init_boot_test: START");
       test_state := pass;
       --
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
       wait until PC == _CANInit;
-      report("setup_flim_init_test: Reached _CANInit");
+      report("flim_init_boot_test: Reached _CANInit");
       --
       wait until PC == noFreeCh;
-      report("setup_flim_init_test: Reached noFreeCh");
+      report("flim_init_boot_test: Reached noFreeCh");
       --
       wait until PC == setid;
-      report("setup_flim_init_test: Reached setid");
+      report("flim_init_boot_test: Reached setid");
       --
       wait until PC == main0;
-      report("setup_flim_init_test: Reached main0");
+      report("flim_init_boot_test: Reached main0");
       --
       if RB6 == '0' then
-        report("setup_flim_init_test: Yellow LED (FLiM) off");
+        report("flim_init_boot_test: Yellow LED (FLiM) off");
         test_state := fail;
       end if;
       if RB7 == '1' then
-        report("setup_flim_init_test: Green LED (SLiM) on");
+        report("flim_init_boot_test: Green LED (SLiM) on");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("setup_flim_init_test: PASS");
+        report("flim_init_boot_test: PASS");
       else
-        report("setup_flim_init_test: FAIL");
+        report("flim_init_boot_test: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
       end if;          
       PC <= 0;
       wait;
-    end process setup_flim_init_test;
+    end process flim_init_boot_test;
 end testbench;

@@ -10,55 +10,55 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("setup_slim_events_test: TIMEOUT");
+      report("slim_setup_events_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  setup_slim_events_test: process is
+  slim_setup_events_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("setup_slim_events_test: START");
+      report("slim_setup_events_test: START");
       test_state := pass;
       --
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
       wait until PC == _CANInit;
-      report("setup_slim_events_test: Reached _CANInit");
+      report("slim_setup_events_test: Reached _CANInit");
       --
       loop
         wait for 1 ic;
         if PC == noFreeCh then
-          report("setup_slim_events_test: Unexpectedly reached noFreeCh");
+          report("slim_setup_events_test: Unexpectedly reached noFreeCh");
           test_state := fail;
           wait for 1 ic;
         end if;
         exit when PC == slimset;
       end loop;
-      report("setup_slim_events_test: Reached slimset");
+      report("slim_setup_events_test: Reached slimset");
       --
       wait until PC == main0;
-      report("setup_slim_events_test: Reached main0");
+      report("slim_setup_events_test: Reached main0");
       --
       if RB6 == '1' then
-        report("setup_slim_events_test: Yellow LED (FLiM) on");
+        report("slim_setup_events_test: Yellow LED (FLiM) on");
         test_state := fail;
       end if;
       if RB7 == '0' then
-        report("setup_slim_events_test: Green LED (SLiM) off");
+        report("slim_setup_events_test: Green LED (SLiM) off");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("setup_slim_events_test: PASS");
+        report("slim_setup_events_test: PASS");
       else
-        report("setup_slim_events_test: FAIL");
+        report("slim_setup_events_test: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
       end if;          
       PC <= 0;
       wait;
-    end process setup_slim_events_test;
+    end process slim_setup_events_test;
 end testbench;

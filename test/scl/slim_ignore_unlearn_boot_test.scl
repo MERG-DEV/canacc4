@@ -10,55 +10,55 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("setup_slim_ignore_unlearn_test: TIMEOUT");
+      report("slim_ignore_unlearn_boot_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  setup_slim_ignore_unlearn_test: process is
+  slim_ignore_unlearn_boot_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("setup_slim_ignore_unlearn_test: START");
+      report("slim_ignore_unlearn_boot_test: START");
       test_state := pass;
       --
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '0'; -- UNLEARN on
       --
       wait until PC == _CANInit;
-      report("setup_slim_ignore_unlearn_test: Reached _CANInit");
+      report("slim_ignore_unlearn_boot_test: Reached _CANInit");
       --
       wait until PC == slimset;
-      report("setup_slim_ignore_unlearn_test: Reached slimset");
+      report("slim_ignore_unlearn_boot_test: Reached slimset");
       --
       loop
         wait for 1 ic;
         if PC == initevdata then
-          report("setup_slim_ignore_unlearn_test: Unexpectedly reached initevdata");
+          report("slim_ignore_unlearn_boot_test: Unexpectedly reached initevdata");
           test_state := fail;
           wait for 1 ic;
         end if;
         exit when PC == main0;
       end loop;
-      report("setup_slim_ignore_unlearn_test: Reached main0");
+      report("slim_ignore_unlearn_boot_test: Reached main0");
       --
       if RB6 == '1' then
-        report("setup_slim_ignore_unlearn_test: Yellow LED (FLiM) on");
+        report("slim_ignore_unlearn_boot_test: Yellow LED (FLiM) on");
         test_state := fail;
       end if;
       if RB7 == '0' then
-        report("setup_slim_ignore_unlearn_test: Green LED (SLiM) off");
+        report("slim_ignore_unlearn_boot_test: Green LED (SLiM) off");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("setup_slim_ignore_unlearn_test: PASS");
+        report("slim_ignore_unlearn_boot_test: PASS");
       else
-        report("setup_slim_ignore_unlearn_test: FAIL");
+        report("slim_ignore_unlearn_boot_test: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
       end if;          
       PC <= 0;
       wait;
-    end process setup_slim_ignore_unlearn_test;
+    end process slim_ignore_unlearn_boot_test;
 end testbench;

@@ -26,7 +26,6 @@ begin
         report("bootload_test: PASS");
       else
         report("bootload_test: FAIL");
-        report(PC); -- Crashes simulator, MDB will report current source line
       end if;
       PC <= 0;
       wait;
