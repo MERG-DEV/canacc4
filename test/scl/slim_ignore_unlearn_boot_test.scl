@@ -43,15 +43,6 @@ begin
       end loop;
       report("slim_ignore_unlearn_boot_test: Reached main0");
       --
-      if RB6 == '1' then
-        report("slim_ignore_unlearn_boot_test: Yellow LED (FLiM) on");
-        test_state := fail;
-      end if;
-      if RB7 == '0' then
-        report("slim_ignore_unlearn_boot_test: Green LED (SLiM) off");
-        test_state := fail;
-      end if;
-      --
       if test_state == pass then
         report("slim_ignore_unlearn_boot_test: PASS");
       else

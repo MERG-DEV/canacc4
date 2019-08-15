@@ -1,0 +1,40 @@
+configuration for "PIC18F2480" is
+end configuration;
+--
+testbench for "PIC18F2480" is
+begin
+  test_timeout: process is
+    begin
+      wait for 2000 ms;
+      report("slim_boot_test: TIMEOUT");
+      if RB6 == '1' then
+        report("slim_boot_test: Yellow LED (FLiM) on");
+      end if;
+      PC <= 0;
+      wait;
+    end process test_timeout;
+    --
+  slim_boot_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
+    begin
+      report("slim_boot_test: START");
+      test_state := pass;
+      --
+      wait until RB7 == '1';
+      report("slim_boot_test: Green LED (SLiM) on");
+      wait for 4 ic;
+      if RB6 == '1' then
+        report("slim_boot_test: Yellow LED (FLiM) on");
+        test_state := fail;
+      end if;
+      --
+      if test_state == pass then
+        report("slim_boot_test: PASS");
+      else
+        report("slim_boot_test: FAIL");
+      end if;          
+      PC <= 0;
+      wait;
+    end process slim_boot_test;
+end testbench;

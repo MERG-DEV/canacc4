@@ -38,15 +38,6 @@ begin
       wait until PC == main0;
       report("flim_init_boot_test: Reached main0");
       --
-      if RB6 == '0' then
-        report("flim_init_boot_test: Yellow LED (FLiM) off");
-        test_state := fail;
-      end if;
-      if RB7 == '1' then
-        report("flim_init_boot_test: Green LED (SLiM) on");
-        test_state := fail;
-      end if;
-      --
       if test_state == pass then
         report("flim_init_boot_test: PASS");
       else
