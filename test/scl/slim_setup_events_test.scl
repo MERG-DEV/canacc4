@@ -1,7 +1,5 @@
 configuration for "PIC18F2480" is
-  shared label _CANInit;
   shared label noFreeCh;
-  shared label slimset;
   shared label mains;
 end configuration;
 --
@@ -26,9 +24,6 @@ begin
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
-      wait until PC == _CANInit;
-      report("slim_setup_events_test: Reached _CANInit");
-      --
       loop
         wait for 1 ic;
         if PC == noFreeCh then
@@ -36,18 +31,14 @@ begin
           test_state := fail;
           wait for 1 ic;
         end if;
-        exit when PC == slimset;
+        exit when PC == mains;
       end loop;
-      report("slim_setup_events_test: Reached slimset");
-      --
-      wait until PC == mains;
       report("slim_setup_events_test: Reached mains");
       --
       if test_state == pass then
         report("slim_setup_events_test: PASS");
       else
         report("slim_setup_events_test: FAIL");
-        report(PC); -- Crashes simulator, MDB will report current source line
       end if;          
       PC <= 0;
       wait;
