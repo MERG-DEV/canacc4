@@ -1,8 +1,5 @@
 configuration for "PIC18F2480" is
-  shared label _CANInit;
   shared label noFreeCh;
-  shared label slimset;
-  shared label mains;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -26,22 +23,14 @@ begin
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '1'; -- UNLEARN off
       --
-      wait until PC == _CANInit;
-      report("slim_learn_boot_test: Reached _CANInit");
-      --
       loop
         wait for 1 ic;
         if PC == noFreeCh then
           report("slim_learn_boot_test: Unexpectedly reached noFreeCh");
           test_state := fail;
-          wait for 1 ic;
         end if;
-        exit when PC == slimset;
+        exit when RB7 == '1';
       end loop;
-      report("slim_learn_boot_test: Reached slimset");
-      --
-      wait until PC == mains;
-      report("slim_learn_boot_test: Reached mains");
       --
       if test_state == pass then
         report("slim_learn_boot_test: PASS");

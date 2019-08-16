@@ -1,6 +1,4 @@
 configuration for "PIC18F2480" is
-  shared label mains;
-  shared label para1rd;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -23,8 +21,10 @@ begin
       RA3 <= '1';
       count_index := 0; -- Index of parameter count
       --
-      wait until PC == mains;
+      wait until RB7 == '1';
       RXB0D0 <= 16#73#;
+      RXB0D1 <= 0;
+      RXB0D2 <= 0;
       RXB0D3 <= count_index;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
@@ -33,15 +33,23 @@ begin
       --
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#9B# then
-        report("slim_param_count_test: Sending wrong response");
+        report("slim_param_count_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 0 then
+        report("slim_param_count_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 0 then
+        report("slim_param_count_test: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != count_index then
-        report("slim_param_count_test: Sending wrong parameter index");
+        report("slim_param_count_test: Sent wrong parameter index");
         test_state := fail;
       end if;
       if TXB1D4 != 14 then
-        report("slim_param_count_test: Sending wrong parameter count");
+        report("slim_param_count_test: Sent wrong parameter count");
         test_state := fail;
       end if;
       --

@@ -1,5 +1,4 @@
 configuration for "PIC18F2480" is
-  shared label _CANInit;
   shared label slimset;
   shared label initevdata;
   shared label mains;
@@ -25,9 +24,6 @@ begin
       --
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '0'; -- UNLEARN on
-      --
-      wait until PC == _CANInit;
-      report("slim_unlearn_boot_test: Reached _CANInit");
       --
       wait until PC == slimset;
       report("slim_unlearn_boot_test: Reached slimset");

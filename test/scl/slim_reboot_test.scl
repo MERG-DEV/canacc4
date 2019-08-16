@@ -1,6 +1,4 @@
 configuration for "PIC18F2480" is
-  shared label mains;
-  shared label reboots;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -21,17 +19,18 @@ begin
       test_state := pass;
       RA3 <= '1';
       --
-      wait until PC == mains;
-      report("slim_reboot_test: Reached mains");
+      wait until RB7 == '1';
       --
       RXB0D0 <= 16#5C#;
+      RXB0D1 <= 0;
+      RXB0D2 <= 0;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      wait until PC == reboots;
-      report("slim_reboot_test: Reached reboots");
+      wait until RB7 == '0';
+      report("slim_reboot_test: Reboot");
       --
       if test_state == pass then
         report("slim_reboot_test: PASS");

@@ -1,8 +1,6 @@
 configuration for "PIC18F2480" is
-  shared label _CANInit;
   shared label noFreeCh;
   shared label setid;
-  shared label mainf;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -26,9 +24,6 @@ begin
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
-      wait until PC == _CANInit;
-      report("flim_setup_events_test: Reached _CANInit");
-      --
       loop
         wait for 1 ic;
         if PC == noFreeCh then
@@ -39,9 +34,6 @@ begin
         exit when PC == setid;
       end loop;
       report("flim_setup_events_test: Reached setid");
-      --
-      wait until PC == mainf;
-      report("flim_setup_events_test: Reached mainf");
       --
       if test_state == pass then
         report("flim_setup_events_test: PASS");

@@ -1,6 +1,6 @@
 configuration for "PIC18F2480" is
   shared label noFreeCh;
-  shared label mains;
+  shared label slimset;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -31,9 +31,9 @@ begin
           test_state := fail;
           wait for 1 ic;
         end if;
-        exit when PC == mains;
+        exit when PC == slimset;
       end loop;
-      report("slim_setup_events_test: Reached mains");
+      report("slim_setup_events_test: Reached slimset");
       --
       if test_state == pass then
         report("slim_setup_events_test: PASS");

@@ -1,5 +1,4 @@
 configuration for "PIC18F2480" is
-  shared label _CANInit;
   shared label slimset;
   shared label initevdata;
   shared label mains;
@@ -26,9 +25,6 @@ begin
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '0'; -- UNLEARN on
       --
-      wait until PC == _CANInit;
-      report("slim_ignore_unlearn_boot_test: Reached _CANInit");
-      --
       wait until PC == slimset;
       report("slim_ignore_unlearn_boot_test: Reached slimset");
       --
@@ -47,7 +43,6 @@ begin
         report("slim_ignore_unlearn_boot_test: PASS");
       else
         report("slim_ignore_unlearn_boot_test: FAIL");
-        report(PC); -- Crashes simulator, MDB will report current source line
       end if;          
       PC <= 0;
       wait;
