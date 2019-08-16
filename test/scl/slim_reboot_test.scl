@@ -19,17 +19,17 @@ begin
       test_state := pass;
       RA3 <= '1';
       --
-      wait until RB7 == '1';
+      wait until RB7 == '1'; -- Booted into SLiM
       --
-      RXB0D0 <= 16#5C#;
-      RXB0D1 <= 0;
-      RXB0D2 <= 0;
+      RXB0D0 <= 16#5C#; -- CBUS reboot request
+      RXB0D1 <= 0;      -- NN high
+      RXB0D2 <= 0;      -- NN low
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      wait until RB7 == '0';
+      wait until RB7 == '0'; -- Wait for LED output reset on reboot
       report("slim_reboot_test: Reboot");
       --
       if test_state == pass then

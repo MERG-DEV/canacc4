@@ -26,12 +26,12 @@ begin
       --
       loop
         wait for 1 ic;
-        if PC == noFreeCh then
+        if PC == noFreeCh then -- Test for initialising event store
           report("slim_setup_events_test: Unexpectedly reached noFreeCh");
           test_state := fail;
           wait for 1 ic;
         end if;
-        exit when PC == slimset;
+        exit when PC == slimset; -- SLiM setup
       end loop;
       report("slim_setup_events_test: Reached slimset");
       --

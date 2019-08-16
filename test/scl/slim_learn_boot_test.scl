@@ -25,11 +25,11 @@ begin
       --
       loop
         wait for 1 ic;
-        if PC == noFreeCh then
+        if PC == noFreeCh then -- Test for initialising event store
           report("slim_learn_boot_test: Unexpectedly reached noFreeCh");
           test_state := fail;
         end if;
-        exit when RB7 == '1';
+        exit when RB7 == '1'; -- Booted into SLiM
       end loop;
       --
       if test_state == pass then

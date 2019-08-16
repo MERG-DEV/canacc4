@@ -25,13 +25,13 @@ begin
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '0'; -- UNLEARN on
       --
-      wait until PC == slimset;
+      wait until PC == slimset; -- SLiM setup
       report("slim_unlearn_boot_test: Reached slimset");
       --
-      wait until PC == initevdata;
+      wait until PC == initevdata; -- Initialise event data
       report("slim_unlearn_boot_test: Reached initevdata");
       --
-      wait until PC == mains;
+      wait until PC == mains; -- SLiM start of main loop
       report("slim_unlearn_boot_test: Reached mains");
       --
       if test_state == pass then

@@ -26,12 +26,12 @@ begin
       --
       loop
         wait for 1 ic;
-        if PC == noFreeCh then
+        if PC == noFreeCh then -- Test for initialising event store
           report("flim_setup_events_test: Unexpectedly reached noFreeCh");
           test_state := fail;
           wait for 1 ic;
         end if;
-        exit when PC == setid;
+        exit when PC == setid; -- FLiM setup
       end loop;
       report("flim_setup_events_test: Reached setid");
       --

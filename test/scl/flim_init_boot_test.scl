@@ -24,10 +24,10 @@ begin
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
-      wait until PC == noFreeCh;
+      wait until PC == noFreeCh; -- Initialise event store
       report("flim_init_boot_test: Reached noFreeCh");
       --
-      wait until PC == setid;
+      wait until PC == setid; -- FLiM setup
       report("flim_init_boot_test: Reached setid");
       --
       if test_state == pass then

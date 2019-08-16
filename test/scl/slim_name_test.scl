@@ -22,15 +22,16 @@ begin
       test_state := pass;
       RA3 <= '1';
       --
-      wait until RB7 == '1';
-      RXB0D0 <= 16#11#;
-      RXB0D1 <= 0;
-      RXB0D2 <= 0;
+      wait until RB7 == '1'; -- Booted into SLiM
+      --
+      RXB0D0 <= 16#11#; -- CBUS module name request
+      RXB0D1 <= 0;      -- NN high
+      RXB0D2 <= 0;      -- NN low
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      Datmode <= 4;
+      Datmode <= 4;     -- Request only valid when switching to FLiM
       --
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#E2# then

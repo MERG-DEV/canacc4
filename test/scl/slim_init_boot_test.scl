@@ -24,10 +24,10 @@ begin
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
-      wait until PC == noFreeCh;
+      wait until PC == noFreeCh; -- Initialise event store
       report("slim_init_boot_test: Reached noFreeCh");
       --
-      wait until PC == slimset;
+      wait until PC == slimset; -- SLiM setup
       report("slim_init_boot_test: Reached slimset");
       --
       if test_state == pass then

@@ -21,7 +21,7 @@ begin
       report("slim_boot_test: START");
       test_state := pass;
       --
-      wait until RB7 == '1';
+      wait until RB7 == '1'; -- Booted into SLiM
       report("slim_boot_test: Green LED (SLiM) on");
       --
       wait for 100 ic;
