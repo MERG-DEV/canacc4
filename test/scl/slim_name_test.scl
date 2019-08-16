@@ -1,0 +1,77 @@
+configuration for "PIC18F2480" is
+  shared label name;
+  shared label namesend;
+  shared variable Datmode;
+end configuration;
+--
+testbench for "PIC18F2480" is
+begin
+  test_timeout: process is
+    begin
+      wait for 2000 ms;
+      report("slim_name_test: TIMEOUT");
+      PC <= 0;
+      wait;
+    end process test_timeout;
+    --
+  slim_name_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
+    begin
+      report("slim_name_test: START");
+      test_state := pass;
+      RA3 <= '1';
+      --
+      wait until RB7 == '1';
+      RXB0D0 <= 16#11#;
+      RXB0D1 <= 0;
+      RXB0D2 <= 0;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      Datmode <= 4;
+      --
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#E2# then
+        report("slim_name_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 65 then -- A
+        report("slim_name_test: Sent wrong name [0]");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 67 then -- C
+        report("slim_name_test: Sent wrong name [1]");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 67 then -- C
+        report("slim_name_test: Sent wrong name [2]");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 52 then -- 4
+        report("slim_name_test: Sent wrong name [3]");
+        test_state := fail;
+      end if;
+      if TXB1D5 != 95 then -- _
+        report("slim_name_test: Sent wrong name [4]");
+        test_state := fail;
+      end if;
+      if TXB1D6 != 50 then -- 2
+        report("slim_name_test: Sent wrong name [5]");
+        test_state := fail;
+      end if;
+      if TXB1D7 != 32 then -- ' '
+        report("slim_name_test: Sent wrong name [6]");
+        test_state := fail;
+      end if;
+      --
+      if test_state == pass then
+        report("slim_name_test: PASS");
+      else
+        report("slim_name_test: FAIL");
+      end if;          
+      PC <= 0;
+      wait;
+    end process slim_name_test;
+end testbench;
