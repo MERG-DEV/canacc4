@@ -14,19 +14,19 @@ begin
   slim_invalid_param_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
-    variable count_index : integer;
+    variable bad_index : integer;
     begin
       report("slim_invalid_param_test: START");
       test_state := pass;
       RA3 <= '1';
-      count_index := 15; -- Index of parameter count
+      bad_index := 15; -- Invalid parameter index, only 14 parameters
       --
       wait until RB7 == '1'; -- Booted into SLiM
       --
-      RXB0D0 <= 16#73#;      -- CBUS param request
-      RXB0D1 <= 0;           -- NN high
-      RXB0D2 <= 0;           -- NN low
-      RXB0D3 <= count_index; -- Parameter index, 0 == number of parameters
+      RXB0D0 <= 16#73#;    -- CBUS param request
+      RXB0D1 <= 0;         -- NN high
+      RXB0D2 <= 0;         -- NN low
+      RXB0D3 <= bad_index; -- Parameter index
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
