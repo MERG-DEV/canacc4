@@ -1,6 +1,4 @@
 configuration for "PIC18F2480" is
-  shared label name;
-  shared label namesend;
   shared variable Datmode;
 end configuration;
 --
