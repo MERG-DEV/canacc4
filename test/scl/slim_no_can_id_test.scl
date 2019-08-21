@@ -1,0 +1,94 @@
+configuration for "PIC18F2480" is
+end configuration;
+--
+testbench for "PIC18F2480" is
+begin
+  test_timeout: process is
+    begin
+      wait for 23000 ms;
+      report("slim_no_can_id_test: TIMEOUT");
+      report(PC);
+      PC <= 0;
+      wait;
+    end process test_timeout;
+    --
+  slim_no_can_id_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
+    variable test_sidh : byte;
+    variable test_sidl : byte;
+    begin
+      report("slim_no_can_id_test: START");
+      test_state := pass;
+      RA3 <= '1'; -- Setup button not pressed
+      --
+      wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_no_can_id_test: Green LED (SLiM) on");
+      --
+      RA3 <= '0'; -- Setup button pressed
+      wait until RB7 == '0';
+      report("slim_no_can_id_test: FLiM setup started");
+      --
+      RA3 <= '1'; -- Setup button released
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1DLC.TXRTR == '1' then
+        report("slim_no_can_id_test: RTR request");
+      else
+        report("slim_no_can_id_test: not RTR request");
+        test_state := fail;
+      end if;
+      if TXB1SIDH != 16#BF# then
+        report("slim_no_can_id_test: Incorrect default SIDH");
+        test_state := fail;
+      end if;
+      if TXB1SIDL != 16#E0# then
+        report("slim_no_can_id_test: Incorrect default SIDL");
+        test_state := fail;
+      end if;
+      --
+      test_sidh := 0;
+      test_sidl := 1;
+      while test_sidh < 16#10# loop
+        while test_sidl < 16#F0# loop
+          RXB0SIDH <= test_sidh;
+          RXB0SIDL <= test_sidl;
+          RXB0CON.RXFUL <= '1';
+          RXB0DLC <= 0;
+          CANSTAT <= 16#0C#;
+          PIR3.RXB0IF <= '1';
+          wait until RXB0CON.RXFUL == '0';
+          test_sidl := test_sidl + 16#20#;
+        end loop;
+        test_sidh := test_sidh + 1;
+        test_sidl := 0;
+      end loop;
+      report("slim_no_can_id_test: RTR, all CAN Ids taken");
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#6F# then
+        report("slim_no_can_id_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 0 then
+        report("slim_no_can_id_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 0 then
+        report("slim_no_can_id_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 7 then
+        report("slim_no_can_id_test: Sent wrong error number");
+        test_state := fail;
+      end if;
+      --
+      if test_state == pass then
+        report("slim_no_can_id_test: PASS");
+      else
+        report("slim_no_can_id_test: FAIL");
+      end if;          
+      PC <= 0;
+      wait;
+    end process slim_no_can_id_test;
+end testbench;
