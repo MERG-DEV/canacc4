@@ -15,8 +15,8 @@ begin
   slim_no_can_id_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
-    variable test_sidh : byte;
-    variable test_sidl : byte;
+    variable test_sidh : integer;
+    variable test_sidl : integer;
     begin
       report("slim_no_can_id_test: START");
       test_state := pass;
@@ -47,9 +47,9 @@ begin
       end if;
       --
       test_sidh := 0;
-      test_sidl := 1;
+      test_sidl := 16#20#;
       while test_sidh < 16#10# loop
-        while test_sidl < 16#F0# loop
+        while test_sidl < 16#100# loop
           RXB0SIDH <= test_sidh;
           RXB0SIDL <= test_sidl;
           RXB0CON.RXFUL <= '1';
