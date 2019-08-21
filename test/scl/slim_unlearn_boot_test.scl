@@ -21,6 +21,7 @@ begin
     begin
       report("slim_unlearn_boot_test: START");
       test_state := pass;
+      RA3 <= '1'; -- Setup button not pressed
       --
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '0'; -- UNLEARN on

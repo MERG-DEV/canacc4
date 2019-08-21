@@ -18,7 +18,7 @@ begin
     begin
       report("slim_param_count_test: START");
       test_state := pass;
-      RA3 <= '1';
+      RA3 <= '1'; -- Setup button not pressed
       count_index := 0; -- Index of parameter count
       --
       wait until RB7 == '1'; -- Booted into SLiM
