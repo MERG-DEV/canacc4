@@ -127,6 +127,14 @@ begin
         test_state := fail;
       end if;
       --
+      wait until RB6 == '1'; -- Booted into FLiM
+      report("slim_flim_test: Yellow LED (FLiM) on");
+      --
+      if RB7 == '1' then
+        report("slim_flim_test: Green LED (SLiM) on");
+        test_state := fail;
+      end if;
+      --
       if test_state == pass then
         report("slim_flim_test: PASS");
       else
