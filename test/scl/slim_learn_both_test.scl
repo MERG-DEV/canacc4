@@ -33,8 +33,8 @@ begin
       RB5 <= '1'; -- Polarity normal
       --
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
       RXB0D3 <= 4;
       RXB0D4 <= 2;
       RXB0CON.RXFUL <= '1';
@@ -60,8 +60,8 @@ begin
       RB5 <= '0'; -- Polarity inverse
       --
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
+      RXB0D1 <= 2;         -- NN high
+      RXB0D2 <= 1;         -- NN low
       RXB0D3 <= 2;
       RXB0D4 <= 4;
       RXB0CON.RXFUL <= '1';
@@ -95,8 +95,8 @@ begin
       -- * but that's not working so for now use unique event numbers.     *
       -- *******************************************************************
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
+      RXB0D1 <= 2;         -- NN high
+      RXB0D2 <= 1;         -- NN low
       RXB0D3 <= 6;
       RXB0D4 <= 4;
       RXB0CON.RXFUL <= '1';
@@ -122,8 +122,8 @@ begin
       RB5 <= '0'; -- Polarity inverse
       --
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
       RXB0D3 <= 4;
       RXB0D4 <= 6;
       RXB0CON.RXFUL <= '1';
@@ -149,8 +149,8 @@ begin
       RB4 <= '1'; -- Learn off
       --
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
       RXB0D3 <= 4;
       RXB0D4 <= 2;
       RXB0CON.RXFUL <= '1';
@@ -180,8 +180,8 @@ begin
       end if;
       --
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
+      RXB0D1 <= 2;         -- NN high
+      RXB0D2 <= 1;         -- NN low
       RXB0D3 <= 2;
       RXB0D4 <= 4;
       RXB0CON.RXFUL <= '1';
@@ -211,8 +211,8 @@ begin
       end if;
       --
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
       RXB0D3 <= 4;
       RXB0D4 <= 6;
       RXB0CON.RXFUL <= '1';
@@ -242,8 +242,8 @@ begin
       end if;
       --
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
+      RXB0D1 <= 2;         -- NN high
+      RXB0D2 <= 1;         -- NN low
       RXB0D3 <= 6;
       RXB0D4 <= 4;
       RXB0CON.RXFUL <= '1';
