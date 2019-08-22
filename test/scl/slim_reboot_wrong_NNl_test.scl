@@ -21,7 +21,7 @@ begin
       --
       wait until RB7 == '1'; -- Booted into SLiM
       --
-      RXB0D0 <= 16#5C#; -- CBUS reboot request
+      RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 1;      -- NN low
       RXB0CON.RXFUL <= '1';

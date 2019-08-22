@@ -66,7 +66,7 @@ begin
       --
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#6F# then
+      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
         report("slim_no_can_id_test: Sent wrong response");
         test_state := fail;
       end if;
@@ -78,7 +78,7 @@ begin
         report("slim_no_can_id_test: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
-      if TXB1D3 != 7 then
+      if TXB1D3 != 7 then -- Invalid event
         report("slim_no_can_id_test: Sent wrong error number");
         test_state := fail;
       end if;

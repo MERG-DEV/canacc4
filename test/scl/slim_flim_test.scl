@@ -74,7 +74,7 @@ begin
       --
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#50# then -- Expect NN ack request
+      if TXB1D0 != 16#50# then -- RQNN, CBUS request node number
         report("slim_flim_test: Sent wrong response");
         test_state := fail;
       end if;
@@ -95,7 +95,7 @@ begin
         test_state := fail;
       end if;
       --
-      RXB0D0 <= 16#42#; -- CBUS set NN command
+      RXB0D0 <= 16#42#; -- SNN, CBUS set node number
       RXB0D1 <= 4;      -- New NN high
       RXB0D2 <= 2;      -- New NN low
       RXB0CON.RXFUL <= '1';
@@ -106,7 +106,7 @@ begin
       --
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#52# then -- Expect NN rel request
+      if TXB1D0 != 16#52# then -- NNACK, CBUS node number acknowledge
         report("slim_flim_test: Sent wrong response");
         test_state := fail;
       end if;

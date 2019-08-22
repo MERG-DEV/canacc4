@@ -22,7 +22,7 @@ begin
       --
       wait until RB7 == '1'; -- Booted into SLiM
       --
-      RXB0D0 <= 16#10#; -- CBUS all params request
+      RXB0D0 <= 16#10#; -- RQNP, CBUS node parameters request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 0;      -- NN low
       RXB0CON.RXFUL <= '1';
@@ -32,7 +32,7 @@ begin
       Datmode <= 4;     -- Request only valid when switching to FLiM
       --
       wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#EF# then
+      if TXB1D0 != 16#EF# then -- PARAMS, CBUS node parameters response
         report("slim_params_test: Sent wrong response");
         test_state := fail;
       end if;
