@@ -1,4 +1,4 @@
-# Test reboot on receipt of CBUS command in SLiM mode.
+# Test reboot into bootloader on receipt of CBUS command in SLiM mode.
 #
 Device PIC18F2480
 Hwtool SIM
