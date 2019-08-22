@@ -23,7 +23,7 @@ begin
       --
       wait until RB7 == '1'; -- Booted into SLiM
       --
-      RXB0D0 <= 16#73#;    -- CBUS param request
+      RXB0D0 <= 16#73#;    -- RQNPN, CBUS read node parameter by index
       RXB0D1 <= 0;         -- NN high
       RXB0D2 <= 0;         -- NN low
       RXB0D3 <= bad_index; -- Parameter index
@@ -33,7 +33,7 @@ begin
       PIR3.RXB0IF <= '1';
       --
       wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#6F# then
+      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
         report("slim_invalid_param_test: Sent wrong response");
         test_state := fail;
       end if;
@@ -45,7 +45,7 @@ begin
         report("slim_invalid_param_test: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
-      if TXB1D3 != 10 then
+      if TXB1D3 != 9 then -- Invalid parameter index
         report("slim_invalid_param_test: Sent wrong error number");
         test_state := fail;
       end if;

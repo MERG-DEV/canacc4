@@ -2750,7 +2750,7 @@ numParams
     return
     
 pidxerr
-    movlw .10
+    movlw .9
     call  errsub
     return
     
