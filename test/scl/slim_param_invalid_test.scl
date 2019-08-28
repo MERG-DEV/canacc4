@@ -6,17 +6,17 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("slim_invalid_param_test: TIMEOUT");
+      report("slim_param_invalid_test: TIMEOUT");
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_invalid_param_test: process is
+  slim_param_invalid_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     variable bad_index : integer;
     begin
-      report("slim_invalid_param_test: START");
+      report("slim_param_invalid_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       bad_index := 15; -- Invalid parameter index, only 14 parameters
@@ -34,28 +34,28 @@ begin
       --
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("slim_invalid_param_test: Sent wrong response");
+        report("slim_param_invalid_test: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 0 then
-        report("slim_invalid_param_test: Sent wrong Node Number (high)");
+        report("slim_param_invalid_test: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 0 then
-        report("slim_invalid_param_test: Sent wrong Node Number (low)");
+        report("slim_param_invalid_test: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 9 then -- Invalid parameter index
-        report("slim_invalid_param_test: Sent wrong error number");
+        report("slim_param_invalid_test: Sent wrong error number");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("slim_invalid_param_test: PASS");
+        report("slim_param_invalid_test: PASS");
       else
-        report("slim_invalid_param_test: FAIL");
+        report("slim_param_invalid_test: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_invalid_param_test;
+    end process slim_param_invalid_test;
 end testbench;
