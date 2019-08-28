@@ -8,17 +8,17 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("slim_init_boot_test: TIMEOUT");
+      report("slim_boot_init_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_init_boot_test: process is
+  slim_boot_init_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("slim_init_boot_test: START");
+      report("slim_boot_init_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       --
@@ -26,18 +26,18 @@ begin
       RA5 <= '1'; -- UNLEARN off
       --
       wait until PC == noFreeCh; -- Initialise event store
-      report("slim_init_boot_test: Reached noFreeCh");
+      report("slim_boot_init_test: Reached noFreeCh");
       --
       wait until PC == slimset; -- SLiM setup
-      report("slim_init_boot_test: Reached slimset");
+      report("slim_boot_init_test: Reached slimset");
       --
       if test_state == pass then
-        report("slim_init_boot_test: PASS");
+        report("slim_boot_init_test: PASS");
       else
-        report("slim_init_boot_test: FAIL");
+        report("slim_boot_init_test: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
       end if;          
       PC <= 0;
       wait;
-    end process slim_init_boot_test;
+    end process slim_boot_init_test;
 end testbench;

@@ -7,17 +7,17 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("slim_learn_boot_test: TIMEOUT");
+      report("slim_boot_learn_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_learn_boot_test: process is
+  slim_boot_learn_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("slim_learn_boot_test: START");
+      report("slim_boot_learn_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       --
@@ -27,18 +27,18 @@ begin
       loop
         wait for 1 ic;
         if PC == noFreeCh then -- Test for initialising event store
-          report("slim_learn_boot_test: Unexpectedly reached noFreeCh");
+          report("slim_boot_learn_test: Unexpectedly reached noFreeCh");
           test_state := fail;
         end if;
         exit when RB7 == '1'; -- Booted into SLiM
       end loop;
       --
       if test_state == pass then
-        report("slim_learn_boot_test: PASS");
+        report("slim_boot_learn_test: PASS");
       else
-        report("slim_learn_boot_test: FAIL");
+        report("slim_boot_learn_test: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_learn_boot_test;
+    end process slim_boot_learn_test;
 end testbench;

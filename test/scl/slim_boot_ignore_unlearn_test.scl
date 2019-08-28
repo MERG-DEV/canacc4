@@ -9,17 +9,17 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("slim_ignore_unlearn_boot_test: TIMEOUT");
+      report("slim_boot_ignore_unlearn_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_ignore_unlearn_boot_test: process is
+  slim_boot_ignore_unlearn_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("slim_ignore_unlearn_boot_test: START");
+      report("slim_boot_ignore_unlearn_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       --
@@ -27,25 +27,25 @@ begin
       RA5 <= '0'; -- UNLEARN on
       --
       wait until PC == slimset; -- SLiM setup
-      report("slim_ignore_unlearn_boot_test: Reached slimset");
+      report("slim_boot_ignore_unlearn_test: Reached slimset");
       --
       loop
         wait for 1 ic;
         if PC == initevdata then -- Test for initialising event data
-          report("slim_ignore_unlearn_boot_test: Unexpectedly reached initevdata");
+          report("slim_boot_ignore_unlearn_test: Unexpectedly reached initevdata");
           test_state := fail;
           wait for 1 ic;
         end if;
         exit when PC == mains; -- SLiM start of main loop
       end loop;
-      report("slim_ignore_unlearn_boot_test: Reached mains");
+      report("slim_boot_ignore_unlearn_test: Reached mains");
       --
       if test_state == pass then
-        report("slim_ignore_unlearn_boot_test: PASS");
+        report("slim_boot_ignore_unlearn_test: PASS");
       else
-        report("slim_ignore_unlearn_boot_test: FAIL");
+        report("slim_boot_ignore_unlearn_test: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_ignore_unlearn_boot_test;
+    end process slim_boot_ignore_unlearn_test;
 end testbench;
