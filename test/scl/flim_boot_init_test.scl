@@ -8,17 +8,17 @@ begin
   test_timeout: process is
     begin
       wait for 2000 ms;
-      report("flim_init_boot_test: TIMEOUT");
+      report("flim_boot_init_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  flim_init_boot_test: process is
+  flim_boot_init_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("flim_init_boot_test: START");
+      report("flim_boot_init_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       --
@@ -26,18 +26,18 @@ begin
       RA5 <= '1'; -- UNLEARN off
       --
       wait until PC == noFreeCh; -- Initialise event store
-      report("flim_init_boot_test: Reached noFreeCh");
+      report("flim_boot_init_test: Reached noFreeCh");
       --
       wait until PC == setid; -- FLiM setup
-      report("flim_init_boot_test: Reached setid");
+      report("flim_boot_init_test: Reached setid");
       --
       if test_state == pass then
-        report("flim_init_boot_test: PASS");
+        report("flim_boot_init_test: PASS");
       else
-        report("flim_init_boot_test: FAIL");
+        report("flim_boot_init_test: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
       end if;          
       PC <= 0;
       wait;
-    end process flim_init_boot_test;
+    end process flim_boot_init_test;
 end testbench;
