@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 10000 ms;
+      wait for 8060 ms;
       report("slim_boot_with_events_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -23,6 +23,7 @@ begin
       RA5 <= '1'; -- UNLEARN off
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_boot_with_events_test: Green LED (SLiM) on");
       --
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
       RXB0D1 <= 1;         -- NN high
@@ -33,9 +34,10 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_with_events_test: Short on event 0x0402 ignored");
       --
-      wait on PORTC for 5 ms;
+      wait on PORTC for 55 ms;
       if PORTC != 0 then
         report("slim_boot_with_events_test: Unexpected trigger");
         test_state := fail;
@@ -50,28 +52,20 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_with_events_test: On event 0x0402 trigger 3A");
       --
-      wait on PORTC;
-      if PORTC == 16#20# then -- Output 3A on
-        report("slim_boot_with_events_test: 3A triggered");
-      else
-        report("slim_boot_with_events_test: Wrong output");
-        test_state := fail;
-      end if;
+      wait until PORTC == 16#20#; -- Output 3A on
+      report("slim_boot_with_events_test: 3A triggered");
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_boot_with_events_test: Output not turned off");
-        test_state := fail;
-      end if;
-      --
-      wait on PORTC for 5 ms;
+      wait until PORTC == 0;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_boot_with_events_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
       end if;
-      --
+      
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -81,14 +75,16 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_with_events_test: On event 0x0204 ignored");
-      --
-      wait on PORTC for 5 ms;
+      
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_boot_with_events_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
       end if;
-      --
+      
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
       RXB0D1 <= 5;         -- NN high
       RXB0D2 <= 6;         -- NN low
@@ -98,26 +94,18 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_with_events_test: Short on event 0x0204 trigger 3B");
       --
-      wait on PORTC;
-      if PORTC == 16#04# then -- Output 3B on
-        report("slim_boot_with_events_test: 3B triggered");
-      else
-        report("slim_boot_with_events_test: Wrong output");
-        test_state := fail;
-      end if;
+      wait until PORTC == 16#04#; -- Output 3B on
+      report("slim_boot_with_events_test: 3B triggered");
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_boot_with_events_test: Output not turned off");
-        test_state := fail;
-      end if;
-      --
-      wait on PORTC for 5 ms;
+      wait until PORTC == 0;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_boot_with_events_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
       end if;
       --
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
@@ -129,12 +117,14 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_with_events_test: Off event 0x0406 ignored");
       --
-      wait on PORTC for 5 ms;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_boot_with_events_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
       end if;
       --
       RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
@@ -146,26 +136,18 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_with_events_test: Short off event 0x0406 trigger 2A");
       --
-      wait on PORTC;
-      if PORTC == 16#02# then -- Output 2A on
-        report("slim_boot_with_events_test: 2A triggered");
-      else
-        report("slim_boot_with_events_test: Wrong output");
-        test_state := fail;
-      end if;
+      wait until PORTC == 16#02#; -- Output 2A on
+      report("slim_boot_with_events_test: 2A triggered");
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_boot_with_events_test: Output not turned off");
-        test_state := fail;
-      end if;
-      --
-      wait on PORTC for 5 ms;
+      wait until PORTC == 0;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_boot_with_events_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
       end if;
       --
       RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
@@ -177,12 +159,14 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_with_events_test: Short off event 0x0604 ignored");
       --
-      wait on PORTC for 5 ms;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_boot_with_events_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
       end if;
       --
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
@@ -194,23 +178,14 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_with_events_test: Off event 0x0604 trigger 2B");
       --
-      wait on PORTC;
-      if PORTC == 16#40# then -- Output 2B on
-        report("slim_boot_with_events_test: 2B triggered");
-      else
-        report("slim_boot_with_events_test: Wrong output");
-        test_state := fail;
-      end if;
+      wait until PORTC == 16#40#; -- Output 2B on
+      report("slim_boot_with_events_test: 2B triggered");
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_boot_with_events_test: Output not turned off");
-        test_state := fail;
-      end if;
-      --
-      wait on PORTC for 5 ms;
+      wait until PORTC == 0;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_boot_with_events_test: Unexpected trigger");
         test_state := fail;
