@@ -1,4 +1,4 @@
-# Test boot into SLiM mode with events does not initialise events.
+# Test boot into SLiM mode with events does not clear and initialise events.
 #
 Device PIC18F2480
 Hwtool SIM
