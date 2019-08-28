@@ -3,7 +3,7 @@
 Device PIC18F2480
 Hwtool SIM
 Program "../dist/default/production/canacc4.production.cof"
-Stim "./scl/flim_setup_events_test.scl"
+Stim "./scl/flim_boot_with_events_test.scl"
 Break *0 1
 Write /e 0x04 0x78 0x08
 Write /e 0x01 0xFF
