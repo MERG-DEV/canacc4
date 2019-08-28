@@ -1,6 +1,5 @@
 configuration for "PIC18F2480" is
   shared label noFreeCh;
-  shared label slimset;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -28,8 +27,8 @@ begin
       wait until PC == noFreeCh; -- Initialise event store
       report("slim_boot_init_test: Reached noFreeCh");
       --
-      wait until PC == slimset; -- SLiM setup
-      report("slim_boot_init_test: Reached slimset");
+      wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_boot_init_test: Green LED (SLiM) on");
       --
       if test_state == pass then
         report("slim_boot_init_test: PASS");

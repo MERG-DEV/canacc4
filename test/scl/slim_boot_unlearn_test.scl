@@ -1,7 +1,6 @@
 configuration for "PIC18F2480" is
   shared label slimset;
   shared label initevdata;
-  shared label mains;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -32,8 +31,8 @@ begin
       wait until PC == initevdata; -- Initialise event data
       report("slim_boot_unlearn_test: Reached initevdata");
       --
-      wait until PC == mains; -- SLiM start of main loop
-      report("slim_boot_unlearn_test: Reached mains");
+      wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_boot_unlearn_test: Green LED (SLiM) on");
       --
       if test_state == pass then
         report("slim_boot_unlearn_test: PASS");

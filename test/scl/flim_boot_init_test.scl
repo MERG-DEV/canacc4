@@ -1,6 +1,5 @@
 configuration for "PIC18F2480" is
   shared label noFreeCh;
-  shared label setid;
 end configuration;
 --
 testbench for "PIC18F2480" is
@@ -28,8 +27,8 @@ begin
       wait until PC == noFreeCh; -- Initialise event store
       report("flim_boot_init_test: Reached noFreeCh");
       --
-      wait until PC == setid; -- FLiM setup
-      report("flim_boot_init_test: Reached setid");
+      wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_boot_init_test: Yellow LED (FLiM) on");
       --
       if test_state == pass then
         report("flim_boot_init_test: PASS");

@@ -32,6 +32,7 @@ begin
         end if;
         exit when RB7 == '1'; -- Booted into SLiM
       end loop;
+      report("slim_boot_learn_test: Green LED (SLiM) on");
       --
       if test_state == pass then
         report("slim_boot_learn_test: PASS");
