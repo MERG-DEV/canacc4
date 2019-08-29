@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 10000 ms;
+      wait for 10675 ms;
       report("slim_learn_both_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -32,6 +32,9 @@ begin
       RB1 <= '1'; -- Sel 1 off
       RB5 <= '1'; -- Polarity normal
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -43,7 +46,7 @@ begin
       PIR3.RXB0IF <= '1';
       report("slim_learn_both_test: On event 0x0402 to be learnt for 3A");
       --
-      wait on PORTC;
+      wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
         report("slim_learn_both_test: 3A triggered");
       else
@@ -51,14 +54,13 @@ begin
         test_state := fail;
       end if;
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_learn_both_test: Output not turned off");
-        test_state := fail;
-      end if;
+      wait until PORTC == 0;
       --
       RB5 <= '0'; -- Polarity inverse
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -70,7 +72,7 @@ begin
       PIR3.RXB0IF <= '1';
       report("slim_learn_both_test: On event 0x0204 to be learnt for 3B");
       --
-      wait on PORTC;
+      wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
         report("slim_learn_both_test: 3B triggered");
       else
@@ -78,11 +80,7 @@ begin
         test_state := fail;
       end if;
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_learn_both_test: Output not turned off");
-        test_state := fail;
-      end if;
+      wait until PORTC == 0;
       --
       -- Learn events for output 2
       RB4 <= '0'; -- Learn on
@@ -94,6 +92,9 @@ begin
       -- * Should be able to use opposite versions of events for 3A and 3B *
       -- * but that's not working so for now use unique event numbers.     *
       -- *******************************************************************
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -105,7 +106,7 @@ begin
       PIR3.RXB0IF <= '1';
       report("slim_learn_both_test: Off event 0x0604 to be learnt for 2B");
       --
-      wait on PORTC;
+      wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
         report("slim_learn_both_test: 2B triggered");
       else
@@ -113,14 +114,13 @@ begin
         test_state := fail;
       end if;
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_learn_both_test: Output not turned off");
-        test_state := fail;
-      end if;
+      wait until PORTC == 0;
       --
       RB5 <= '0'; -- Polarity inverse
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -132,7 +132,7 @@ begin
       PIR3.RXB0IF <= '1';
       report("slim_learn_both_test: Off event 0x0406 to be learnt for 2A");
       --
-      wait on PORTC;
+      wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
         report("slim_learn_both_test: 2A triggered");
       else
@@ -140,14 +140,13 @@ begin
         test_state := fail;
       end if;
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_learn_both_test: Output not turned off");
-        test_state := fail;
-      end if;
+      wait until PORTC == 0;
       --
       RB4 <= '1'; -- Learn off
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -159,7 +158,7 @@ begin
       PIR3.RXB0IF <= '1';
       report("slim_learn_both_test: On event 0x0402 trigger 3A");
       --
-      wait on PORTC;
+      wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
         report("slim_learn_both_test: 3A triggered");
       else
@@ -167,18 +166,18 @@ begin
         test_state := fail;
       end if;
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_learn_both_test: Output not turned off");
-        test_state := fail;
-      end if;
+      wait until PORTC == 0;
       --
-      wait on PORTC for 5 ms;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
       end if;
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -190,7 +189,7 @@ begin
       PIR3.RXB0IF <= '1';
       report("slim_learn_both_test: On event 0x0204 trigger 3B");
       --
-      wait on PORTC;
+      wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
         report("slim_learn_both_test: 3B triggered");
       else
@@ -198,18 +197,18 @@ begin
         test_state := fail;
       end if;
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_learn_both_test: Output not turned off");
-        test_state := fail;
-      end if;
+      wait until PORTC == 0;
       --
-      wait on PORTC for 5 ms;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
       end if;
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -221,7 +220,7 @@ begin
       PIR3.RXB0IF <= '1';
       report("slim_learn_both_test: Off event 0x0406 trigger 2A");
       --
-      wait on PORTC;
+      wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
         report("slim_learn_both_test: 2A triggered");
       else
@@ -229,18 +228,18 @@ begin
         test_state := fail;
       end if;
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_learn_both_test: Output not turned off");
-        test_state := fail;
-      end if;
+      wait until PORTC == 0;
       --
-      wait on PORTC for 5 ms;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
       end if;
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -252,7 +251,7 @@ begin
       PIR3.RXB0IF <= '1';
       report("slim_learn_both_test: Off event 0x0604 trigger 2B");
       --
-      wait on PORTC;
+      wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
         report("slim_learn_both_test: 2B triggered");
       else
@@ -260,13 +259,9 @@ begin
         test_state := fail;
       end if;
       --
-      wait on PORTC;
-      if PORTC != 0 then
-        report("slim_learn_both_test: Output not turned off");
-        test_state := fail;
-      end if;
+      wait until PORTC == 0;
       --
-      wait on PORTC for 5 ms;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;

@@ -103,7 +103,6 @@ begin
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      --
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#52# then -- NNACK, CBUS node number acknowledge

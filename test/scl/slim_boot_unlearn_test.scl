@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 935 ms;
+      wait for 1885 ms;
       report("slim_boot_unlearn_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -25,6 +25,9 @@ begin
       wait until RB7 == '1'; -- Booted into SLiM
       report("slim_boot_unlearn_test: Green LED (SLiM) on");
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -34,9 +37,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_unlearn_test: Short on event 0x0402 ignored");
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -46,9 +51,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_unlearn_test: On event 0x0402 ignored");
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -58,9 +65,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_unlearn_test: On event 0x0204 ignored");
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
       RXB0D1 <= 5;         -- NN high
       RXB0D2 <= 6;         -- NN low
@@ -70,9 +79,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_unlearn_test: Short on event 0x0204 ignored");
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -82,9 +93,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_unlearn_test: Off event 0x0406 ignored");
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
       RXB0D1 <= 7;         -- NN high
       RXB0D2 <= 8;         -- NN low
@@ -94,9 +107,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_unlearn_test: Short off event 0x0406 ignored");
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -106,9 +121,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_unlearn_test: Short off event 0x0604 ignored");
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -118,10 +135,9 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      wait until RXB0CON.RXFUL == '0';
       report("slim_boot_unlearn_test: Off event 0x0604 ignored");
       --
-      wait on PORTC for 55 ms;
+      wait on PORTC for 1005 ms;
       if PORTC != 0 then
         report("slim_boot_unlearn_test: Unexpected trigger");
         test_state := fail;
