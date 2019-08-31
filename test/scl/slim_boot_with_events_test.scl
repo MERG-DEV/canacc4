@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 17225 ms;
+      wait for 17265 ms;
       report("slim_boot_with_events_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -261,6 +261,15 @@ begin
       else
         report("slim_boot_with_events_test: Wrong output");
         test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("slim_boot_with_events_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
       end if;
       --
       if RXB0CON.RXFUL != '0' then

@@ -460,6 +460,15 @@ begin
         test_state := fail;
       end if;
       --
+      wait until PORTC == 0;
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("slim_learn_both_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
