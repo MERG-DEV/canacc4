@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 13715 ms;
+      wait for 27730 ms;
       report("slim_learn_mixed_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -30,12 +30,12 @@ begin
       RB4 <= '0'; -- Learn on
       RB0 <= '0'; -- Sel 0 on
       RB1 <= '1'; -- Sel 1 off
-      RB5 <= '1'; -- Polarity normal
+      RB5 <= '1'; -- Polarity normal, On event => A, Off event => B
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
       RXB0D3 <= 4;
@@ -44,7 +44,7 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Learn on event 0x0402 for 3A");
+      report("slim_learn_mixed_test: Pair 3 learn long on 0x0402");
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
@@ -56,21 +56,69 @@ begin
       --
       wait until PORTC == 0;
       --
-      RB5 <= '0'; -- Polarity inverse
-      --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
-      RXB0D1 <= 2;         -- NN high
-      RXB0D2 <= 1;         -- NN low
+      RXB0D1 <= 3;         -- NN high
+      RXB0D2 <= 4;         -- NN low
       RXB0D3 <= 2;
       RXB0D4 <= 4;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Learn short on event 0x0204 for 3B");
+      report("slim_learn_mixed_test: Pair 3 learn short on 0x0204");
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#20# then -- Output 3A on
+        report("slim_learn_mixed_test: 3A triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      RB5 <= '0'; -- Polarity inverse, On event => B, Off event => A
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("slim_learn_mixed_test: Pair 3 learn long off 0x0204 inverted");
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#20# then -- Output 3A on
+        report("slim_learn_mixed_test: 3A triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 5;         -- NN high
+      RXB0D2 <= 6;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("slim_learn_mixed_test: Pair 3 learn short on 0x0402 inverted");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
@@ -88,14 +136,10 @@ begin
       RB1 <= '0'; -- Sel 1 on
       RB5 <= '1'; -- Polarity normal
       --
-      -- * NB **************************************************************
-      -- * Should be able to use opposite versions of events for 3A and 3B *
-      -- * but that's not working so for now use unique event numbers.     *
-      -- *******************************************************************
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
       RXB0D3 <= 6;
@@ -104,7 +148,7 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Learn off event 0x0604 for 2B");
+      report("slim_learn_mixed_test: Pair 2 learn long off 0x0604");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
@@ -116,25 +160,59 @@ begin
       --
       wait until PORTC == 0;
       --
-      RB5 <= '0'; -- Polarity inverse
-      --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 7;         -- NN high
+      RXB0D2 <= 8;         -- NN low
       RXB0D3 <= 4;
-      RXB0D4 <= 6;
+      RXB0D4 <= 2;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Learn short off event 0x0406 for 2A");
+      report("slim_learn_mixed_test: Pair 2 learn on short 0x0402");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
         report("slim_learn_mixed_test: 2A triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      RB5 <= '0'; -- Polarity inverse, On event => B, Off event => A
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("slim_learn_mixed_test: Pair 2 learn long off 0x0402 inverted");
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#02# then -- Output 2A on
+        report("slim_learn_mixed_test: 2A triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#04# then -- Output 3B on
+        report("slim_learn_mixed_test: 3B triggered");
       else
         report("slim_learn_mixed_test: Wrong output");
         test_state := fail;
@@ -147,7 +225,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
       RXB0D3 <= 4;
@@ -156,28 +234,17 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Short on event 0x0402 ignored");
+      report("slim_learn_mixed_test: Long on 0x0402 trigger 2B and 3A");
       --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+      wait until PORTC != 0;
+      if PORTC == 16#40# then -- Output 2B on
+        report("slim_learn_mixed_test: 2B triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
         test_state := fail;
-        wait until PORTC == 0;
       end if;
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: On event 0x0402 trigger 3A");
+      wait until PORTC == 0;
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
@@ -199,16 +266,26 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-      RXB0D1 <= 2;         -- NN high
-      RXB0D2 <= 1;         -- NN low
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 9;         -- NN high
+      RXB0D2 <= 0;         -- NN low
       RXB0D3 <= 2;
       RXB0D4 <= 4;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: On event 0x0204 ignored");
+      report("slim_learn_mixed_test: Short on 0x0204 trigger 3A");
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#20# then -- Output 3A on
+        report("slim_learn_mixed_test: 3A triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
@@ -220,16 +297,16 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
-      RXB0D1 <= 5;         -- NN high
-      RXB0D2 <= 6;         -- NN low
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
       RXB0D3 <= 2;
       RXB0D4 <= 4;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Short on event 0x0204 trigger 3B");
+      report("slim_learn_mixed_test: Long on 0x0204 trigger 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
@@ -251,16 +328,36 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 0;         -- NN high
+      RXB0D2 <= 9;         -- NN low
       RXB0D3 <= 4;
-      RXB0D4 <= 6;
+      RXB0D4 <= 2;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Off event 0x0406 ignored");
+      report("slim_learn_mixed_test: Short on 0x0402 trigger 2A and 3B");
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#02# then -- Output 2A on
+        report("slim_learn_mixed_test: 2A triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#04# then -- Output 3B on
+        report("slim_learn_mixed_test: 3B triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
@@ -272,16 +369,16 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
-      RXB0D1 <= 7;         -- NN high
-      RXB0D2 <= 8;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 6;
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 2;         -- NN high
+      RXB0D2 <= 1;         -- NN low
+      RXB0D3 <= 6;
+      RXB0D4 <= 4;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Short off event 0x0406 trigger 2A");
+      report("slim_learn_mixed_test: Long on 0x0604 trigger 2A");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
@@ -303,16 +400,36 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
-      RXB0D1 <= 2;         -- NN high
-      RXB0D2 <= 1;         -- NN low
-      RXB0D3 <= 6;
-      RXB0D4 <= 4;
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Short off event 0x0604 ignored");
+      report("slim_learn_mixed_test: Long off 0x0402 trigger 2A and 3B");
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#02# then -- Output 2A on
+        report("slim_learn_mixed_test: 2A triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#04# then -- Output 3B on
+        report("slim_learn_mixed_test: 3B triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
@@ -324,7 +441,29 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory off
+      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
+      RXB0D1 <= 8;         -- NN high
+      RXB0D2 <= 7;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("slim_learn_mixed_test: Short off 0x0204 trigger 3B");
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#04# then -- Output 3B on
+        report("slim_learn_mixed_test: 3B triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
       RXB0D3 <= 6;
@@ -333,7 +472,7 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Off event 0x0604 trigger 2B");
+      report("slim_learn_mixed_test: Long off 0x0604 trigger 2B");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
@@ -349,6 +488,79 @@ begin
       if PORTC != 0 then
         report("slim_learn_mixed_test: Unexpected trigger");
         test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("slim_learn_mixed_test: Long off 0x0204 trigger 3B");
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#04# then -- Output 3B on
+        report("slim_learn_mixed_test: 3B triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("slim_learn_mixed_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
+      RXB0D1 <= 6;         -- NN high
+      RXB0D2 <= 5;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("slim_learn_mixed_test: Short off 0x0402 trigger 2B and 3A");
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#40# then -- Output 2B on
+        report("slim_learn_mixed_test: 2B triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#20# then -- Output 3A on
+        report("slim_learn_mixed_test: 3A triggered");
+      else
+        report("slim_learn_mixed_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("slim_learn_mixed_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
       end if;
       --
       if test_state == pass then
