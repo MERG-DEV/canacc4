@@ -6,19 +6,19 @@ begin
   test_timeout: process is
     begin
       wait for 27730 ms;
-      report("slim_learn_mixed_test: TIMEOUT");
+      report("slim_learn_both_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_learn_mixed_test: process is
+  slim_learn_both_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     variable event_high : integer;
     variable event_low : integer;
     begin
-      report("slim_learn_mixed_test: START");
+      report("slim_learn_both_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
@@ -44,13 +44,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Pair 3 learn long on 0x0402");
+      report("slim_learn_both_test: Pair 3 learn long on 0x0402");
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_mixed_test: 3A triggered");
+        report("slim_learn_both_test: 3A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -68,13 +68,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Pair 3 learn short on 0x0204");
+      report("slim_learn_both_test: Pair 3 learn short on 0x0204");
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_mixed_test: 3A triggered");
+        report("slim_learn_both_test: 3A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -94,13 +94,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Pair 3 learn long off 0x0204 inverted");
+      report("slim_learn_both_test: Pair 3 learn long off 0x0204 inverted");
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_mixed_test: 3A triggered");
+        report("slim_learn_both_test: 3A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -118,13 +118,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Pair 3 learn short on 0x0402 inverted");
+      report("slim_learn_both_test: Pair 3 learn short on 0x0402 inverted");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_mixed_test: 3B triggered");
+        report("slim_learn_both_test: 3B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -148,13 +148,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Pair 2 learn long off 0x0604");
+      report("slim_learn_both_test: Pair 2 learn long off 0x0604");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
-        report("slim_learn_mixed_test: 2B triggered");
+        report("slim_learn_both_test: 2B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -172,13 +172,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Pair 2 learn on short 0x0402");
+      report("slim_learn_both_test: Pair 2 learn on short 0x0402");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
-        report("slim_learn_mixed_test: 2A triggered");
+        report("slim_learn_both_test: 2A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -198,13 +198,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Pair 2 learn long off 0x0402 inverted");
+      report("slim_learn_both_test: Pair 2 learn long off 0x0402 inverted");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
-        report("slim_learn_mixed_test: 2A triggered");
+        report("slim_learn_both_test: 2A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -212,9 +212,9 @@ begin
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_mixed_test: 3B triggered");
+        report("slim_learn_both_test: 3B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -234,13 +234,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Long on 0x0402 trigger 2B and 3A");
+      report("slim_learn_both_test: Long on 0x0402 trigger 2B and 3A");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
-        report("slim_learn_mixed_test: 2B triggered");
+        report("slim_learn_both_test: 2B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -248,9 +248,9 @@ begin
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_mixed_test: 3A triggered");
+        report("slim_learn_both_test: 3A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -258,7 +258,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+        report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -275,13 +275,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Short on 0x0204 trigger 3A");
+      report("slim_learn_both_test: Short on 0x0204 trigger 3A");
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_mixed_test: 3A triggered");
+        report("slim_learn_both_test: 3A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -289,7 +289,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+        report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -306,13 +306,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Long on 0x0204 trigger 3B");
+      report("slim_learn_both_test: Long on 0x0204 trigger 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_mixed_test: 3B triggered");
+        report("slim_learn_both_test: 3B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -320,7 +320,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+        report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -337,13 +337,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Short on 0x0402 trigger 2A and 3B");
+      report("slim_learn_both_test: Short on 0x0402 trigger 2A and 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
-        report("slim_learn_mixed_test: 2A triggered");
+        report("slim_learn_both_test: 2A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -351,9 +351,9 @@ begin
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_mixed_test: 3B triggered");
+        report("slim_learn_both_test: 3B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -361,7 +361,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+        report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -378,13 +378,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Long on 0x0604 trigger 2A");
+      report("slim_learn_both_test: Long on 0x0604 trigger 2A");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
-        report("slim_learn_mixed_test: 2A triggered");
+        report("slim_learn_both_test: 2A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -392,7 +392,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+        report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -409,13 +409,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Long off 0x0402 trigger 2A and 3B");
+      report("slim_learn_both_test: Long off 0x0402 trigger 2A and 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
-        report("slim_learn_mixed_test: 2A triggered");
+        report("slim_learn_both_test: 2A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -423,9 +423,9 @@ begin
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_mixed_test: 3B triggered");
+        report("slim_learn_both_test: 3B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -433,7 +433,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+        report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -450,13 +450,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Short off 0x0204 trigger 3B");
+      report("slim_learn_both_test: Short off 0x0204 trigger 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_mixed_test: 3B triggered");
+        report("slim_learn_both_test: 3B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -472,13 +472,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Long off 0x0604 trigger 2B");
+      report("slim_learn_both_test: Long off 0x0604 trigger 2B");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
-        report("slim_learn_mixed_test: 2B triggered");
+        report("slim_learn_both_test: 2B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -486,7 +486,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+        report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -503,13 +503,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Long off 0x0204 trigger 3B");
+      report("slim_learn_both_test: Long off 0x0204 trigger 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_mixed_test: 3B triggered");
+        report("slim_learn_both_test: 3B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -517,7 +517,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+        report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -534,13 +534,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_mixed_test: Short off 0x0402 trigger 2B and 3A");
+      report("slim_learn_both_test: Short off 0x0402 trigger 2B and 3A");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
-        report("slim_learn_mixed_test: 2B triggered");
+        report("slim_learn_both_test: 2B triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -548,9 +548,9 @@ begin
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_mixed_test: 3A triggered");
+        report("slim_learn_both_test: 3A triggered");
       else
-        report("slim_learn_mixed_test: Wrong output");
+        report("slim_learn_both_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -558,17 +558,17 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_mixed_test: Unexpected trigger");
+        report("slim_learn_both_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
       --
       if test_state == pass then
-        report("slim_learn_mixed_test: PASS");
+        report("slim_learn_both_test: PASS");
       else
-        report("slim_learn_mixed_test: FAIL");
+        report("slim_learn_both_test: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_learn_mixed_test;
+    end process slim_learn_both_test;
 end testbench;

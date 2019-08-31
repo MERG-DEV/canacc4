@@ -6,19 +6,19 @@ begin
   test_timeout: process is
     begin
       wait for 19360 ms;
-      report("slim_learn_normal_test: TIMEOUT");
+      report("slim_learn_long_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_learn_normal_test: process is
+  slim_learn_long_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     variable event_high : integer;
     variable event_low : integer;
     begin
-      report("slim_learn_normal_test: START");
+      report("slim_learn_long_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
@@ -38,11 +38,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: On event 0x0402 to be ignored");
+      report("slim_learn_long_test: On event 0x0402 to be ignored");
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -65,13 +65,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: Pair 3 learn on event 0x0402");
+      report("slim_learn_long_test: Pair 3 learn on event 0x0402");
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_normal_test: 3A triggered");
+        report("slim_learn_long_test: 3A triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -92,13 +92,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: Pair 3 learn off event 0x0204 inverted");
+      report("slim_learn_long_test: Pair 3 learn off event 0x0204 inverted");
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_normal_test: 3A triggered");
+        report("slim_learn_long_test: 3A triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -122,14 +122,14 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: Pair 2 learn off event 0x0402 inverted");
+      report("slim_learn_long_test: Pair 2 learn off event 0x0402 inverted");
       wait until RXB0CON.RXFUL <= '0';
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
-        report("slim_learn_normal_test: 2A triggered");
+        report("slim_learn_long_test: 2A triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -137,9 +137,9 @@ begin
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_normal_test: 3B triggered");
+        report("slim_learn_long_test: 3B triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -159,11 +159,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: On event 0x0202 to be ignored");
+      report("slim_learn_long_test: On event 0x0202 to be ignored");
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -180,11 +180,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: On event 0x0402 wrong node ignored");
+      report("slim_learn_long_test: On event 0x0402 wrong node ignored");
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -201,13 +201,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: On event 0x0402 trigger 2B then 3A");
+      report("slim_learn_long_test: On event 0x0402 trigger 2B then 3A");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
-        report("slim_learn_normal_test: 2B triggered");
+        report("slim_learn_long_test: 2B triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -215,9 +215,9 @@ begin
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_normal_test: 3A triggered");
+        report("slim_learn_long_test: 3A triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -225,7 +225,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -242,11 +242,11 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: Short off event 0x0402 ignored");
+      report("slim_learn_long_test: Short off event 0x0402 ignored");
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -263,13 +263,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: Off event 0x0402 trigger 2A then 3B");
+      report("slim_learn_long_test: Off event 0x0402 trigger 2A then 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
-        report("slim_learn_normal_test: 2A triggered");
+        report("slim_learn_long_test: 2A triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -277,9 +277,9 @@ begin
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_normal_test: 3B triggered");
+        report("slim_learn_long_test: 3B triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -287,7 +287,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -304,18 +304,18 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: On event 0x0204 wrong node ignored");
+      report("slim_learn_long_test: On event 0x0204 wrong node ignored");
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -333,13 +333,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: Short on event 0x0204 trigger 3B");
+      report("slim_learn_long_test: Short on event 0x0204 trigger 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_normal_test: 3B triggered");
+        report("slim_learn_long_test: 3B triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -347,7 +347,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -364,13 +364,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: On event 0x0204 trigger 3B");
+      report("slim_learn_long_test: On event 0x0204 trigger 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
-        report("slim_learn_normal_test: 3B triggered");
+        report("slim_learn_long_test: 3B triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -378,7 +378,7 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
         wait until PORTC == 0;
       end if;
@@ -395,13 +395,13 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_learn_normal_test: Off event 0x0204 trigger 3A");
+      report("slim_learn_long_test: Off event 0x0204 trigger 3A");
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
-        report("slim_learn_normal_test: 3A triggered");
+        report("slim_learn_long_test: 3A triggered");
       else
-        report("slim_learn_normal_test: Wrong output");
+        report("slim_learn_long_test: Wrong output");
         test_state := fail;
       end if;
       --
@@ -409,16 +409,16 @@ begin
       --
       wait on PORTC for 1005 ms;
       if PORTC != 0 then
-        report("slim_learn_normal_test: Unexpected trigger");
+        report("slim_learn_long_test: Unexpected trigger");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("slim_learn_normal_test: PASS");
+        report("slim_learn_long_test: PASS");
       else
-        report("slim_learn_normal_test: FAIL");
+        report("slim_learn_long_test: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_learn_normal_test;
+    end process slim_learn_long_test;
 end testbench;
