@@ -1,0 +1,11 @@
+# Test FLiM mode does not learn using switches and events.
+#
+Device PIC18F2480
+Hwtool SIM
+Program "../dist/default/production/canacc4.production.cof"
+Stim "./scl/flim_learn_test.scl"
+Break *0 1
+Write /e 0x01 0x08
+Run
+Wait
+Quit

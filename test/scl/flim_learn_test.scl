@@ -1,0 +1,306 @@
+configuration for "PIC18F2480" is
+end configuration;
+--
+testbench for "PIC18F2480" is
+begin
+  test_timeout: process is
+    begin
+      wait for 12905 ms;
+      report("flim_learn_test: TIMEOUT");
+      report(PC); -- Crashes simulator, MDB will report current source line
+      PC <= 0;
+      wait;
+    end process test_timeout;
+    --
+  flim_learn_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
+    variable event_high : integer;
+    variable event_low : integer;
+    begin
+      report("flim_learn_test: START");
+      test_state := pass;
+      RA3 <= '1'; -- Setup button not pressed
+      RB4 <= '1'; -- Learn off
+      RA5 <= '1'; -- Unlearn off
+      --
+      wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_learn_test: Yellow LED (FLiM) on");
+      --
+      wait for 4 ic; -- Delay to avoid first message getting lost
+      --
+      -- Learn events for output 3
+      RB4 <= '0'; -- Learn on
+      RB0 <= '0'; -- Sel 0 on
+      RB1 <= '1'; -- Sel 1 off
+      RB5 <= '1'; -- Polarity normal, On event => A, Off event => B
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Pair 3 long on 0x0402");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
+      RXB0D1 <= 3;         -- NN high
+      RXB0D2 <= 4;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Pair 3 short off 0x0204");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      -- Learn events for output 2
+      RB4 <= '0'; -- Learn on
+      RB0 <= '1'; -- Sel 0 off
+      RB1 <= '0'; -- Sel 1 on
+      RB5 <= '0'; -- Polarity inverse, On event => B, Off event => A
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 5;         -- NN high
+      RXB0D2 <= 6;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Pair 2 inverted long off 0x0204");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 7;         -- NN high
+      RXB0D2 <= 8;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Pair 2 inverted short on 0x0402");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      RB4 <= '1'; -- Learn off
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Long on 0x0402");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
+      RXB0D1 <= 3;         -- NN high
+      RXB0D2 <= 4;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Short off 0x0204");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Long off 0x0402");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 3;         -- NN high
+      RXB0D2 <= 4;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Short on 0x0204");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 5;         -- NN high
+      RXB0D2 <= 6;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Long off 0x0204");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 7;         -- NN high
+      RXB0D2 <= 8;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Short on 0x0402");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 5;         -- NN high
+      RXB0D2 <= 6;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Long on 0x0204");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
+      RXB0D1 <= 7;         -- NN high
+      RXB0D2 <= 8;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      report("flim_learn_test: Short off 0x0402");
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_boot_ignore_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if test_state == pass then
+        report("flim_learn_test: PASS");
+      else
+        report("flim_learn_test: FAIL");
+      end if;          
+      PC <= 0;
+      wait;
+    end process flim_learn_test;
+end testbench;
