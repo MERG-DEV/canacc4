@@ -21,6 +21,8 @@ begin
       report("slim_flim_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
+      RB4 <= '1'; -- DOLEARN off
+      RA5 <= '1'; -- UNLEARN off
       --
       wait until RB7 == '1'; -- Booted into SLiM
       report("slim_flim_test: Green LED (SLiM) on");
