@@ -1,0 +1,75 @@
+configuration for "PIC18F2480" is
+end configuration;
+--
+testbench for "PIC18F2480" is
+begin
+  test_timeout: process is
+    begin
+      wait for 19855 ms;
+      report("flim_slim_test: TIMEOUT");
+      report(PC);
+      PC <= 0;
+      wait;
+    end process test_timeout;
+    --
+  flim_slim_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
+    variable test_sidh : integer;
+    variable test_sidl : integer;
+    begin
+      report("flim_slim_test: START");
+      test_state := pass;
+      RA3 <= '1'; -- Setup button not pressed
+      RB4 <= '1'; -- DOLEARN off
+      RA5 <= '1'; -- UNLEARN off
+      --
+      wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_boot_test: Yellow LED (FLiM) on");
+      --
+      RA3 <= '0'; -- Setup button pressed
+      wait until RB6 == '0';
+      report("flim_slim_test: SLiM setup started");
+      RA3 <= '1'; -- Setup button released
+      --
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#51# then -- RQNN, CBUS request node number
+        report("flim_slim_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_slim_test: NN ack wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_slim_test: NN ack wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1SIDL != 16#80# then
+        report("flim_slim_test: NN ack wrong CAN Id, SIDL");
+        test_state := fail;
+      end if;
+      if TXB1SIDH != 16#B1# then
+        report("flim_slim_test: NN ack wrong CAN Id, SIDH");
+        test_state := fail;
+      end if;
+      --
+      if RB7 != '1' then
+        wait until RB7 == '1'; -- Booted into SLiM
+      end if;
+      report("flim_slim_test: Green LED (SLiM) on");
+      --
+      if RB6 == '1' then
+        report("flim_slim_test: Yellow LED (FLiM) on");
+        test_state := fail;
+      end if;
+      --
+      if test_state == pass then
+        report("flim_slim_test: PASS");
+      else
+        report("flim_slim_test: FAIL");
+      end if;          
+      PC <= 0;
+      wait;
+    end process flim_slim_test;
+end testbench;
