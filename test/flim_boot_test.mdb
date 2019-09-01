@@ -5,7 +5,7 @@ Hwtool SIM
 Program "../dist/default/production/canacc4.production.cof"
 Stim "./scl/flim_boot_test.scl"
 Break *0 1
-Write /e 0x01 0xFF
+Write /e 0x01 0x08
 Run
 Wait
 Quit
