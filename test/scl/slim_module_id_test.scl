@@ -19,6 +19,8 @@ begin
       report("slim_module_id_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
+      RB4 <= '1'; -- Learn off
+      RA5 <= '1'; -- Unlearn off
       module_id_index := 3; -- Index of Module ID parameter
       --
       wait until RB7 == '1'; -- Booted into SLiM
