@@ -10,6 +10,7 @@ begin
       if RB6 == '1' then
         report("slim_boot_test: Yellow LED (FLiM) on");
       end if;
+      report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;

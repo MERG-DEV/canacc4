@@ -8,6 +8,7 @@ begin
     begin
       wait for 2000 ms;
       report("slim_name_test: TIMEOUT");
+      report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;

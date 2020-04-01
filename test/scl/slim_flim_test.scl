@@ -7,7 +7,7 @@ begin
     begin
       wait for 23000 ms;
       report("slim_flim_test: TIMEOUT");
-      report(PC);
+      report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
