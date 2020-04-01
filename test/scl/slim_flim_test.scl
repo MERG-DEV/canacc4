@@ -60,7 +60,7 @@ begin
           wait until RXB0CON.RXFUL == '0';
           test_sidl := test_sidl + 16#20#;
         end loop;
-        test_sidh := test_sidh + 1;
+        test_sidh := 1;
         test_sidl := 0;
         while test_sidl < 16#80# loop
           RXB0SIDH <= test_sidh;
@@ -71,8 +71,15 @@ begin
           PIR3.RXB0IF <= '1';
           wait until RXB0CON.RXFUL == '0';
           test_sidl := test_sidl + 16#20#;
-      end loop;
-      report("slim_flim_test: RTR, first eleven CAN Ids taken");
+        end loop;
+      RXB0SIDH <= test_sidh;
+      RXB0SIDL <= 16#A0#;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC <= 0;
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      wait until RXB0CON.RXFUL == '0';
+      report("slim_flim_test: RTR, first free CAN Id is 12");
       --
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
