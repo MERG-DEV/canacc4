@@ -2343,12 +2343,12 @@ setid bsf   Mode,1      ;flag FLiM
     
   
 seten_f 
+    bcf   Datmode,0
+    call  timload     ;load stuff
     movlw B'11000000'
     movwf INTCON      ;enable interrupts
     bsf   PORTB,6   ;Yellow LED on.
     bcf   PORTB,7     
-    bcf   Datmode,0
-    call  timload     ;load stuff
     goto  main0
 
 slimset bcf   Mode,1
