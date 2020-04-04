@@ -1,9 +1,9 @@
-# Test CBUS node flags parameter request in FLiM mode.
+# Test CBUS node parameter requests in FLiM mode.
 
 Device PIC18F2480
 Hwtool SIM
 Program "../dist/default/production/canacc4.production.cof"
-Stim "./scl/flim_node_flags_test.scl"
+Stim "./scl/flim_param_test.scl"
 Break *0 1
 
 # Set CAN Id and module status
