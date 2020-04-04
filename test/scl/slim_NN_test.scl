@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 35 ms;
+      wait for 811 ms;
       report("slim_NN_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -33,7 +33,7 @@ begin
       PIR3.RXB0IF <= '1';
       --
       TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 1 ms; -- Test if response sent
+      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
       if TXB1CON.TXREQ == '1' then
         report("slim_NN_test: Unexpected response");
         test_state := fail;
