@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 17 ms;
+      wait for 29 ms;
       report("flim_param_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -15,41 +15,57 @@ begin
   flim_param_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
+    variable count_index : integer;
+    variable cpu_index : integer;
     variable e_variable_index : integer;
     variable event_index : integer;
     variable flags_index : integer;
+    variable invalid_index : integer;
+    variable load0_index : integer;
+    variable load1_index : integer;
+    variable load2_index : integer;
+    variable load3_index : integer;
     variable major_index : integer;
     variable manufacturer_index : integer;
     variable minor_index : integer;
     variable module_id_index : integer;
     variable n_variable_index : integer;
+    variable pb_index : integer;
     begin
       report("flim_param_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       --
       -- Module parameter indices
-      manufacturer_index := 1; -- Manufacturer
-      minor_index        := 2; -- Version number, minor part
-      module_id_index    := 3; -- Module ID
-      event_index        := 4; -- Maximum number of events
-      e_variable_index   := 5; -- Maximum number of variables per event
-      n_variable_index   := 6; -- Number of node variables
-      major_index        := 7; -- Version number, major part
-      flags_index        := 8; -- Node flags
+      count_index        :=  0; -- Number of parameters
+      manufacturer_index :=  1; -- Manufacturer
+      minor_index        :=  2; -- Version number, minor part
+      module_id_index    :=  3; -- Module ID
+      event_index        :=  4; -- Maximum number of events
+      e_variable_index   :=  5; -- Maximum number of variables per event
+      n_variable_index   :=  6; -- Number of node variables
+      major_index        :=  7; -- Version number, major part
+      flags_index        :=  8; -- Node flags
+      cpu_index          :=  9; -- CPU type
+      pb_index           := 10; -- Connected bus type
+      load0_index        := 11; -- Module code load address byte 0
+      load1_index        := 12; -- Module code load address byte 0
+      load2_index        := 13; -- Module code load address byte 0
+      load3_index        := 14; -- Module code load address byte 0
+      invalid_index      := 15; -- Out of range index value
       --
       wait until RB6 == '1'; -- Booted into FLiM
       --
+      report("flim_param_test: Addressed 00");
       RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
       RXB0D1 <= 0;           -- NN high
       RXB0D2 <= 0;           -- NN low
-      RXB0D3 <= flags_index; -- Parameter index, 8 == node flags
+      RXB0D3 <= count_index; -- Parameter index, 0 == number of parameters
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      report("flim_param_test: Addressed 00");
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
       if TXB1CON.TXREQ == '1' then
@@ -57,19 +73,20 @@ begin
         test_state := fail;
       end if;
       --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("flim_param_test: Addressed 24");
       RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
       RXB0D1 <= 2;           -- NN high
       RXB0D2 <= 4;           -- NN low
-      RXB0D3 <= flags_index; -- Parameter index, 8 == node flags
+      RXB0D3 <= count_index; -- Parameter index, 0 == number of parameters
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      report("flim_param_test: Addressed 24");
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
       if TXB1CON.TXREQ == '1' then
@@ -77,13 +94,571 @@ begin
         test_state := fail;
       end if;
       --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("flim_param_test: Parameter count");
+      RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= count_index; -- Parameter index, 0 == number of parameters
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != count_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 14 then
+        report("flim_param_test: Sent wrong parameter count");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Manufacturer");
+      RXB0D0 <= 16#73#;             -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;                  -- NN high
+      RXB0D2 <= 2;                  -- NN low
+      RXB0D3 <= manufacturer_index; -- Manufacturer parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != manufacturer_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 165 then
+        report("flim_param_test: Sent wrong manufacturer");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Version number major part");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= major_index; -- Version number major part parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != major_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 2 then
+        report("flim_param_test: Sent wrong version number major part");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Module ID");
+      RXB0D0 <= 16#73#;          -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;               -- NN high
+      RXB0D2 <= 2;               -- NN low
+      RXB0D3 <= module_id_index; -- Module ID parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != module_id_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 8 then
+        report("flim_param_test: Sent wrong module id");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Maximum number of events");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= event_index; -- Maximum number of events parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != event_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 128 then
+        report("flim_param_test: Sent wrong number of events");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      report("flim_param_test: Maximum number of variables per event");
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      RXB0D0 <= 16#73#;           -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;                -- NN high
+      RXB0D2 <= 2;                -- NN low
+      RXB0D3 <= e_variable_index; -- Maximum number of variables per event
+                                  -- parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != e_variable_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 2 then
+        report("flim_param_test: Sent wrong number of variables per event");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Number of node variables");
+      RXB0D0 <= 16#73#;           -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;                -- NN high
+      RXB0D2 <= 2;                -- NN low
+      RXB0D3 <= n_variable_index; -- Number of node variables parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != n_variable_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 16 then
+        report("flim_param_test: Sent wrong number of node variables");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Version number minor part");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= minor_index; -- Version number minor part parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != minor_index then
+        report("flim_param_test: Sent wrong version number minor part");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 81 then
+        report("flim_param_test: Sent wrong parameter value");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Node flags");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= flags_index; -- Node flags parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != flags_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 13 then
+        report("flim_param_test: Sent wrong node flags");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: CPU");
       RXB0D0 <= 16#73#;    -- RQNPN, CBUS read node parameter by index
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 15;        -- Parameter index
+      RXB0D3 <= cpu_index; -- CPU type parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != cpu_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 1 then
+        report("flim_param_test: Sent wrong cpu type");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Connected bus");
+      RXB0D0 <= 16#73#;   -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;        -- NN high
+      RXB0D2 <= 2;        -- NN low
+      RXB0D3 <= pb_index; -- Connected bus type parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != pb_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 1 then
+        report("flim_param_test: Sent wrong connected bus type");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Load address byte 0");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= load0_index; -- Load address byte 0 parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != load0_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 0 then
+        report("flim_param_test: Sent wrong load address byte 0");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Load address byte 1");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= load1_index; -- Load address byte 1 parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != load1_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 16#08# then
+        report("flim_param_test: Sent wrong load address byte 1");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Load address byte 2");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= load2_index; -- Load address byte 2 parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != load2_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 0 then
+        report("flim_param_test: Sent wrong load address byte 2");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Load address byte 3");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= load3_index; -- Load address byte 3 parameter index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
+        report("flim_param_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_param_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_param_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != load3_index then
+        report("flim_param_test: Sent wrong parameter index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 0 then
+        report("flim_param_test: Sent wrong load address byte 3");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Out of range index");
+      RXB0D0 <= 16#73#;        -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;             -- NN high
+      RXB0D2 <= 2;             -- NN low
+      RXB0D3 <= invalid_index; -- Parameter index
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
@@ -105,303 +680,6 @@ begin
       end if;
       if TXB1D3 != 9 then -- Invalid parameter index
         report("flim_param_test: Sent wrong error number");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#73#;             -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 4;                  -- NN high
-      RXB0D2 <= 2;                  -- NN low
-      RXB0D3 <= manufacturer_index; -- Manufacturer parameter index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      report("flim_param_test: Manufacturer parameter");
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-        report("flim_param_test: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("flim_param_test: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("flim_param_test: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != manufacturer_index then
-        report("flim_param_test: Sent wrong parameter index");
-        test_state := fail;
-      end if;
-      if TXB1D4 != 165 then
-        report("flim_param_test: Sent wrong parameter value");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 4;           -- NN high
-      RXB0D2 <= 2;           -- NN low
-      RXB0D3 <= major_index; -- Version number major part parameter index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      report("flim_param_test: Version number major part");
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-        report("flim_param_test: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("flim_param_test: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("flim_param_test: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != major_index then
-        report("flim_param_test: Sent wrong parameter index");
-        test_state := fail;
-      end if;
-      if TXB1D4 != 2 then
-        report("flim_param_test: Sent wrong parameter value");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#73#;          -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 4;               -- NN high
-      RXB0D2 <= 2;               -- NN low
-      RXB0D3 <= module_id_index; -- Module ID parameter index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      report("flim_param_test: Module ID");
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-        report("flim_param_test: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("flim_param_test: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("flim_param_test: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != module_id_index then
-        report("flim_param_test: Sent wrong parameter index");
-        test_state := fail;
-      end if;
-      if TXB1D4 != 8 then
-        report("flim_param_test: Sent wrong parameter value");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 4;           -- NN high
-      RXB0D2 <= 2;           -- NN low
-      RXB0D3 <= event_index; -- Maximum number of events parameter index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      report("flim_param_test: Maximum number of events");
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-        report("flim_param_test: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("flim_param_test: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("flim_param_test: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != event_index then
-        report("flim_param_test: Sent wrong parameter index");
-        test_state := fail;
-      end if;
-      if TXB1D4 != 128 then
-        report("flim_param_test: Sent wrong parameter value");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#73#;           -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 4;                -- NN high
-      RXB0D2 <= 2;                -- NN low
-      RXB0D3 <= e_variable_index; -- Maximum number of variables per event
-                                  -- parameter index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      report("flim_param_test: Maximum number of variables per event");
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-        report("flim_param_test: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("flim_param_test: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("flim_param_test: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != e_variable_index then
-        report("flim_param_test: Sent wrong parameter index");
-        test_state := fail;
-      end if;
-      if TXB1D4 != 2 then
-        report("flim_param_test: Sent wrong parameter value");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#73#;           -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 4;                -- NN high
-      RXB0D2 <= 2;                -- NN low
-      RXB0D3 <= n_variable_index; -- Number of node variables parameter index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      report("flim_param_test: Number of node variables");
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-        report("flim_param_test: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("flim_param_test: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("flim_param_test: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != n_variable_index then
-        report("flim_param_test: Sent wrong parameter index");
-        test_state := fail;
-      end if;
-      if TXB1D4 != 16 then
-        report("flim_param_test: Sent wrong parameter value");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 4;           -- NN high
-      RXB0D2 <= 2;           -- NN low
-      RXB0D3 <= minor_index; -- Version number minor part parameter index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      report("flim_param_test: Version number minor part");
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-        report("flim_param_test: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("flim_param_test: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("flim_param_test: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != minor_index then
-        report("flim_param_test: Sent wrong parameter index");
-        test_state := fail;
-      end if;
-      if TXB1D4 != 81 then
-        report("flim_param_test: Sent wrong parameter value");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 4;           -- NN high
-      RXB0D2 <= 2;           -- NN low
-      RXB0D3 <= flags_index; -- Node flags parameter index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      report("flim_param_test: Node flags");
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-        report("flim_param_test: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("flim_param_test: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("flim_param_test: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != flags_index then
-        report("flim_param_test: Sent wrong parameter index");
-        test_state := fail;
-      end if;
-      if TXB1D4 != 13 then
-        report("flim_param_test: Sent wrong node flags");
         test_state := fail;
       end if;
       --
