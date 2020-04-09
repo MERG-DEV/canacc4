@@ -25,8 +25,6 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("flim_unlearn_test: Yellow LED (FLiM) on");
       --
-      wait for 4 ic; -- Delay to avoid first message getting lost
-      --
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '0'; -- UNLEARN on
       --

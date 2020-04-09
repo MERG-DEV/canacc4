@@ -25,8 +25,6 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("flim_boot_ignore_unlearn_test: Yellow LED (FLiM) on");
       --
-      wait for 4 ic; -- Delay to avoid first message getting lost
-      --
       RB4 <= '1'; -- DOLEARN off
       --
       if RXB0CON.RXFUL != '0' then

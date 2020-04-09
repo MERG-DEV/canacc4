@@ -27,8 +27,6 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("flim_learn_test: Yellow LED (FLiM) on");
       --
-      wait for 4 ic; -- Delay to avoid first message getting lost
-      --
       -- Learn events for output 3
       RB4 <= '0'; -- Learn on
       RB0 <= '0'; -- Sel 0 on

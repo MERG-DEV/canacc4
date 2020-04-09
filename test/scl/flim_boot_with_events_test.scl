@@ -25,8 +25,6 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("flim_boot_with_events_test: Yellow LED (FLiM) on");
       --
-      wait for 4 ic; -- Delay to avoid first message getting lost
-      --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
