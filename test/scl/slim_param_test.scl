@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 900 ms;
+      wait for 906 ms;
       report("slim_param_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -59,6 +59,48 @@ begin
       report("flim_param_test: Addressed 42");
       RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
       RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= count_index; -- Parameter index, 0 == number of parameters
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
+      if TXB1CON.TXREQ == '1' then
+        report("slim_param_test: Unexpected response");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Addressed 40");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 0;           -- NN low
+      RXB0D3 <= count_index; -- Parameter index, 0 == number of parameters
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
+      if TXB1CON.TXREQ == '1' then
+        report("slim_param_test: Unexpected response");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_param_test: Addressed 02");
+      RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
+      RXB0D1 <= 0;           -- NN high
       RXB0D2 <= 2;           -- NN low
       RXB0D3 <= count_index; -- Parameter index, 0 == number of parameters
       RXB0CON.RXFUL <= '1';
