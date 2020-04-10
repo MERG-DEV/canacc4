@@ -177,7 +177,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_teach_test: Check free event space");
+      report("flim_teach_test: Test short on 0x0708,0x0402");
       RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
       RXB0D1 <= 7;         -- NN high
       RXB0D2 <= 8;         -- NN low
