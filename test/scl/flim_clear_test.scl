@@ -1,0 +1,578 @@
+configuration for "PIC18F2480" is
+end configuration;
+--
+testbench for "PIC18F2480" is
+begin
+  test_timeout: process is
+    begin
+      wait for 17382 ms;
+      report("flim_clear_test: TIMEOUT");
+      report(PC); -- Crashes simulator, MDB will report current source line
+      PC <= 0;
+      wait;
+    end process test_timeout;
+    --
+  flim_clear_test: process is
+    type test_result is (pass, fail);
+    variable test_state : test_result;
+    variable event_high : integer;
+    variable event_low : integer;
+    begin
+      report("flim_clear_test: START");
+      test_state := pass;
+      RA3 <= '1'; -- Setup button not pressed
+      RB4 <= '1'; -- Learn off
+      RA5 <= '1'; -- Unlearn off
+      --
+      wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_clear_test: Yellow LED (FLiM) on");
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check available event space");
+      RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
+        report("flim_clear_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_clear_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_clear_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 124 then
+        report("flim_clear_test: Sent wrong available event space");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check number of stored events");
+      RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#74# then -- NNEVN, CBUS number of stored events response
+        report("flim_clear_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_clear_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_clear_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 4 then
+        report("flim_clear_test: Sent wrong number of stored events");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check long on 0x0102,0x0402");
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#20# then -- Output 3A on
+        report("flim_clear_test: 3A triggered");
+      else
+        report("flim_clear_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check short on 0x0304,0x0204");
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 3;         -- NN high
+      RXB0D2 <= 4;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#04# then -- Output 3B on
+        report("flim_clear_test: 3B triggered");
+      else
+        report("flim_clear_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check long off 0x0102,0x0402");
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#04# then -- Output 3B on
+        report("flim_clear_test: 3B triggered");
+      else
+        report("flim_clear_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check short off 0x0506,0x0204");
+      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
+      RXB0D1 <= 5;         -- NN high
+      RXB0D2 <= 6;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#20# then -- Output 3A on
+        report("flim_clear_test: 3A triggered");
+      else
+        report("flim_clear_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check long off 0x0506,0x0204");
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 5;         -- NN high
+      RXB0D2 <= 6;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#40# then -- Output 2B on
+        report("flim_clear_test: 2B triggered");
+      else
+        report("flim_clear_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check short on 0x0708,0x0402");
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 7;         -- NN high
+      RXB0D2 <= 8;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#40# then -- Output 2B on
+        report("flim_clear_test: 2B triggered");
+      else
+        report("flim_clear_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check long on 0x0506,0x0204");
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 5;         -- NN high
+      RXB0D2 <= 6;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#02# then -- Output 2A on
+        report("flim_clear_test: 2A triggered");
+      else
+        report("flim_clear_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      wait until PORTC == 0;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Check short off 0x090A,0x0402");
+      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
+      RXB0D1 <= 9;         -- NN high
+      RXB0D2 <= 10;        -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait until PORTC != 0;
+      if PORTC == 16#02# then -- Output 2A on
+        report("flim_clear_test: 2A triggered");
+      else
+        report("flim_clear_test: Wrong output");
+        test_state := fail;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Enter learn mode");
+      RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Clear events");
+      RXB0D0 <= 16#55#;    -- NNCLR, CBUS clear events
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
+        report("flim_clear_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_clear_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_clear_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Exit learn mode");
+      RXB0D0 <= 16#54#;    -- NNULN, exit learn mode
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Reheck available event space");
+      RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
+        report("flim_clear_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_clear_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_clear_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 128 then
+        report("flim_clear_test: Sent wrong available event space");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Reheck number of stored events");
+      RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#74# then -- NNEVN, CBUS number of stored events response
+        report("flim_clear_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_clear_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_clear_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 0 then
+        report("flim_clear_test: Sent wrong number of stored events");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Test long on 0x0102,0x0402");
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_clear_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Test short off 0x0304,0x0204");
+      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
+      RXB0D1 <= 3;         -- NN high
+      RXB0D2 <= 4;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_clear_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Test long off 0x0102,0x0402");
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_clear_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Test short on 0x0708,0x0204");
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 7;         -- NN high
+      RXB0D2 <= 8;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_clear_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Test long off 0x0506,0x0204");
+      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
+      RXB0D1 <= 5;         -- NN high
+      RXB0D2 <= 6;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_clear_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Test short on 0x090A,0x0402");
+      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
+      RXB0D1 <= 9;         -- NN high
+      RXB0D2 <= 10;        -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_clear_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Test long on 0x0506,0x0204");
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 5;         -- NN high
+      RXB0D2 <= 6;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_clear_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Test short on 0x0708,0x0402");
+      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
+      RXB0D1 <= 7;         -- NN high
+      RXB0D2 <= 8;         -- NN low
+      RXB0D3 <= 4;
+      RXB0D4 <= 2;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("flim_clear_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if test_state == pass then
+        report("flim_clear_test: PASS");
+      else
+        report("flim_clear_test: FAIL");
+      end if;          
+      PC <= 0;
+      wait;
+    end process flim_clear_test;
+end testbench;
