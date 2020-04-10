@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 24556 ms;
+      wait for 24555 ms;
       report("flim_teach_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -177,7 +177,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_teach_test: Test short off 0x0708,0x0402");
+      report("flim_teach_test: Check free event space");
       RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
       RXB0D1 <= 7;         -- NN high
       RXB0D2 <= 8;         -- NN low
@@ -195,6 +195,70 @@ begin
         wait until PORTC == 0;
       end if;
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_teach_test: Check available event space");
+      RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
+        report("flim_teach_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_teach_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_teach_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 128 then
+        report("flim_teach_test: Sent wrong available event space");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_teach_test: Check number of stored events");
+      RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#74# then -- NNEVN, CBUS number of stored events response
+        report("flim_teach_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_teach_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_teach_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 0 then
+        report("flim_teach_test: Sent wrong number of stored events");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
@@ -537,6 +601,70 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_teach_test: Recheck available event space");
+      RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
+        report("flim_teach_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_teach_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_teach_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 124 then
+        report("flim_teach_test: Sent wrong available event space");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_teach_test: Recheck number of stored events");
+      RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#74# then -- NNEVN, CBUS number of stored events response
+        report("flim_teach_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_teach_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_teach_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 4 then
+        report("flim_teach_test: Sent wrong number of stored events");
+        test_state := fail;
+      end if;
       --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       if RXB0CON.RXFUL != '0' then
