@@ -28,6 +28,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("flim_clear_test: Check long on 0x0102,0x0402");
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -37,7 +38,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Long on 0x0402 trigger 2B and 3A");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
@@ -69,6 +69,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_boot_with_events_test: Check short on 0x0900x0204");
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
       RXB0D1 <= 9;         -- NN high
       RXB0D2 <= 0;         -- NN low
@@ -78,7 +79,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Short on 0x0204 trigger 3A");
       --
       wait until PORTC != 0;
       if PORTC == 16#20# then -- Output 3A on
@@ -100,6 +100,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_boot_with_events_test: Check long on 0x0102,0x0204");
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -109,7 +110,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Long on 0x0204 trigger 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
@@ -131,6 +131,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_boot_with_events_test: Check short on 0x0009,0x0402");
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
       RXB0D1 <= 0;         -- NN high
       RXB0D2 <= 9;         -- NN low
@@ -140,7 +141,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Short on 0x0402 trigger 2A and 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
@@ -172,6 +172,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_boot_with_events_test: Check long on 0x0201,0x0604");
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -181,7 +182,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Long on 0x0604 trigger 2A");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
@@ -203,6 +203,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_boot_with_events_test: Check long off 0x0102,0x0402");
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -212,7 +213,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Long off 0x0402 trigger 2A and 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#02# then -- Output 2A on
@@ -244,6 +244,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_boot_with_events_test: Check short off 0x0807,0x0204");
       RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
       RXB0D1 <= 8;         -- NN high
       RXB0D2 <= 7;         -- NN low
@@ -253,7 +254,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Short off 0x0204 trigger 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
@@ -275,6 +275,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_boot_with_events_test: Long off 0x0201,0x0604");
       RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
       RXB0D1 <= 2;         -- NN high
       RXB0D2 <= 1;         -- NN low
@@ -284,7 +285,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Long off 0x0604 trigger 2B");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
@@ -306,6 +306,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_boot_with_events_test: Check long off 0x0102,0x0204");
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long off
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -315,7 +316,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Long off 0x0204 trigger 3B");
       --
       wait until PORTC != 0;
       if PORTC == 16#04# then -- Output 3B on
@@ -337,6 +337,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_boot_with_events_test: Check short off 0x0605,0x0402");
       RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
       RXB0D1 <= 6;         -- NN high
       RXB0D2 <= 5;         -- NN low
@@ -346,7 +347,6 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_boot_with_events_test: Short off 0x0402 trigger 2B and 3A");
       --
       wait until PORTC != 0;
       if PORTC == 16#40# then -- Output 2B on
