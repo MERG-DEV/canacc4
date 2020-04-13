@@ -15,6 +15,11 @@ begin
   slim_unlearn_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
+    file     event_file   : text;
+    variable file_stat    : file_open_status;
+    variable report_line  : string;
+    variable trigger_line : string;
+    variable trigger_val  : integer;
     begin
       report("slim_unlearn_test: START");
       test_state := pass;
@@ -31,7 +36,28 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_unlearn_test: Unlearn short 0x0402");
+      report("slim_unlearn_test: Long 0x0102,0x0204");
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait on PORTC for 1005 ms;
+      if PORTC != 0 then
+        report("slim_unlearn_test: Unexpected trigger");
+        test_state := fail;
+        wait until PORTC == 0;
+      end if;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("slim_unlearn_test: Short 0x0402");
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
       RXB0D1 <= 9;         -- NN high
       RXB0D2 <= 9;         -- NN low
@@ -52,635 +78,53 @@ begin
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long on 0x0102,0x0402");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#40# then -- Output 2B on
-        report("slim_unlearn_test: 2B triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
+      file_open(file_stat, event_file, "./data/unlearnt_events.dat", read_mode);
+      if file_stat != open_ok then
+        report("slim_unlearn_test: Failed to open event data file");
+        PC <= 0;
+        wait;
       end if;
       --
-      wait until PORTC == 0;
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#20# then -- Output 3A on
-        report("slim_unlearn_test: 3A triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check short on 0x0009,0x0204");
-      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 9;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#20# then -- Output 3A on
-        report("slim_unlearn_test: 3A triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long on 0x0202,0x0204");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#04# then -- Output 3B on
-        report("slim_unlearn_test: 3B triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check short on 0x0807,0x0402");
-      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
-      RXB0D1 <= 8;         -- NN high
-      RXB0D2 <= 7;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long on 0x0201,0x0604");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
-      RXB0D1 <= 2;         -- NN high
-      RXB0D2 <= 1;         -- NN low
-      RXB0D3 <= 6;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#02# then -- Output 2A on
-        report("slim_unlearn_test: 2A triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long off 0x0102,0x0402");
-      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#02# then -- Output 2A on
-        report("slim_unlearn_test: 2A triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#04# then -- Output 3B on
-        report("slim_unlearn_test: 3B triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check short off 0x0605,0x0204");
-      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
-      RXB0D1 <= 6;         -- NN high
-      RXB0D2 <= 5;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#04# then -- Output 3B on
-        report("slim_unlearn_test: 3B triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long off 0x0201,0x0604");
-      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
-      RXB0D1 <= 2;         -- NN high
-      RXB0D2 <= 1;         -- NN low
-      RXB0D3 <= 6;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#40# then -- Output 2B on
-        report("slim_unlearn_test: 2B triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long off 0x0102,0x0204");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long off
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#04# then -- Output 3B on
-        report("slim_unlearn_test: 3B triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check short off 0x0403,0x0402");
-      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 3;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      RB4 <= '0'; -- DOLEARN on
-      RA5 <= '0'; -- UNLEARN on
-      --
-      report("slim_unlearn_test: Unlearn long 0x0102,0x0204");
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long off
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      RB4 <= '1'; -- DOLEARN off
-      RA5 <= '1'; -- UNLEARN off
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long on 0x0102,0x0402");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#40# then -- Output 2B on
-        report("slim_unlearn_test: 2B triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#20# then -- Output 3A on
-        report("slim_unlearn_test: 3A triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check short on 0x0201,0x0204");
-      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
-      RXB0D1 <= 2;         -- NN high
-      RXB0D2 <= 1;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#20# then -- Output 3A on
-        report("slim_unlearn_test: 3A triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long on 0x0102,0x0204");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check short on 0x0001,0x0402");
-      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 1;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      --
-      -- FIXME, this event has been lost
-      --if RXB0CON.RXFUL != '0' then
-      --  wait until RXB0CON.RXFUL == '0';
-      --end if;
-      --report("slim_unlearn_test: Check long on 0x0201,0x0604");
-      --RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
-      --RXB0D1 <= 2;         -- NN high
-      --RXB0D2 <= 1;         -- NN low
-      --RXB0D3 <= 6;
-      --RXB0D4 <= 4;
-      --RXB0CON.RXFUL <= '1';
-      --RXB0DLC.DLC3 <= '1';
-      --CANSTAT <= 16#0C#;
-      --PIR3.RXB0IF <= '1';
-      ----
-      --wait until PORTC != 0;
-      --if PORTC == 16#02# then -- Output 2A on
-      --  report("slim_unlearn_test: 2A triggered");
-      --else
-      --  report("slim_unlearn_test: Wrong output");
-      --  test_state := fail;
-      --end if;
-      --
-      --wait until PORTC == 0;
-      ----
-      --wait on PORTC for 1005 ms;
-      --if PORTC != 0 then
-      --  report("slim_unlearn_test: Unexpected trigger");
-      --  test_state := fail;
-      --  wait until PORTC == 0;
-      --end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long off 0x0102,0x0402");
-      RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#02# then -- Output 2A on
-        report("slim_unlearn_test: 2A triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#04# then -- Output 3B on
-        report("slim_unlearn_test: 3B triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check short off 0x0202,0x0204");
-      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
-      RXB0D1 <= 2;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait until PORTC != 0;
-      if PORTC == 16#04# then -- Output 3B on
-        report("slim_unlearn_test: 3B triggered");
-      else
-        report("slim_unlearn_test: Wrong output");
-        test_state := fail;
-      end if;
-      --
-      wait until PORTC == 0;
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      -- FIXME, this event has been lost
-      --if RXB0CON.RXFUL != '0' then
-      --  wait until RXB0CON.RXFUL == '0';
-      --end if;
-      --report("slim_unlearn_test: Check long off 0x0201,0x0604");
-      --RXB0D0 <= 16#91#;    -- ACON, CBUS accessory long off
-      --RXB0D1 <= 2;         -- NN high
-      --RXB0D2 <= 1;         -- NN low
-      --RXB0D3 <= 6;
-      --RXB0D4 <= 4;
-      --RXB0CON.RXFUL <= '1';
-      --RXB0DLC.DLC3 <= '1';
-      --CANSTAT <= 16#0C#;
-      --PIR3.RXB0IF <= '1';
-      ----
-      --wait until PORTC != 0;
-      --if PORTC == 16#40# then -- Output 2B on
-      --  report("slim_unlearn_test: 2B triggered");
-      --else
-      --  report("slim_unlearn_test: Wrong output");
-      --  test_state := fail;
-      --end if;
-      ----
-      --wait until PORTC == 0;
-      ----
-      --wait on PORTC for 1005 ms;
-      --if PORTC != 0 then
-      --  report("slim_unlearn_test: Unexpected trigger");
-      --  test_state := fail;
-      --  wait until PORTC == 0;
-      --end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Check long off 0x0102,0x0204");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long off
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      RXB0D0 <= 16#99#;    -- ACON, CBUS accessory short off
-      RXB0D1 <= 3;         -- NN high
-      RXB0D2 <= 3;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      report("slim_unlearn_test: Short 0x0402 ignored");
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
+      while endfile(event_file) == false loop
+        if RXB0CON.RXFUL != '0' then
+          wait until RXB0CON.RXFUL == '0';
+        end if;
+        readline(event_file, report_line);
+        report(report_line);
+        read(event_file, RXB0D0, 1);
+        read(event_file, RXB0D1, 1);
+        read(event_file, RXB0D2, 1);
+        read(event_file, RXB0D3, 1);
+        read(event_file, RXB0D4, 1);
+        RXB0CON.RXFUL <= '1';
+        RXB0DLC.DLC3 <= '1';
+        CANSTAT <= 16#0C#;
+        PIR3.RXB0IF <= '1';
+        --
+        readline(event_file, report_line);
+        while match(report_line, "Done") == false loop
+          readline(event_file, trigger_line);
+          read(trigger_line, trigger_val);
+          --
+          wait until PORTC != 0;
+          if PORTC == trigger_val then
+            report(report_line);
+         else
+            report("slim_unlearn_test: Wrong output");
+            test_state := fail;
+          end if;
+          wait until PORTC == 0;
+          --
+          readline(event_file, report_line);
+        end loop;
+        --
+        wait on PORTC for 1005 ms;
+        if PORTC != 0 then
+          report("slim_unlearn_test: Unexpected trigger");
+          test_state := fail;
+          wait until PORTC == 0;
+        end if;
+      end loop;
       --
       if test_state == pass then
         report("slim_unlearn_test: PASS");
