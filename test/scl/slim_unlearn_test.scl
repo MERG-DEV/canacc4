@@ -33,52 +33,43 @@ begin
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '0'; -- UNLEARN on
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Long 0x0102,0x0204");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory long on
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
+      file_open(file_stat, event_file, "./data/unlearn_events.dat", read_mode);
+      if file_stat != open_ok then
+        report("slim_unlearn_test: Failed to open unlearn data file");
+        PC <= 0;
+        wait;
       end if;
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("slim_unlearn_test: Short 0x0402");
-      RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
-      RXB0D1 <= 9;         -- NN high
-      RXB0D2 <= 9;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      while endfile(event_file) == false loop
+        if RXB0CON.RXFUL != '0' then
+          wait until RXB0CON.RXFUL == '0';
+        end if;
+        readline(event_file, report_line);
+        report(report_line);
+        read(event_file, RXB0D0, 1);
+        read(event_file, RXB0D1, 1);
+        read(event_file, RXB0D2, 1);
+        read(event_file, RXB0D3, 1);
+        read(event_file, RXB0D4, 1);
+        RXB0CON.RXFUL <= '1';
+        RXB0DLC.DLC3 <= '1';
+        CANSTAT <= 16#0C#;
+        PIR3.RXB0IF <= '1';
+        --
+        wait on PORTC for 1005 ms;
+        if PORTC != 0 then
+          report("slim_unlearn_test: Unexpected trigger");
+          test_state := fail;
+          wait until PORTC == 0;
+        end if;
+      end loop;
       --
-      wait on PORTC for 1005 ms;
-      if PORTC != 0 then
-        report("slim_unlearn_test: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
+      file_close(event_file);
       --
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
-      file_open(file_stat, event_file, "./data/unlearnt_events.dat", read_mode);
+      file_open(file_stat, event_file, "./data/remaining_events.dat", read_mode);
       if file_stat != open_ok then
         report("slim_unlearn_test: Failed to open event data file");
         PC <= 0;

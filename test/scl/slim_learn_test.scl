@@ -31,7 +31,7 @@ begin
       --
       RB4 <= '0'; -- Learn on
       --
-      report("slim_learn_test: Learnt events");
+      report("slim_learn_test: Learn events");
       file_open(file_stat, event_file, "./data/slim_learn.dat", read_mode);
       if file_stat != open_ok then
         report("slim_learn_test: Failed to open learn data file");
@@ -93,7 +93,7 @@ begin
       RB4 <= '1'; -- Learn off
       --
       report("slim_learn_test: Check events");
-      file_open(file_stat, event_file, "./data/original_events.dat", read_mode);
+      file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("slim_learn_test: Failed to open event data file");
         PC <= 0;
