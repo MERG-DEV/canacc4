@@ -44,11 +44,11 @@ begin
         end if;
         readline(event_file, file_line);
         report(file_line);
-        read(event_file, RXB0D0);
-        read(event_file, RXB0D1);
-        read(event_file, RXB0D2);
-        read(event_file, RXB0D3);
-        read(event_file, RXB0D4);
+        read(event_file, RXB0D0, 1);
+        read(event_file, RXB0D1, 1);
+        read(event_file, RXB0D2, 1);
+        read(event_file, RXB0D3, 1);
+        read(event_file, RXB0D4, 1);
         RXB0CON.RXFUL <= '1';
         RXB0DLC.DLC3 <= '1';
         CANSTAT <= 16#0C#;
