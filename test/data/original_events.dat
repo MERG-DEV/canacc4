@@ -1,0 +1,139 @@
+Long off 0x0102,0x0204
+16#91#
+1
+2
+2
+4
+Trigger 3A
+16#0x20#
+Done
+Long on 0x0102,0x0204
+16#90#
+1
+2
+2
+4
+Trigger 3B
+16#0x04#
+Done
+Short off 0x0102,0x0204
+1
+2
+2
+4
+Trigger 3B
+16#0x04#
+Done
+Short on 0x0201,0x0204
+16#90#
+2
+1
+2
+4
+Trigger 3A
+16#0x20#
+Done
+Long off 0x0201,0x0204
+16#91#
+2
+1
+2
+4
+Done
+Long on 0x0201,0x0204
+16#90#
+2
+1
+2
+4
+Done
+Long off 0x0102,0x0402
+16#91#
+1
+2
+4
+2
+Trigger 2A
+16#0x02#
+Trigger 3B
+16#0x04#
+Done
+Long on 0x0102,0x0402
+16#90#
+1
+2
+4
+2
+Trigger 2B
+16#0x40#
+Trigger 3A
+16#0x20#
+Done
+Short off 0x0304,0x0402
+16#99#
+3
+4
+4
+2
+Trigger 2B
+16#0x40#
+Trigger 3A
+16#0x20#
+Done
+Short on 0x0506,0x0402
+16#98#
+5
+6
+4
+2
+Trigger 2A
+16#0x02#
+Trigger 3B
+16#0x04#
+Done
+Long off 0x0201,0x0604
+16#91#
+2
+1
+6
+4
+Trigger 2B
+16#0x40#
+Done
+Long on 0x0201,0x0604
+16#90#
+2
+1
+6
+4
+Trigger 2A
+16#0x02#
+Done
+Long off 0x0102,0x0604
+16#91#
+1
+2
+6
+4
+Done
+Long on 0x0102,0x0604
+16#90#
+1
+2
+6
+4
+Done
+Short off 0x0708,0x0602
+16#99#
+7
+8
+6
+2
+Done
+Short on 0x090A,0x0602
+16#98#
+9
+10
+6
+2
+Done
