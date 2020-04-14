@@ -1,5 +1,4 @@
 Long 0x0102,0x0204, pair 3
-D2
 1
 2
 2
@@ -10,7 +9,6 @@ Trigger 3A
 32
 Done
 Long 0x0102,0x0204, invert pair 3
-D2
 1
 2
 2
@@ -21,7 +19,6 @@ Trigger 3B
 4
 Done
 Short 0x0204, pair 3
-D2
 0
 0
 2
@@ -32,7 +29,6 @@ Trigger 3A
 32
 Done
 Long 0x0102,0x0402, pair 2 & 3
-D2
 1
 2
 4
@@ -45,7 +41,6 @@ Trigger 3A
 32
 Done
 Long 0x0102,0x0402, invert pair 2
-D2
 1
 2
 4
@@ -58,7 +53,6 @@ Trigger 3A
 32
 Done
 Short 0x0402, pair 3
-D2
 0
 0
 4
@@ -69,7 +63,6 @@ Trigger 3A
 32
 Done
 Short 0x0402, invert pair 3
-D2
 0
 0
 4
@@ -80,7 +73,6 @@ Trigger 3B
 4
 Done
 Short 0x0402, pair 2 & 3
-D2
 0
 0
 4
@@ -93,7 +85,6 @@ Trigger 3B
 4
 Done
 Long on 0x0201,0x0604, pair 2
-D2
 2
 1
 6

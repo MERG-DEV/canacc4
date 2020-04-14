@@ -132,7 +132,7 @@ begin
         readline(event_file, report_line);
         report(report_line);
         --
-        read(event_file, RXB0D0, 1);
+        RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
         read(event_file, RXB0D1, 1);
         read(event_file, RXB0D2, 1);
         read(event_file, RXB0D3, 1);
