@@ -14,7 +14,7 @@ begin
     --
   flim_learn_test: process is
     type test_result is (pass, fail);
-    variable test_state : test_result;
+    variable test_state   : test_result;
     file     event_file   : text;
     variable file_stat    : file_open_status;
     variable file_line    : string;
@@ -32,9 +32,10 @@ begin
       report("flim_learn_test: Yellow LED (FLiM) on");
       --
       report("flim_learn_test: Learn events");
-      file_open(file_stat, event_file, "./data/slim_learn.dat", read_mode);
+      file_open(file_stat, event_file, "./data/learn.dat", read_mode);
       if file_stat != open_ok then
         report("flim_learn_test: Failed to open learn data file");
+        report("flim_learn_test: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -143,9 +144,11 @@ begin
         test_state := fail;
       end if;
       --
+      report("flim_learn_test: Check events");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_learn_test: Failed to open event data file");
+        report("flim_learn_test: FAIL");
         PC <= 0;
         wait;
       end if;

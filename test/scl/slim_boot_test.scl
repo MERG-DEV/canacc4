@@ -34,6 +34,7 @@ begin
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("slim_boot_test: Failed to open event data file");
+        report("slim_boot_test: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -54,7 +55,6 @@ begin
         CANSTAT <= 16#0C#;
         PIR3.RXB0IF <= '1';
         --
-        readline(event_file, file_line);
         while match(file_line, "Done") == false loop
           readline(event_file, file_line);
         end loop;

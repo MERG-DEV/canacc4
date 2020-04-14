@@ -6,17 +6,17 @@ begin
   test_timeout: process is
     begin
       wait for 811 ms;
-      report("slim_NN_test: TIMEOUT");
+      report("slim_query_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_NN_test: process is
+  slim_query_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("slim_NN_test: START");
+      report("slim_query_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
@@ -35,16 +35,16 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
       if TXB1CON.TXREQ == '1' then
-        report("slim_NN_test: Unexpected response");
+        report("slim_query_test: Unexpected response");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("slim_NN_test: PASS");
+        report("slim_query_test: PASS");
       else
-        report("slim_NN_test: FAIL");
+        report("slim_query_test: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_NN_test;
+    end process slim_query_test;
 end testbench;

@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 16926 ms;
+      wait for 16929 ms;
       report("flim_boot_test: TIMEOUT");
       if RB7 == '1' then
         report("flim_boot_test: Green LED (SLiM) on");
@@ -94,14 +94,16 @@ begin
         test_state := fail;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      report("flim_boot_test: Check events");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_boot_test: Failed to open event data file");
+        report("flim_boot_test: FAIL");
         PC <= 0;
         wait;
       end if;
       --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';

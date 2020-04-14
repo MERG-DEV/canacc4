@@ -34,6 +34,7 @@ begin
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("slim_boot_unlearn_test: Failed to open event data file");
+        report("slim_boot_unlearn_test: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -66,6 +67,8 @@ begin
           wait until PORTC == 0;
         end if;
       end loop;
+      --
+      file_close(event_file);
       --
       if test_state == pass then
         report("slim_boot_unlearn_test: PASS");

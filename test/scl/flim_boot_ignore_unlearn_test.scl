@@ -14,7 +14,7 @@ begin
     --
   flim_boot_ignore_unlearn_test: process is
     type test_result is (pass, fail);
-    variable test_state : test_result;
+    variable test_state   : test_result;
     file     event_file   : text;
     variable file_stat    : file_open_status;
     variable report_line  : string;
@@ -96,7 +96,6 @@ begin
         test_state := fail;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_boot_ignore_unlearn_test: Failed to open event data file");
@@ -104,6 +103,7 @@ begin
         wait;
       end if;
       --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';

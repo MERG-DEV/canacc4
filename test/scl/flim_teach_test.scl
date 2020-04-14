@@ -14,7 +14,7 @@ begin
     --
   flim_teach_test: process is
     type test_result is (pass, fail);
-    variable test_state : test_result;
+    variable test_state   : test_result;
     file     event_file   : text;
     variable file_stat    : file_open_status;
     variable file_line    : string;
@@ -116,9 +116,10 @@ begin
       end if;
       --
       report("flim_teach_test: Teach events");
-      file_open(file_stat, event_file, "./data/flim_teach.dat", read_mode);
+      file_open(file_stat, event_file, "./data/teach.dat", read_mode);
       if file_stat != open_ok then
         report("flim_teach_test: Failed to open learn data file");
+        report("flim_teach_test: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -265,6 +266,7 @@ begin
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_teach_test: Failed to open event data file");
+        report("flim_teach_test: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -310,6 +312,8 @@ begin
           wait until PORTC == 0;
         end if;
       end loop;
+      --
+      file_close(event_file);
       --
       if test_state == pass then
         report("flim_teach_test: PASS");

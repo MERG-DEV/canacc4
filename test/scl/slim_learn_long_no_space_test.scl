@@ -15,7 +15,7 @@ begin
   slim_learn_long_no_space_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
-    variable event_low : integer;
+    variable event_low  : integer;
     begin
       report("slim_learn_long_no_space_test: START");
       test_state := pass;

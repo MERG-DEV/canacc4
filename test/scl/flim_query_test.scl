@@ -6,17 +6,17 @@ begin
   test_timeout: process is
     begin
       wait for 777 ms;
-      report("flim_NN_test: TIMEOUT");
+      report("flim_query_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  flim_NN_test: process is
+  flim_query_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("flim_NN_test: START");
+      report("flim_query_test: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
@@ -34,36 +34,36 @@ begin
       --
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#B6# then -- PNN, CBUS Query node response
-        report("flim_NN_test: Sent wrong response");
+        report("flim_query_test: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 4 then
-        report("flim_NN_test: Sent wrong Node Number (high)");
+        report("flim_query_test: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 2 then
-        report("flim_NN_test: Sent wrong Node Number (low)");
+        report("flim_query_test: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 165 then
-        report("flim_NN_test: Sent wrong manufacturer id");
+        report("flim_query_test: Sent wrong manufacturer id");
         test_state := fail;
       end if;
       if TXB1D4 != 8 then
-        report("flim_NN_test: Sent wrong module id");
+        report("flim_query_test: Sent wrong module id");
         test_state := fail;
       end if;
       if TXB1D5 != 13 then
-        report("flim_NN_test: Sent wrong flags");
+        report("flim_query_test: Sent wrong flags");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("flim_NN_test: PASS");
+        report("flim_query_test: PASS");
       else
-        report("flim_NN_test: FAIL");
+        report("flim_query_test: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process flim_NN_test;
+    end process flim_query_test;
 end testbench;
