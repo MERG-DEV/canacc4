@@ -15,7 +15,6 @@ begin
   flim_read_events_test: process is
     type test_result is (pass, fail);
     variable test_state  : test_result;
-    variable event_index : integer;
     file     event_file  : text;
     variable file_stat   : file_open_status;
     variable file_line   : string;
@@ -117,7 +116,6 @@ begin
             test_state := fail;
           end if;
           --
-          ev_index := ev_index + 1;
           readline(event_file, file_line);
         end loop;
       end loop;
