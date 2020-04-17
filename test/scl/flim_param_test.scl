@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 29 ms;
+      wait for 33 ms;
       report("flim_param_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -15,7 +15,7 @@ begin
   flim_param_test: process is
     type test_result is (pass, fail);
     variable test_state  : test_result;
-    file     param_file  : text;
+    file     data_file  : text;
     variable file_stat   : file_open_status;
     variable file_line   : string;
     variable param_index : integer;
@@ -27,45 +27,39 @@ begin
       --
       wait until RB6 == '1'; -- Booted into FLiM
       --
-      report("flim_param_test: Addressed 00");
-      RXB0D0 <= 16#73#;  -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 0;       -- NN high
-      RXB0D2 <= 0;       -- NN low
-      RXB0D3 <= 0;       -- Parameter index, 0 == number of parameters
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("flim_param_test: Unexpected response");
-        test_state := fail;
+      file_open(file_stat, data_file, "./data/flim_ignore.dat", read_mode);
+      if file_stat != open_ok then
+        report("flim_param_test: Failed to open ignored addresses data file");
+        report("flim_param_test: FAIL");
+        PC <= 0;
+        wait;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("flim_param_test: Addressed 24");
-      RXB0D0 <= 16#73#;  -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 2;       -- NN high
-      RXB0D2 <= 4;       -- NN low
-      RXB0D3 <= 0;       -- Parameter index, 0 == number of parameters
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      report("flim_param_test: Ignore other node numbers");
+      while endfile(data_file) == false loop
+        wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+        readline(data_file, file_line);
+        report(file_line);
+        RXB0D0 <= 16#73#; -- RQNPN, CBUS read node parameter by index
+        read(data_file, RXB0D1, 1); -- NN high
+        read(data_file, RXB0D2, 1); -- NN low
+        RXB0D3 <= 0;                -- Index, 0 == number of parameters
+        RXB0CON.RXFUL <= '1';
+        RXB0DLC.DLC3 <= '1';
+        CANSTAT <= 16#0C#;
+        PIR3.RXB0IF <= '1';
+        --
+        TXB1CON.TXREQ <= '0';
+        wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
+        if TXB1CON.TXREQ == '1' then
+          report("flim_param_test: Unexpected response");
+          test_state := fail;
+        end if;
+      end loop;
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("flim_param_test: Unexpected response");
-        test_state := fail;
-      end if;
+      file_close(data_file);
       --
-      file_open(file_stat, param_file, "./data/flim_params.dat", read_mode);
+      file_open(file_stat, data_file, "./data/flim_params.dat", read_mode);
       if file_stat != open_ok then
         report("flim_param_test: Failed to open parameter data file");
         report("flim_param_test: FAIL");
@@ -73,16 +67,16 @@ begin
         wait;
       end if;
       --
-      while endfile(param_file) == false loop
+      while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';
         end if;
-        readline(param_file, file_line);
+        readline(data_file, file_line);
         report(file_line);
-        readline(param_file, file_line);
+        readline(data_file, file_line);
         read(file_line, param_index);
-        readline(param_file, file_line);
+        readline(data_file, file_line);
         read(file_line, param_value);
         --
         RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
