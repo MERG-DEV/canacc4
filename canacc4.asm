@@ -1920,15 +1920,9 @@ packet  movlw CMD_ON  ;only ON, OFF  events supported
     movlw 0x5D      ;re-enumerate
     subwf Rx0d0,W
     bz    enum1
-    movlw 0x71      ;read NVs
-    subwf Rx0d0,W
-    bz    readNVx
     movlw 0x75      ;force new CAN_ID
     subwf Rx0d0,W
     bz    newID1
-    movlw 0x96      ;set NV
-    subwf Rx0d0,W
-    bz    setNVx
     movlw 0xD2      ;is it set event?
     subwf Rx0d0,W
     bz    chklrn1     ;do learn
