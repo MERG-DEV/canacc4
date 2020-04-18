@@ -1,5 +1,4 @@
 Long 0x0102,0x0204, pair 2 & 4
-D2
 1
 2
 2
@@ -12,7 +11,6 @@ Trigger 4A
 16
 Done
 Long 0x0102,0x0204, invert pair 4
-D2
 1
 2
 2
@@ -25,7 +23,6 @@ Trigger 4B
 8
 Done
 Short 0x0204, pair 1
-D2
 0
 0
 2
