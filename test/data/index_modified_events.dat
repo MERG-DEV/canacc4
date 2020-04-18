@@ -1,0 +1,158 @@
+Long off 0x0102,0x0204
+91
+1
+2
+2
+4
+Trigger 2B
+64
+Trigger 4A
+16
+Done
+Long on 0x0102,0x0204
+90
+1
+2
+2
+4
+Trigger 2A
+2
+Trigger 4B
+8
+Done
+Short off 0x0102,0x0204
+99
+1
+2
+2
+4
+Trigger 1B
+128
+Done
+Short on 0x0201,0x0204
+98
+2
+1
+2
+4
+Trigger 1A
+1
+Done
+Long off 0x0201,0x0204
+91
+2
+1
+2
+4
+Done
+Long on 0x0201,0x0204
+90
+2
+1
+2
+4
+Done
+Long off 0x0102,0x0402
+91
+1
+2
+4
+2
+Trigger 2A
+2
+Trigger 3B
+4
+Done
+Long on 0x0102,0x0402
+90
+1
+2
+4
+2
+Trigger 2B
+64
+Trigger 3A
+32
+Done
+Short off 0x0304,0x0402
+99
+3
+4
+4
+2
+Trigger 2B
+64
+Trigger 3A
+32
+Done
+Short on 0x0506,0x0402
+98
+5
+6
+4
+2
+Trigger 2A
+2
+Trigger 3B
+4
+Done
+Long off 0x0201,0x0604
+91
+2
+1
+6
+4
+Done
+Long on 0x0201,0x0604
+90
+2
+1
+6
+4
+Done
+Long off 0x0102,0x0604
+91
+1
+2
+6
+4
+Done
+Long on 0x0102,0x0604
+90
+1
+2
+6
+4
+Done
+Short off 0x0708,0x0602
+99
+7
+8
+6
+2
+Done
+Short on 0x090A,0x0602
+98
+9
+10
+6
+2
+Done
+Short off 0x0B0C,0x0909
+99
+11
+12
+9
+9
+Trigger 1B
+128
+Done
+Short on 0x0D0E,0x0909
+98
+13
+14
+9
+9
+Trigger 1A
+1
+Done
