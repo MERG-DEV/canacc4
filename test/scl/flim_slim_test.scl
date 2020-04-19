@@ -30,7 +30,6 @@ begin
       RA3 <= '0'; -- Setup button pressed
       wait until RB6 == '0';
       report("flim_slim_test: SLiM setup started");
-      RA3 <= '1'; -- Setup button released
       --
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#51# then -- NNREL, CBUS release node number
@@ -53,6 +52,8 @@ begin
         report("flim_slim_test: NN release wrong CAN Id, SIDH");
         test_state := fail;
       end if;
+      --
+      RA3 <= '1'; -- Setup button released
       --
       if RB7 != '1' then
         wait until RB7 == '1'; -- Booted into SLiM
