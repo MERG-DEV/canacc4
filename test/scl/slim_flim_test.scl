@@ -81,6 +81,14 @@ begin
       --
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
+      if TXB1SIDH != 16#B1# then
+        report("slim_flim_test: Incorrect new SIDH");
+        test_state := fail;
+      end if;
+      if TXB1SIDL != 16#80# then
+        report("slim_flim_test: Incorrect new SIDL");
+        test_state := fail;
+      end if;
       if TXB1D0 != 16#50# then -- RQNN, CBUS request node number
         report("slim_flim_test: Sent wrong request");
         test_state := fail;

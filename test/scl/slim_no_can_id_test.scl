@@ -66,6 +66,14 @@ begin
       --
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
+      if TXB1SIDH != 16#BF# then
+        report("slim_no_can_id_test: Unexpected SIDH change");
+        test_state := fail;
+      end if;
+      if TXB1SIDL != 16#E0# then
+        report("slim_no_can_id_test: Unexpected SIDH change");
+        test_state := fail;
+      end if;
       if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
         report("slim_no_can_id_test: Sent wrong response");
         test_state := fail;
