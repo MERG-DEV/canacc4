@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 23286 ms;
+      wait for 24839 ms;
       report("slim_boot_with_events_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -78,6 +78,45 @@ begin
           wait until PORTC == 0;
         end if;
       end loop;
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("slim_boot_with_events_test: Request available event space");
+      RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
+      RXB0D1 <= 0;         -- NN high
+      RXB0D2 <= 0;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
+      if TXB1CON.TXREQ == '1' then
+        report("slim_boot_with_events_test: Unexpected response");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("slim_boot_with_events_test: Request number of stored events");
+      RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
+      RXB0D1 <= 0;         -- NN high
+      RXB0D2 <= 0;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
+      if TXB1CON.TXREQ == '1' then
+        report("slim_boot_with_events_test: Unexpected response");
+        test_state := fail;
+      end if;
       --
       if test_state == pass then
         report("slim_boot_with_events_test: PASS");
