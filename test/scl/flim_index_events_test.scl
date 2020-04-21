@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 10000 ms;
+      wait for 1619 ms;
       report("flim_index_events_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
