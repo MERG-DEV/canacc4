@@ -240,7 +240,7 @@ begin
           readline(event_file, file_line);
         end loop;
         --
-        wait on PORTC for 1005 ms;
+        wait until PORTC != 0 for 1005 ms;
         if PORTC != 0 then
           report("flim_clear_test: Unexpected trigger");
           test_state := fail;

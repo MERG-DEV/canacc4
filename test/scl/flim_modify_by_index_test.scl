@@ -107,7 +107,7 @@ begin
           --   test_state := fail;
           -- end if;
           -- wait until PORTC == 0;
-          wait on PORTC for 1005 ms;
+          wait until PORTC != 0 for 1005 ms;
           if PORTC != 0 then
             report("flim_modify_by_index_test: Unexpected trigger");
             test_state := fail;
@@ -117,7 +117,7 @@ begin
           readline(event_file, report_line);
         end loop;
         --
-        --wait on PORTC for 1005 ms;
+        --wait until PORTC != 0 for 1005 ms;
         --if PORTC != 0 then
         --  report("flim_modify_by_index_test: Unexpected trigger");
         --  test_state := fail;
@@ -247,7 +247,7 @@ begin
           readline(event_file, report_line);
         end loop;
         --
-        wait on PORTC for 1005 ms;
+        wait until PORTC != 0 for 1005 ms;
         if PORTC != 0 then
           report("flim_modify_by_index_test: Unexpected trigger");
           test_state := fail;
