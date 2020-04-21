@@ -23,7 +23,6 @@ begin
     variable event_hi    : integer;
     variable event_lo    : integer;
     variable ev_index    : integer;
-    variable ev_value    : integer;
     begin
       report("slim_read_events_test: START");
       test_state := pass;
