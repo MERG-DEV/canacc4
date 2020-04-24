@@ -1,0 +1,50 @@
+Short 0x0402, pair 2 & 3
+0
+0
+4
+2
+1
+6
+2
+4
+Done
+Long 0x0102,0x0402, pair 2 inverted & 3
+1
+2
+4
+2
+1
+6
+2
+2
+Done
+Long on 0x0201,0x0604, pair 2
+2
+1
+6
+4
+1
+2
+2
+0
+Done
+Long 0x0102,0x0204, pair 3 inverted
+1
+2
+2
+4
+1
+4
+2
+4
+Done
+Short 0x0204, pair 3
+0
+0
+2
+4
+1
+4
+2
+0
+Done

@@ -115,6 +115,44 @@ TMR1CN      equ 0x10000 - (4000000 / LPINTI) ;Timer 1 count (counts UP)
 
 ACC4_2_ID   equ 8
 
+#define Skip_If_Awaiting_NN      btfss Datmode,2
+#define Skip_If_Not_Awaiting_NN  btfsc Datmode,2
+#define Set_Awaiting_NN          bsf Datmode,2
+#define Unset_Awaiting_NN        bcf Datmode,2
+#define Skip_If_FLiM             btfss Mode,1
+#define Set_FLiM                 bsf Mode,1
+#define Skip_If_SLiM             btfsc Mode,1
+#define Set_SLiM                 bcf Mode,1
+#define Skip_If_Learn            btfsc LEARN_INP
+#define Skip_If_Not_Learn        btfss LEARN_INP
+#define Skip_If_Learning         btfss Datmode,4
+#define Skip_If_Not_Learning     btfsc Datmode,4
+#define Set_Learning             bsf Datmode,4
+#define Unset_Learning           bcf Datmode,4
+#define Skip_If_Reading_EVs      btfss Datmode,6
+#define Skip_If_Not_Reading_EVs  btfsc Datmode,6
+#define Set_Reading_EVs          bsf Datmode,6
+#define Unset_Reading_EVs        bcf Datmode,6
+#define Skip_If_Running          btfss Datmode,3
+#define Skip_If_Not_Running      btfsc Datmode,3
+#define Set_Running              bsf Datmode,3
+#define Unset_Running            bcf Datmode,3
+#define Skip_If_Setup            btfss Datmode,1
+#define Skip_If_Not_Setup        btfsc Datmode,1
+#define Set_Setup                bsf Datmode,1
+#define Unset_Setup              bcf Datmode,1
+#define Skip_If_Unlearn          btfsc UNLEARN_INP
+#define Skip_If_Not_Unlearn      btfss UNLEARN_INP
+#define Skip_If_Unlearning       btfss Datmode,5
+#define Skip_If_Not_Unlearning   btfsc Datmode,5
+#define Set_Unlearning           bsf Datmode,5
+#define Unset_Unlearning         bcf Datmode,5
+#define Skip_If_Valid_Frame      btfss Datmode,0
+#define Skip_If_Not_Valid_Frame  btfsc Datmode,0
+#define Set_Valid_Frame          bsf Datmode,0
+#define Unset_Valid_Frame        bcf Datmode,0
+
+
 Modstat     equ 1   ; Address in EEPROM
 
 #define  FLiM_MODE  Mode,1
@@ -485,9 +523,8 @@ rxb1int
 
 rxb0int
     bcf   PIR3,RXB0IF
-    btfsc Datmode,1     ;setup mode?
-    bra   setmode
-
+    Skip_If_Not_Setup     ;setup mode?
+    bra   setmode 
     lfsr  FSR0,Rx0con
     goto  access
 
@@ -540,7 +577,7 @@ load
     movf    Rx0dlc,F
     bz      back
 
-    bsf     Datmode,0   ;valid message frame
+    Set_Valid_Frame
 
 #ifdef AUTOID
     ; Include automatic CAN ID enumeration (may cause problems with CANCAN)
@@ -565,7 +602,8 @@ back
     bcf     RXB0CON,RXFUL ;ready for next
 
 back1
-    clrf    PIR3      ;clear all flags
+    movlw B'00000011'
+    andwf PIR3        ; Clear all but Rx interrupt flags
 
     movf    CANCON,W
     andlw   B'11110001'
@@ -581,10 +619,10 @@ back1
 
 
 isRTR
-    btfsc   Datmode,1   ;setup mode?
+    Skip_If_Not_Setup
     bra     back      ;back
 
-    btfss   FLiM_MODE      ;FLiM?
+    Skip_If_FLiM
     bra     back
 
     movlb   15
@@ -870,7 +908,7 @@ lpend
 ;*********************************************************************
 ; main waiting loop
 main_loop
-    btfsc FLiM_MODE      ;is it SLiM?
+    Skip_If_SLiM
     bra   flim_loop     ;no
 
 slim_loop             ;is SLiM
@@ -889,14 +927,14 @@ flim_loop
     btfss INTCON,TMR0IF   ;is it flash?
     bra   noflash
 
-    btfss Datmode,2
+    Skip_If_Awaiting_NN
     bra   nofl1
 
     btg   LEDY_OUT     ;flash yellow LED
 
 nofl1
     bcf   INTCON,TMR0IF
-    btfss Datmode,3   ;running mode
+    Skip_If_Running   ;running mode
     bra   noflash
 
     decfsz  Keepcnt     ;send keep alive?
@@ -919,7 +957,7 @@ wait
     decfsz  Count2
     goto  wait
 
-    btfss Datmode,2
+    Skip_If_Awaiting_NN
     bra   wait2
 
     btfss INTCON,TMR0IF   ;is it flash?
@@ -938,7 +976,7 @@ wait2
     decfsz  Count
     goto  wait
 
-    btfss FLiM_MODE      ;is it in FLiM?
+    Skip_If_FLiM      ;is it in FLiM?
     bra   go_FLiM
 
     clrf  Datmode     ;back to virgin
@@ -971,7 +1009,7 @@ wait1
     incf  EEADR
     movlw 0
     call  eewrite
-    btfss FLiM_MODE
+    Skip_If_FLiM
     bra   main5       ;FLiM setup
 
     movlw Modstat
@@ -979,7 +1017,7 @@ wait1
     movlw 0
     call  eewrite       ;mode back to SLiM
     clrf  Datmode
-    bcf   FLiM_MODE
+    Set_SLiM
     bcf   LEDY_OUT
     bsf   LEDG_OUT       ;green LED on
 
@@ -992,18 +1030,18 @@ main5
     movwf EEADR
     movlw 1
     call  eewrite       ;mode to FLiM in EEPROM
-    bsf   FLiM_MODE        ;to FLiM
+    Set_FLiM        ;to FLiM
     call  self_en       ;self enumerate routine
-    bcf   Datmode,1
+    Unset_Setup
     call  nnack       ;send request for NN
-    bsf   Datmode,2
+    Set_Awaiting_NN
     bra   main1
 
 main4
-    btfss Datmode,2
+    Skip_If_Awaiting_NN
     bra   mset2
 
-    bcf   Datmode,2
+    Unset_Awaiting_NN
     bsf   LEDY_OUT     ;LED on
     movlw OPC_NNACK
     call  nnrel
@@ -1015,29 +1053,29 @@ main4
     bra   main3
 
 mset2
-    bsf   Datmode,2
+    Set_Awaiting_NN
     call  self_en
-    bcf   Datmode,1
+    Unset_Setup
     call  nnack
     bra   main1
 
 main3
-    btfss Datmode,1   ;setup mode ?
+    Skip_If_Setup   ;setup mode ?
     bra   main1
 
-    bcf   Datmode,1   ;out of setup
-    bsf   Datmode,2   ;wait for NN
+    Unset_Setup   ;out of setup
+    Set_Awaiting_NN   ;wait for NN
     bra   main1     ;continue normally
 
 go_FLiM
-    bsf   Datmode,1   ;FLiM setup mode
+    Set_Setup   ;FLiM setup mode
     bcf   LEDG_OUT     ;green off
     bra   wait1
 
 
 ; common to FLiM and SLiM
 main1
-    btfss Datmode,0   ;any new CAN frame received?
+    Skip_If_Valid_Frame   ;any new CAN frame received?
     bra   main_loop
     bra   packet      ;yes
 
@@ -1045,10 +1083,10 @@ main1
 
 ;********************************************************************
 unset
-    btfss Datmode,4     ;Roger's mod
+    Skip_If_Learning     ;Roger's mod
     bra   main_end       ;no error message on OPC 0x95
 
-    bsf   Datmode,5
+    Set_Unlearning
     call  copyev
     bra   learn2
 
@@ -1056,7 +1094,7 @@ unset
 
 ;********************************************************************
 readEV
-    btfss Datmode,4
+    Skip_If_Learning
     bra   main_end     ;prevent error message
 
     call  copyev
@@ -1069,7 +1107,7 @@ readEV
 rdev1
     bra   noEV1
 
-    bsf   Datmode,6
+    Set_Reading_EVs
     bra   learn2
 
 
@@ -1103,7 +1141,7 @@ notNNx
 
 ;********************************************************************
 name
-    btfsc Datmode,2   ;only in setup mode
+    Skip_If_Not_Awaiting_NN   ;only in setup mode
     call  namesend
     bra   main_end
 
@@ -1126,7 +1164,7 @@ go_on_x goto go_on
 
 ;********************************************************************
 params
-    btfss Datmode,2   ;only in setup mode
+    Skip_If_Awaiting_NN   ;only in setup mode
     bra   main_end
 
     call  parasend
@@ -1199,7 +1237,7 @@ packet
     subwf Rx0d0,w
     bz    name      ;read module name
 
-    btfss FLiM_MODE      ;FLiM?
+    Skip_If_FLiM
     bra   main_end
 
     movlw OPC_SNN      ;set NN on 0x42
@@ -1234,17 +1272,9 @@ packet
     subwf Rx0d0,W
     bz    enum1
 
-    movlw OPC_NVRD      ;read NVs
-    subwf Rx0d0,W
-    bz    readNVx
-
     movlw OPC_CANID      ;force new CAN_ID
     subwf Rx0d0,W
     bz    newID1
-
-    movlw OPC_EVULN      ;set NV
-    subwf Rx0d0,W
-    bz    setNVx
 
     movlw OPC_EVLRN      ;is it set event?
     subwf Rx0d0,W
@@ -1273,6 +1303,7 @@ packet
     movlw OPC_REVAL        ;read event variables by EN#
     subwf Rx0d0,W
     bz    reval1
+
     bra   main_end       ;end of events lookup
 
 
@@ -1292,14 +1323,14 @@ reval1   goto reval
 
 ;********************************************************************
 main_end
-    bcf   Datmode,0
+    Unset_Valid_Frame
     goto  main_loop     ;loop
 
 
 
 ;********************************************************************
 reboot
-    btfss FLiM_MODE      ;FLiM?
+    Skip_If_FLiM      ;FLiM?
     bra   reboots
 
     call  thisNN
@@ -1323,7 +1354,7 @@ reboots
 
 ;********************************************************************
 para1a
-    btfss FLiM_MODE
+    Skip_If_FLiM
     bra   para1s
 
     call  thisNN      ;read parameter by index
@@ -1343,12 +1374,12 @@ para1s
 
 ;********************************************************************
 setNN
-    btfss Datmode,2   ;in NN set mode?
+    Skip_If_Awaiting_NN   ;in NN set mode?
     bra   main_end     ;no
 
     call  putNN     ;put in NN
-    bcf   Datmode,2
-    bsf   Datmode,3
+    Unset_Awaiting_NN
+    Set_Running
     movlw 10
     movwf Keepcnt     ;for keep alive
     movlw OPC_NNACK
@@ -1375,7 +1406,7 @@ newID
 
 ;********************************************************************
 sendNN
-    btfss Datmode,2   ;in NN set mode?
+    Skip_If_Awaiting_NN   ;in NN set mode?
     bra   main_end     ;no
 
     movlw OPC_RQNN      ;send back NN
@@ -1398,7 +1429,7 @@ setlrn
     sublw 0
     bnz   notNN
 
-    bsf   Datmode,4
+    Set_Learning
     bsf   LEDY_OUT     ;LED on
     bra   main_end
 
@@ -1410,9 +1441,9 @@ notlrn
     sublw 0
     bnz   notNN
 
-    bcf   Datmode,4
+    Unset_Learning
 notln1    ;leave in learn mode
-    bcf   Datmode,5
+    Unset_Unlearning
     bra   main_end
 
 
@@ -1423,7 +1454,7 @@ clrens
     sublw 0
     bnz   notNN
 
-    btfss Datmode,4
+    Skip_If_Learning
     bra   clrerr
 
     call  initevdata
@@ -1447,7 +1478,7 @@ clrerr
 
 ;********************************************************************
 chklrn
-    btfss Datmode,4   ;is in learn mode?
+    Skip_If_Learning   ;is in learn mode?
     bra   main_end     ;j if not
 
     call  copyev
@@ -1515,7 +1546,7 @@ copyev    ; copy event data to safe buffer
 ;********************************************************************
 go_on
     call  copyev
-    btfss FLiM_MODE      ;FLiM?
+    Skip_If_FLiM      ;FLiM?
     bra   go_on_s
 
 go_on1
@@ -1525,7 +1556,7 @@ go_on1
     bra   main_end     ;not here
 
 go_on_s
-    btfss LEARN_INP
+    Skip_If_Not_Learn
     bra   learn2      ;is in learn mode
     bra   go_on1
 
@@ -1587,11 +1618,11 @@ learn2
     sublw   0
     bz    isthere
 
-    btfsc FLiM_MODE      ;FLiM?
+    Skip_If_SLiM      ;FLiM?
     bra   learn3
 
-    btfss UNLEARN_INP  ;if unset and not here
-    bra   l_out2      ;do nothing else
+    Skip_If_Not_Unlearn  ;if unset and not here
+    bra   l_out2      ;do nothing else 
 
     call  learnin     ;put EN into stack and RAM
     sublw 0
@@ -1602,10 +1633,10 @@ learn2
 
     ;here if FLiM
 learn3
-    btfsc Datmode,6   ;read EV?
+    Skip_If_Not_Reading_EVs   ;read EV?
     bra   rdbak1      ;not here
 
-    btfsc Datmode,5   ;if unset and not here
+    Skip_If_Not_Unlearning   ;if unset and not here
     bra   l_out1      ;do nothing else
 
 learn4
@@ -1624,20 +1655,20 @@ lrnend
     bra   go_on1
 
 isthere
-    btfsc FLiM_MODE
+    Skip_If_SLiM
     bra   isthf     ;j if FLiM mode
 
-    btfsc UNLEARN_INP  ;is it here and unlearn...
+    Skip_If_Unlearn  ;is it here and unlearn...
     bra   dolrn
 
     call  unlearn     ;...goto unlearn
     bra   l_out1
 
 isthf
-    btfsc Datmode, 6    ;is it read back
+    Skip_If_Not_Reading_EVs    ;is it read back
     bra   rdbak
 
-    btfss Datmode,5   ;FLiM unlearn?
+    Skip_If_Unlearning   ;FLiM unlearn?
     bra   dolrn
 
     call  unlearn
@@ -1669,12 +1700,12 @@ rdbak
 
 
 ;********************************************************************
-l_out   
-    bcf   Datmode,4
-l_out1  
-    bcf   Datmode,6
-l_out2  
-    bcf   Datmode,0
+l_out
+    Unset_Learning
+l_out1
+    Unset_Reading_EVs
+l_out2
+    Unset_Valid_Frame
     clrf  PCLATH
     goto  main_end
 
@@ -1808,27 +1839,27 @@ mskloop
     bra   slimset     ;wait for setup PB
 
 setid
-    bsf   FLiM_MODE      ;flag FLiM
+    Set_FLiM      ;flag FLiM
     call  newid_f     ;put ID into Tx1buf, TXB2 and ID number store
 
 seten_f
+    Unset_Valid_Frame
+    call  timload     ;load stuff
     movlw B'11000000'
     movwf INTCON      ;enable interrupts
     bsf   LEDY_OUT   ;Yellow LED on.
     bcf   LEDG_OUT
-    bcf   Datmode,0
-    call  timload     ;load stuff
     goto  main_loop
 
 
 slimset
-    bcf   FLiM_MODE
+    Set_SLiM
     clrf  NN_temph
     clrf  NN_templ
     ;test for clear all events
-    btfss LEARN_INP   ;ignore the clear if learn is set
+    Skip_If_Not_Learn   ;ignore the clear if learn is set
     goto  seten
-    btfss UNLEARN_INP
+    Skip_If_Not_Unlearn
     call  initevdata      ;clear all events if unlearn is set during power up
 
 seten
@@ -2254,7 +2285,7 @@ pidxerr
 
 getflags    ; create flags byte
     movlw PF_CONSUMER
-    btfsc FLiM_MODE
+    Skip_If_SLiM
     iorlw 4   ; set bit 2
     movwf Temp
     bsf   Temp,3    ;set bit 3, we are bootable
@@ -2614,7 +2645,7 @@ self_en
     movff FSR1H,Fsr_tmp1He
     movlw B'11000000'
     movwf INTCON      ;start interrupts if not already started
-    bsf   Datmode,1   ;set to 'setup' mode
+    Set_Setup   ;set to 'setup' mode
     clrf  Tx1con      ;CAN ID enumeration. Send RTR frame, start timer
     movlw 14
     movwf Count
@@ -2662,6 +2693,7 @@ here1
     bnz   here
     movlw 8
     addwf IDcount,F
+
     incf  FSR1L
     bra   here1
 

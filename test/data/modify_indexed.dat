@@ -1,0 +1,50 @@
+Long 0x0102,0x0204, pair 2 & 4
+1
+2
+2
+4
+4
+1
+A
+Trigger 2A
+2
+Trigger 4A
+16
+Done
+Short 0x0204, pair 1
+0
+0
+2
+4
+5
+1
+1
+Trigger 1A
+1
+Done
+Long on 0x0201,0x0604 becomes short 0x0909, pair 1
+0
+0
+9
+9
+3
+1
+1
+2
+0
+Trigger 1A
+1
+Done
+Long 0x0102,0x0204, invert pair 4
+1
+2
+2
+4
+4
+2
+8
+Trigger 2A
+2
+Trigger 4B
+8
+Done
