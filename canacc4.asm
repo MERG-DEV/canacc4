@@ -1113,7 +1113,6 @@ rdev1
 ;********************************************************************
 evns1
     call  thisNN        ;read event numbers
-    sublw 0
     bnz   notNNx
 
     call  evnsend
@@ -1124,7 +1123,6 @@ evns1
 ;********************************************************************
 reval
     call  thisNN        ;read event numbers
-    sublw 0
     bnz   notNNx
 
     movff Rx0d3,ENidx
@@ -1170,7 +1168,6 @@ params
 
 setNV
     call  thisNN
-    sublw 0
     bnz   notNNx      ;not this node
 
     call  putNV
@@ -1332,7 +1329,6 @@ reboot
     bra   reboots
 
     call  thisNN
-    sublw 0
     bnz   notNN
 
 reboot1
@@ -1352,22 +1348,11 @@ reboots
 
 ;********************************************************************
 para1a
-    Skip_If_FLiM
-    bra   para1s
-
-    call  thisNN      ;read parameter by index
-    sublw 0
+    call  thisNN    ; Check message addressed to this node
     bnz   notNN
 
     call  para1rd
     bra   main_end
-
-para1s
-    movf  Rx0d1,w
-    addwf Rx0d2,w
-    bnz   notNN
-
-    call  para1rd
 
 
 ;********************************************************************
@@ -1391,7 +1376,6 @@ setNN
 ;********************************************************************
 newID
     call  thisNN
-    sublw 0
     bnz   notNN
 
     movff Rx0d3,IDcount
@@ -1424,7 +1408,6 @@ rden goto rden1
 ;********************************************************************
 setlrn
     call  thisNN
-    sublw 0
     bnz   notNN
 
     Set_Learning
@@ -1449,7 +1432,6 @@ notln1    ;leave in learn mode
 ;********************************************************************
 clrens
     call  thisNN
-    sublw 0
     bnz   notNN
 
     Skip_If_Learning
@@ -1501,7 +1483,6 @@ noEV1
 ;********************************************************************
 readENi
     call  thisNN      ;read event by index
-    sublw 0
     bnz   notNN
 
     call  enrdi
@@ -1512,7 +1493,6 @@ readENi
 ;********************************************************************
 enum
     call  thisNN
-    sublw 0
     bnz   notNN1
 
     call  self_en
@@ -1570,7 +1550,6 @@ paraerr
 ;********************************************************************
 readNV
     call  thisNN
-    sublw 0
     bnz   notNN     ;not this node
 
     call  getNV
@@ -1581,7 +1560,6 @@ readNV
 ;********************************************************************
 readEN
     call  thisNN
-    sublw 0
     bnz   notNN
 
     call  enread
@@ -1602,7 +1580,6 @@ do_it
 ;********************************************************************
 rden1
     call  thisNN
-    sublw 0
     bnz   notNN
 
     call  rdFreeSp
@@ -2170,18 +2147,14 @@ new_1
 ;****************************************************************************
 ;   check if command is for this node
 thisNN
-    movf  NN_temph,W
+    movf  NN_temph,W        ; Compare address high byte
     subwf Rx0d1,W
-    bnz   not_NN
+    btfss STATUS,Z          ; Skip if match ...
+    return                  ; ... else return with non zero status
 
-    movf  NN_templ,W
+    movf  NN_templ,W        ; Compare address low byte
     subwf Rx0d2,W
-    bnz   not_NN
-
-    retlw   0     ;returns 0 if match
-
-not_NN
-    retlw 1
+    return                  ; Zero status on return indicates match
 
 
 
