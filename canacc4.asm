@@ -155,8 +155,6 @@ ACC4_2_ID   equ 8
 
 Modstat     equ 1   ; Address in EEPROM
 
-#define  FLiM_MODE  Mode,1
-
 #define HIGH_INT_VECT 0x0808
 #define LOW_INT_VECT  0x0818
 #define RESET_VECT    0x0800
@@ -581,7 +579,7 @@ load
 
 #ifdef AUTOID
     ; Include automatic CAN ID enumeration (may cause problems with CANCAN)
-    btfss   FLiM_MODE       ;FLim Mode?
+    Skip_If_FLiM       ;FLim Mode?
     bra     back        ; dont do Can ID check if SLiM mode
 
     ;check for ID conflict
