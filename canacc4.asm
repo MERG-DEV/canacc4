@@ -289,9 +289,9 @@ Modstat     equ 1   ; Address in EEPROM
 
   CBLOCK  0
 
-  W_tempL
-  St_tempL
-  Bsr_tempL
+  LPInt_W
+  LPInt_STATUS
+  LPInt_BSR
 
   HPInt_FSR1L
   HPInt_FSR1H
@@ -486,12 +486,13 @@ cksum
 ;*******************************************************************
 ;   high priority interrupt. Used for CAN receive and transmit error.
 hpint
-    movff CANSTAT,TempCANSTAT
+    movff   CANSTAT,TempCANSTAT
 
-    movff FSR2L,HPInt_FSR2L
-    movff FSR2H,HPInt_FSR2H
-    movff FSR1L,HPInt_FSR1L
-    movff FSR1H,HPInt_FSR1H
+    ; Save registers to protect during interrupt
+    movff   FSR2L,HPInt_FSR2L
+    movff   FSR2H,HPInt_FSR2H
+    movff   FSR1L,HPInt_FSR1L
+    movff   FSR1H,HPInt_FSR1H
 
     movlw HIGH cstatab
     movwf PCLATH
@@ -516,13 +517,20 @@ errint
     btfss   TXB1CON,TXLARB
     bra     errbak        ;not lost arb.
 
+    bcf     TXB1CON,TXREQ   ;try again
+
     movf    Latcount,F      ;is it already at zero?
     bz      errbak
 
     decfsz  Latcount,F
-    bra     errbak
+    bra     txagain
 
-    bcf     TXB1CON,TXREQ
+    movlw   B'11000000'
+    andwf   TXB1SIDH,W      ; Check priority
+    bz      errbak
+
+    movlw   10
+    movwf   Latcount
     movlw   B'00111111'
     andwf   TXB1SIDH,F      ;change priority
 
@@ -592,6 +600,7 @@ back
     movlw B'00000011'
     andwf PIR3        ; Clear all but Rx interrupt flags
 
+    ; Restore registers to protected during interrupt
     movff   HPInt_FSR1L,FSR1L
     movff   HPInt_FSR1H,FSR1H
     movff   HPInt_FSR2L,FSR2L
@@ -663,9 +672,10 @@ enum_3
 ;**************************************************************
 ;   low priority interrupt. Used by output timer overflow. Every 10 millisecs.
 lpint
-    movwf   W_tempL       ;used for output timers
-    movff   STATUS,St_tempL
-    movff   BSR,Bsr_tempL
+    ; Save registers to protect during interrupt
+    movwf   LPInt_W
+    movff   STATUS,LPInt_STATUS
+    movff   BSR,LPInt_BSR
 
     movlw   LOW TMR1CN      ;Timer 1 lo byte. (adjust if needed)
     movwf   TMR1L       ;reset timer 1
@@ -878,9 +888,10 @@ trig
     movwf   OpCdly      ; Set charge delay
 
 lpend
-    movff   Bsr_tempL,BSR
-    movf    W_tempL,W
-    movff   St_tempL,STATUS
+    ; Restore registers to protected during interrupt
+    movff   LPInt_BSR,BSR
+    movf    LPInt_W,W
+    movff   LPInt_STATUS,STATUS
 
     retfie
 
