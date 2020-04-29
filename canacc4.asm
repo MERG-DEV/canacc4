@@ -179,11 +179,10 @@ Modstat     equ 1   ; Address in EEPROM
   PCH_tempH   ;save PCH in hpint
   PCH_tempL   ;save PCH in lpint
 
-  Fsr_temp0L
-  Fsr_temp0H
-  Fsr_temp1L
-  Fsr_temp1H
-  Fsr_temp2L
+  Saved_FSR0L
+  Saved_FSR0H
+  Saved_FSR1L
+  Saved_FSR1H
 
   TempCANCON
   TempCANSTAT
@@ -222,8 +221,7 @@ Modstat     equ 1   ; Address in EEPROM
   Dlc       ;data length for CAN TX
   OpcCmd      ;copy of Rx0d0
 
-  Rx0con      ;start of receive packet 0
-  Rx0sidh
+  Rx0sidh      ;start of receive packet 0
   Rx0sidl
   Rx0eidh
   Rx0eidl
@@ -488,13 +486,10 @@ cksum
 ;*******************************************************************
 ;   high priority interrupt. Used for CAN receive and transmit error.
 hpint
-    movff CANCON,TempCANCON
     movff CANSTAT,TempCANSTAT
 
-    movff FSR0L,Fsr_temp0L    ;save FSR0
-    movff FSR0H,Fsr_temp0H
-    movff FSR1L,Fsr_temp1L    ;save FSR1
-    movff FSR1H,Fsr_temp1H
+    movff FSR1L,Saved_FSR1L    ;save FSR1
+    movff FSR1H,Saved_FSR1H
 
     movlw HIGH cstatab
     movwf PCLATH
@@ -511,20 +506,6 @@ cstatab
     bra   rxb1int     ;only receive interrupts used
     bra   rxb0int
     bra   back
-
-
-rxb1int
-    bcf   PIR3,RXB1IF       ; uses RB0 to RB1 rollover so may never use this
-                            ; may need bank switch?
-    lfsr  FSR0,Rx0con
-    goto  access
-
-rxb0int
-    bcf   PIR3,RXB0IF
-    Skip_If_Not_Setup     ;setup mode?
-    bra   setmode
-    lfsr  FSR0,Rx0con
-    goto  access
 
 
     ;error routine here. Only acts on lost arbitration
@@ -552,29 +533,37 @@ errbak
     bcf     RXB0CON,RXFUL   ;ready for next
     bcf     COMSTAT,RXB0OVFL  ;clear overflow flags if set
     bcf     COMSTAT,RXB1OVFL
-    bra     back1
+    bra     back
+
+rxb1int
+    bcf     PIR3,RXB1IF
+    lfsr    FSR1,RXB1D7     ; Source for received buffer copy
+    goto    access
+
+rxb0int
+    bcf     PIR3,RXB0IF
+    lfsr    FSR1,RXB0D7     ; Source for received buffer copy
 
 access
-    movf    CANCON,W
-    andlw   B'11110001'
-    movwf   CANCON
-    movf    TempCANSTAT,W
-    andlw   B'00001110'
-    iorwf   CANCON
-    lfsr    FSR1,RXB0CON  ;this is switched bank
-
+    ; Copy relevant Rx buffer into working RAM
+    lfsr    FSR2,Rx0d7      ; Destination for received buffer copy
 load
-    movff   POSTINC1,POSTINC0
-    movlw   0x6E      ;end of access buffer lo byte
-    cpfseq  FSR1L
-    bra     load
+    movff   POSTDEC1,POSTDEC2
+    movlw   Rx0sidh         ; Test for end of Rx buffer in access bank ...
+    cpfseq  FSR2L           ; ... skip if reached ...
+    bra     load            ; ... else keep copying
 
-    btfsc   Rx0dlc,RXRTR    ;is it RTR?
+    movff   POSTDEC1,INDF2  ; Copy last byte
+    bcf     INDF1,RXFUL     ; Mark Rx buffer available for use
+
+    btfsc   Rx0dlc,RXRTR     ; Skip if not received an RTR
     bra     isRTR
 
-    movf    Rx0dlc,F
-    bz      back
+    Skip_If_Not_Setup
+    bra     setmode
 
+    movf    Rx0dlc,F        ; Test length of received data ...
+    btfss   STATUS,Z        ; ... do nothing if zero
     Set_Valid_Frame
 
 #ifdef AUTOID
@@ -597,21 +586,11 @@ load
 #endif
 
 back
-    bcf     RXB0CON,RXFUL ;ready for next
-
-back1
     movlw B'00000011'
     andwf PIR3        ; Clear all but Rx interrupt flags
 
-    movf    CANCON,W
-    andlw   B'11110001'
-    iorwf   TempCANCON,W
-    movwf   CANCON
-
-    movff   Fsr_temp0L,FSR0L    ;recover FSR0
-    movff   Fsr_temp0H,FSR0H
-    movff   Fsr_temp1L,FSR1L    ;recover FSR1
-    movff   Fsr_temp1H,FSR1H
+    movff   Saved_FSR1L,FSR1L    ;recover FSR1
+    movff   Saved_FSR1H,FSR1H
 
     retfie  1       ;use shadow registers
 
@@ -625,7 +604,6 @@ isRTR
 
     movlb   15
 
-
 isRTR1
     btfsc   TXB2CON,TXREQ ;send ID frame - preloaded in TXB2
     bra     isRTR1
@@ -636,14 +614,14 @@ isRTR1
 
 
 setmode
-    tstfsz  RXB0DLC
+    tstfsz  Rx0dlc
     bra     back        ;only zero length frames for setup
 
-    swapf   RXB0SIDH,W      ;get ID into one byte
+    swapf   Rx0sidh,W      ;get ID into one byte
     rrcf    WREG
     andlw   B'01111000'     ;mask
     movwf   Temp
-    swapf   RXB0SIDL,W
+    swapf   Rx0sidl,W
     rrncf   WREG
     andlw   B'00000111'
     iorwf   Temp,W
