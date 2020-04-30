@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 880 ms;
+      wait for 890 ms;
       report("slim_tx_arbitration_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -15,7 +15,11 @@ begin
   slim_tx_arbitration_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
+    file     sidh_file  : text;
+    variable file_stat  : file_open_status;
+    variable sidh_line  : string;
     variable tx_count   : integer;
+    variable sidh_val   : integer;
     begin
       report("slim_tx_arbitration_test: START");
       test_state := pass;
@@ -34,45 +38,40 @@ begin
       wait until INTCON < 128;
       wait until INTCON > 127;
       --
-      tx_count := 0;
-      while tx_count < 10 loop
-        if TXB1CON.TXREQ == '0' then
-          wait until TXB1CON.TXREQ == '1';
-        end if;
-        if TXB1SIDH != 16#B0# then
-          report("slim_tx_arbitration_test: Wrong SIDH");
-          test_state := fail;
-        end if;
-        tx_count := tx_count + 1;
-        TXB1CON.TXLARB <= '1';
-        CANSTAT <= 16#02#;
-        PIR3.ERRIF <= '1';
-        wait until INTCON < 128;
-        wait until INTCON > 127;
-      end loop;
-      --
-      tx_count := 0;
-      while tx_count < 10 loop
-        if TXB1CON.TXREQ == '0' then
-          wait until TXB1CON.TXREQ == '1';
-        end if;
-        if TXB1SIDH != 16#30# then
-          report("slim_tx_arbitration_test: Wrong SIDH priority change");
-          test_state := fail;
-        end if;
-        tx_count := tx_count + 1;
-        TXB1CON.TXLARB <= '1';
-        CANSTAT <= 16#02#;
-        PIR3.ERRIF <= '1';
-        wait until INTCON < 128;
-        wait until INTCON > 127;
-      end loop;
-      --
-      wait until TXB1CON.TXREQ == '1' for 2 ms;
-      if TXB1CON.TXREQ == '1' then
-        report("slim_tx_arbitration_test: Unexpected transmit");
-        test_state := fail;
+      file_open(file_stat, sidh_file, "./data/slim_sidh.dat", read_mode);
+      if file_stat != open_ok then
+        report("flim_unteach_test: Failed to open SIDH data file");
+        report("flim_unteach_test: FAIL");
+        PC <= 0;
+        wait;
       end if;
+      --
+      while endfile(sidh_file) == false loop
+        readline(sidh_file, sidh_line);
+        report(sidh_line);
+        readline(sidh_file, sidh_line);
+        read(sidh_line, tx_count);
+        readline(sidh_file, sidh_line);
+        read(sidh_line, sidh_val);
+        --
+        while tx_count > 0 loop
+          if TXB1CON.TXREQ == '0' then
+            wait until TXB1CON.TXREQ == '1';
+          end if;
+          if TXB1SIDH == sidh_val then
+            --
+          else
+            report("slim_tx_arbitration_test: Wrong SIDH");
+            test_state := fail;
+          end if;
+          TXB1CON.TXLARB <= '1';
+          CANSTAT <= 16#02#;
+          PIR3.ERRIF <= '1';
+          wait until INTCON < 128;
+          wait until INTCON > 127;
+          tx_count := tx_count - 1;
+        end loop;
+      end loop;
       --
       if test_state == pass then
         report("slim_tx_arbitration_test: PASS");
