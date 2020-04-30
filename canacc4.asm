@@ -517,25 +517,11 @@ errint
     btfss   TXB1CON,TXLARB
     bra     errbak        ;not lost arb.
 
-    bcf     TXB1CON,TXREQ   ;try again
-
-    movf    Latcount,F      ;is it already at zero?
-    bz      errbak
-
     decfsz  Latcount,F
-    bra     txagain
+    bra     errbak
 
-    movlw   B'11000000'
-    andwf   TXB1SIDH,W      ; Check priority
-    bz      errbak
-
-    movlw   10
-    movwf   Latcount
     movlw   B'00111111'
     andwf   TXB1SIDH,F      ;change priority
-
-txagain
-    bsf     TXB1CON,TXREQ   ;try again
 
 errbak
     bcf     RXB1CON,RXFUL
