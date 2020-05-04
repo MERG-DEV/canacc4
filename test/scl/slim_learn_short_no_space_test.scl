@@ -89,6 +89,12 @@ begin
         test_state := fail;
       end if;
       --
+      -- FIXME yellow LED should flash
+      --if RB6 == '0' then
+      --  wait until RB6 == '1';
+      --end if;
+      --wait until RB6 == '1';
+      --
       if test_state == pass then
         report("slim_learn_short_no_space_test: PASS");
       else
