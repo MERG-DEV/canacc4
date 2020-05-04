@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 21088 ms;
+      wait for 29375 ms;
       report("slim_flim_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -207,7 +207,12 @@ begin
         test_state := fail;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      wait until RB6 == '1';
+      wait until RB6 == '0';
+      wait until RB6 == '1';
+      wait until RB6 == '0';
+      report("slim_flim_test: Yellow LED (FLiM) flashing");
+      --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
@@ -243,7 +248,7 @@ begin
         test_state := fail;
       end if;
       --
-      wait until RB6 == '1'; -- Booted into FLiM
+      wait until RB6 == '1';
       report("slim_flim_test: Yellow LED (FLiM) on");
       --
       if RB7 == '1' then
