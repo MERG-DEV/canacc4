@@ -48,11 +48,11 @@ begin
         report(report_line);
         --
         readline(event_file, trigger_line);
-        read(trigger_line, RB0);
+        read(trigger_line, RB0); -- Sel 0, LSB
         readline(event_file, trigger_line);
-        read(trigger_line, RB1);
+        read(trigger_line, RB1); -- Sel 1, MSB
         readline(event_file, trigger_line);
-        read(trigger_line, RB5);
+        read(trigger_line, RB5); -- Polarity
         
         read(event_file, RXB0D0, 1);
         read(event_file, RXB0D1, 1);
