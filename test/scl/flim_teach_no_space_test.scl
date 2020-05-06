@@ -6,7 +6,7 @@ begin
   test_timeout: process is
     begin
       wait for 7982 ms;
-      report("flim_teach_long_no_space_test: TIMEOUT");
+      report("flim_teach_no_space_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
@@ -59,15 +59,15 @@ begin
         TXB1CON.TXREQ <= '0';
         wait until TXB1CON.TXREQ == '1';
         if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
-          report("flim_teach_test: Sent wrong response");
+          report("flim_teach_no_space_test: Sent wrong response");
           test_state := fail;
         end if;
         if TXB1D1 != 4 then
-          report("flim_teach_test: Sent wrong Node Number (high)");
+          report("flim_teach_no_space_test: Sent wrong Node Number (high)");
           test_state := fail;
         end if;
         if TXB1D2 != 2 then
-          report("flim_teach_test: Sent wrong Node Number (low)");
+          report("flim_teach_no_space_test: Sent wrong Node Number (low)");
           test_state := fail;
         end if;
         --
@@ -92,15 +92,15 @@ begin
         TXB1CON.TXREQ <= '0';
         wait until TXB1CON.TXREQ == '1';
         if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
-          report("flim_teach_test: Sent wrong response");
+          report("flim_teach_no_space_test: Sent wrong response");
           test_state := fail;
         end if;
         if TXB1D1 != 4 then
-          report("flim_teach_test: Sent wrong Node Number (high)");
+          report("flim_teach_no_space_test: Sent wrong Node Number (high)");
           test_state := fail;
         end if;
         if TXB1D2 != 2 then
-          report("flim_teach_test: Sent wrong Node Number (low)");
+          report("flim_teach_no_space_test: Sent wrong Node Number (low)");
           test_state := fail;
         end if;
         --
