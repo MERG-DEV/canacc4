@@ -78,7 +78,7 @@ begin
         readline(data_file, file_line);
         read(file_line, param_value);
         --
-        RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
+        RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
         RXB0D1 <= 0;           -- NN high
         RXB0D2 <= 0;           -- NN low
         RXB0D3 <= param_index;
