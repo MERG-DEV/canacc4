@@ -89,7 +89,7 @@ begin
       RXB0D2 <= 2;         -- NN low
       RXB0D3 <= 4;
       RXB0D4 <= 2;
-      RXB0D5 <= 8;         -- Event variable index, out of range
+      RXB0D5 <= 3;         -- Event variable index, out of range
       RXB0D6 <= 4;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
