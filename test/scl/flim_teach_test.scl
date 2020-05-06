@@ -47,7 +47,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_teach_test: EV index to low long 0x0102,0x0402");
+      report("flim_teach_test: EV index too low long 0x0102,0x0402");
       RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -83,7 +83,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_teach_test: EV index to high long 0x0102,0x0402");
+      report("flim_teach_test: EV index too high long 0x0102,0x0402");
       RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
