@@ -45,7 +45,7 @@ begin
       end if;
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      RXB0D0 <= 16#57#; -- QNN, CBUS Read events request
+      RXB0D0 <= 16#57#; -- NERD, CBUS Read events request
       RXB0D1 <= 4;      -- NN high
       RXB0D2 <= 2;      -- NN low
       RXB0CON.RXFUL <= '1';
