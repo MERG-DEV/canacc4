@@ -122,7 +122,7 @@ begin
         end if;
         readline(event_file, report_line);
         report(report_line);
-        read(event_file, RXB0D0, 1);
+        read(event_file, RXB0D0, 1); -- Ignore event type from data file
         RXB0D0 <= 16#95#;            -- EVULN, CBUS unlearn event
         read(event_file, RXB0D1, 1);
         read(event_file, RXB0D2, 1);
@@ -164,6 +164,41 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_unteach_test: Do not unlearn event");
+      RXB0D0 <= 16#95#;            -- EVULN, CBUS unlearn event
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 2;
+      RXB0D4 <= 4;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      -- FIXME SHould reject request as not in learn mode
+      --TXB1CON.TXREQ <= '0';
+      --wait until TXB1CON.TXREQ == '1';
+      --if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
+      --  report("flim_unteach_test: Sent wrong response");
+      --  test_state := fail;
+      --end if;
+      --if TXB1D1 != 4 then
+      --  report("flim_unteach_test: Sent wrong Node Number (high)");
+      --  test_state := fail;
+      --end if;
+      --if TXB1D2 != 2 then
+      --  report("flim_unteach_test: Sent wrong Node Number (low)");
+      --  test_state := fail;
+      --end if;
+      --if TXB1D3 != 2 then -- Not in learn event mode
+      --  report("flim_unteach_test: Sent wrong error number");
+      --  test_state := fail;
+      --end if;
       --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       if RXB0CON.RXFUL != '0' then

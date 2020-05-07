@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 16932 ms;
+      wait for 16934 ms;
       report("flim_clear_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -28,6 +28,38 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("flim_clear_test: Yellow LED (FLiM) on");
       --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_clear_test: Do not clear events");
+      RXB0D0 <= 16#55#;    -- NNCLR, CBUS clear events
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
+        report("flim_teach_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_teach_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_teach_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 2 then -- Not in learn event mode
+        report("flim_teach_test: Sent wrong error number");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
