@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 1369 ms;
+      wait for 1374 ms;
       report("flim_nv_write_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -138,7 +138,7 @@ begin
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      -- FIXME Not WRACK
+      -- FIXME No WRACK
       --TXB1CON.TXREQ <= '0';
       --wait until TXB1CON.TXREQ == '1';
       --if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
@@ -222,7 +222,77 @@ begin
         test_state := fail;
       end if;
       --
-      if test_state == pass then
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_nv_write_test: Node variable index too low");
+      RXB0D0 <= 16#96#;      -- NVSET, CBUS set node variable by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= 5;           -- Output 3A fire time
+      RXB0D4 <= 0;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      -- FIXME No CMDERR
+      --TXB1CON.TXREQ <= '0';
+      --wait until TXB1CON.TXREQ == '1';
+      --if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
+      --  report("flim_param_test: Sent wrong response");
+      --  test_state := fail;
+      --end if;
+      --if TXB1D1 != 4 then
+      --  report("flim_param_test: Sent wrong Node Number (high)");
+      --  test_state := fail;
+      --end if;
+      --if TXB1D2 != 2 then
+      --  report("flim_param_test: Sent wrong Node Number (low)");
+      --  test_state := fail;
+      --end if;
+      --if TXB1D3 != 10 then -- Invalid node variable index
+      --  report("flim_param_test: Sent wrong error number");
+      --  test_state := fail;
+      --end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_nv_write_test: Node variable index too high");
+      RXB0D0 <= 16#96#;      -- NVSET, CBUS set node variable by index
+      RXB0D1 <= 4;           -- NN high
+      RXB0D2 <= 2;           -- NN low
+      RXB0D3 <= 5;           -- Output 3A fire time
+      RXB0D4 <= 15;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      -- FIXME No CMDERR
+      --TXB1CON.TXREQ <= '0';
+      --wait until TXB1CON.TXREQ == '1';
+      --if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
+      --  report("flim_param_test: Sent wrong response");
+      --  test_state := fail;
+      --end if;
+      --if TXB1D1 != 4 then
+      --  report("flim_param_test: Sent wrong Node Number (high)");
+      --  test_state := fail;
+      --end if;
+      --if TXB1D2 != 2 then
+      --  report("flim_param_test: Sent wrong Node Number (low)");
+      --  test_state := fail;
+      --end if;
+      --if TXB1D3 != 10 then -- Invalid node variable index
+      --  report("flim_param_test: Sent wrong error number");
+      --  test_state := fail;
+      --end if;
+      --
+     if test_state == pass then
         report("flim_nv_write_test: PASS");
       else
         report("flim_nv_write_test: FAIL");

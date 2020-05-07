@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 36 ms;
+      wait for 37 ms;
       report("flim_nv_read_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -122,6 +122,44 @@ begin
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
       RXB0D3 <= nv_index;  -- Node Variable index
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#97# then -- NVANS, CBUS node variable response
+        report("flim_nv_read_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_nv_read_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_nv_read_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 0 then -- Invalid node variable index
+        report("flim_nv_read_test: Failed to send invalid node variable index");
+        test_state := fail;
+      end if;
+      if TXB1D4 != 0 then -- Invalid node variable index
+        report("flim_nv_read_test: Failed to send invalid node variable value");
+        test_state := fail;
+      end if;
+      --
+      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("flim_nv_read_test: Test read node variable zero");
+      nv_index := nv_index + 1;
+      RXB0D0 <= 16#71#;  -- NVRD, CBUS read node variable by index
+      RXB0D1 <= 4;       -- NN high
+      RXB0D2 <= 2;       -- NN low
+      RXB0D3 <= 0;       -- Node Variable index
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;

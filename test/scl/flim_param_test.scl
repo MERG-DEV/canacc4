@@ -140,7 +140,7 @@ begin
         report("flim_param_test: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
-      if TXB1D3 != 10 then -- Invalid parameter index
+      if TXB1D3 != 9 then -- Invalid parameter index
         report("flim_param_test: Sent wrong error number");
         test_state := fail;
       end if;
