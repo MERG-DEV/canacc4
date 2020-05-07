@@ -5,7 +5,7 @@ testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 153995 ms;
+      wait for 333 ms;
       report("slim_learn_long_no_space_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -15,7 +15,6 @@ begin
   slim_learn_long_no_space_test: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
-    variable event_low  : integer;
     begin
       report("slim_learn_long_no_space_test: START");
       test_state := pass;
@@ -31,31 +30,24 @@ begin
       RB1 <= '1'; -- Sel 1 off
       RB5 <= '1'; -- Polarity normal, On event => A, Off event => B
       --
-      event_low := 0;
-      while event_low < 128 loop
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
-        RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-        RXB0D1 <= 1;         -- NN high
-        RXB0D2 <= 2;         -- NN low
-        RXB0D3 <= 9;
-        RXB0D4 <= event_low;
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
-        --
-        wait until PORTC != 0;
-        wait until PORTC == 0;
-        --
-        if TXB1CON.TXREQ == '1' then
-          report("slim_learn_long_no_space_test: Unexpected message");
-          test_state := fail;
-        end if;
-        --
-        event_low := event_low + 1;
-      end loop;
+      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
+      RXB0D1 <= 1;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0D3 <= 1;
+      RXB0D4 <= 128;
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      wait until PORTC != 0;
+      wait until PORTC == 0;
+      --
+      if TXB1CON.TXREQ == '1' then
+        report("slim_learn_long_no_space_test: Unexpected message");
+        test_state := fail;
+      end if;
+      --
       report("slim_learn_long_no_space_test: Learnt 128 events");
       --
       if RXB0CON.RXFUL != '0' then
@@ -64,8 +56,8 @@ begin
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 9;
-      RXB0D4 <= event_low;
+      RXB0D3 <= 2;
+      RXB0D4 <= 129;
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
