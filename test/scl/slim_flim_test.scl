@@ -1,11 +1,13 @@
 configuration for "PIC18F2480" is
+  shared label    main_loop;
+  shared label    setup;
 end configuration;
 --
 testbench for "PIC18F2480" is
 begin
   test_timeout: process is
     begin
-      wait for 29375 ms;
+      wait for 29376 ms;
       report("slim_flim_test: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
@@ -241,10 +243,51 @@ begin
       end if;
       --
       wait until RB6 == '1';
-      report("slim_flim_test: Yellow LED (FLiM) on");
+      report("slim_flim_test: Yellow LED (FLiM) now on");
       --
       if RB7 == '1' then
         report("slim_flim_test: Green LED (SLiM) on");
+        test_state := fail;
+      end if;
+      --
+      report("slim_flim_test: Restart");
+      wait until PC == main_loop;
+      PC <= setup;
+      --
+      if RB6 == '1' then
+        wait until RB6 == '0';
+      end if;
+      wait until RB6 == '1';
+      report("slim_flim_test: Yellow LED (FLiM) back on");
+      --
+      if RXB0CON.RXFUL != '0' then
+        wait until RXB0CON.RXFUL == '0';
+      end if;
+      report("slim_flim_test: Check Node Number and event space after restart");
+      RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
+      RXB0D1 <= 4;         -- NN high
+      RXB0D2 <= 2;         -- NN low
+      RXB0CON.RXFUL <= '1';
+      RXB0DLC.DLC3 <= '1';
+      CANSTAT <= 16#0C#;
+      PIR3.RXB0IF <= '1';
+      --
+      TXB1CON.TXREQ <= '0';
+      wait until TXB1CON.TXREQ == '1';
+      if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
+        report("flim_boot_test: Sent wrong response");
+        test_state := fail;
+      end if;
+      if TXB1D1 != 4 then
+        report("flim_boot_test: Sent wrong Node Number (high)");
+        test_state := fail;
+      end if;
+      if TXB1D2 != 2 then
+        report("flim_boot_test: Sent wrong Node Number (low)");
+        test_state := fail;
+      end if;
+      if TXB1D3 != 123 then
+        report("flim_boot_test: Sent wrong available event space");
         test_state := fail;
       end if;
       --
