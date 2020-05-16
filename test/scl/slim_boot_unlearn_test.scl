@@ -39,6 +39,7 @@ begin
         wait;
       end if;
       --
+      report("slim_boot_unlearn_test: Check events forgotten");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';

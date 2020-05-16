@@ -25,6 +25,7 @@ begin
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_nv_read_test: Green LED (SLiM) on");
       --
       file_open(file_stat, data_file, "./data/nvs.dat", read_mode);
       if file_stat != open_ok then
@@ -34,6 +35,7 @@ begin
         wait;
       end if;
       --
+      report("slim_nv_read_test: Read Node Variables");
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         if RXB0CON.RXFUL != '0' then
@@ -66,7 +68,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_nv_read_test: Test past number of node variables");
+      report("slim_nv_read_test: Test past number of Node Variables");
       nv_index := nv_index + 1;
       RXB0D0 <= 16#71#;    -- NVRD, CBUS read node variable by index
       RXB0D1 <= 0;         -- NN high

@@ -26,6 +26,7 @@ begin
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_param_test: Green LED (SLiM) on");
       --
       file_open(file_stat, data_file, "./data/slim_ignore.dat", read_mode);
       if file_stat != open_ok then
@@ -35,7 +36,7 @@ begin
         wait;
       end if;
       --
-      report("slim_param_test: Ignore other node numbers");
+      report("slim_param_test: Ignore requests not addressed to this node");
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         readline(data_file, file_line);
@@ -67,6 +68,7 @@ begin
         wait;
       end if;
       --
+      report("slim_param_test: Read Node Parameters");
       param_index := 0;
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed

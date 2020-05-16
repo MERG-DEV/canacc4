@@ -27,7 +27,9 @@ begin
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_rx_buffer_test: Green LED (SLiM) on");
       --
+      report("slim_rx_buffer_test: Read Node Parameter, received in RXB0");
       RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
       RXB0D1 <= 0;           -- NN high
       RXB0D2 <= 0;           -- NN low
@@ -41,6 +43,7 @@ begin
       wait until Datmode == 1;
       wait until Datmode == 0;
       --
+      report("slim_rx_buffer_test: Read Node Parameter, received in RXB1");
       RXB1D0 <= 16#73#;      -- CBUS read node parameter by index
       RXB1D1 <= 0;           -- NN high
       RXB1D2 <= 0;           -- NN low

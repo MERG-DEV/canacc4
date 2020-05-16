@@ -25,11 +25,15 @@ begin
       wait until RB7 == '1'; -- Booted into SLiM
       report("slim_no_can_id_test: Green LED (SLiM) on");
       --
-      RA3 <= '0'; -- Setup button pressed
+      RA3 <= '0';
+      report("slim_no_can_id_test: Setup button pressed");
       wait until RB7 == '0';
       report("slim_no_can_id_test: FLiM setup started");
       --
-      RA3 <= '1'; -- Setup button released
+      RA3 <= '1';
+      report("slim_no_can_id_test: Setup button released");
+      --
+      report("slim_no_can_id_test: Awaiting RTR");
       wait until TXB1CON.TXREQ == '1';
       if TXB1DLC.TXRTR == '1' then
         report("slim_no_can_id_test: RTR request");
@@ -65,6 +69,7 @@ begin
       report("slim_no_can_id_test: RTR, all CAN Ids taken");
       --
       TXB1CON.TXREQ <= '0';
+      report("slim_no_can_id_test: Awaiting CMDERR");
       wait until TXB1CON.TXREQ == '1';
       if TXB1SIDH != 16#BF# then
         report("slim_no_can_id_test: Unexpected SIDH change");

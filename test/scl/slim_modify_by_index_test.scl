@@ -43,7 +43,6 @@ begin
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      report("slim_modify_by_index_test: Modify events");
       file_open(file_stat, event_file, "./data/modify_indexed.dat", read_mode);
       if file_stat != open_ok then
         report("slim_modify_by_index_test: Failed to open learn data file");
@@ -52,6 +51,7 @@ begin
         wait;
       end if;
       --
+      report("slim_modify_by_index_test: Modify events");
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
@@ -106,7 +106,6 @@ begin
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      report("slim_modify_by_index_test: Check events are unchanged");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("slim_modify_by_index_test: Failed to open event data file");
@@ -115,6 +114,7 @@ begin
         wait;
       end if;
       --
+      report("slim_modify_by_index_test: Check events are unchanged");
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then

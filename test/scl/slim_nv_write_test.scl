@@ -23,6 +23,7 @@ begin
       RA5 <= '1'; -- Unlearn off
      --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_nv_write_test: Green LED (SLiM) on");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';

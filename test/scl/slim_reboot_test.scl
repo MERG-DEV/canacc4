@@ -23,8 +23,9 @@ begin
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_reboot_test: Green LED (SLiM) on");
       --
-      report("slim_reboot_test: Addressed 42");
+      report("slim_reboot_test: Reboot request addressed to node 0x0402");
       RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
       RXB0D1 <= 4;      -- NN high
       RXB0D2 <= 2;      -- NN low
@@ -43,7 +44,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_reboot_test: Addressed 40");
+      report("slim_reboot_test: Reboot request addressed to node 0x0400");
       RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
       RXB0D1 <= 4;      -- NN high
       RXB0D2 <= 0;      -- NN low
@@ -62,7 +63,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_reboot_test: Addressed 02");
+      report("slim_reboot_test: Reboot request addressed to node 0x0002");
       RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 2;      -- NN low
@@ -81,7 +82,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_reboot_test: Addressed 00");
+      report("slim_reboot_test: Reboot request addressed to node 0x0000");
       RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 0;      -- NN low

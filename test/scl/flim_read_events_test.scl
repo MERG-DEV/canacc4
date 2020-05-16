@@ -32,6 +32,7 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_read_events_test: Yellow LED (FLiM) on");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
@@ -45,7 +46,6 @@ begin
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      report("flim_read_events_test: Read events");
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_read_events_test: Failed to open event data file");
@@ -54,6 +54,7 @@ begin
         wait;
       end if;
       --
+      report("flim_read_events_test: Read events");
       while endfile(event_file) == false loop
         readline(event_file, file_line);
         report(file_line);
@@ -127,7 +128,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_read_events_test: EV index too low");
+      report("flim_read_events_test: Event Variable index too low");
       RXB0D0 <= 16#B2#;    -- REQEV, CBUS Read event variable request
       RXB0D1 <= node_hi;
       RXB0D2 <= node_lo;
@@ -162,7 +163,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_read_events_test: EV index too high");
+      report("flim_read_events_test: Event Variable index too high");
       RXB0D0 <= 16#B2#;    -- REQEV, CBUS Read event variable request
       RXB0D1 <= node_hi;
       RXB0D2 <= node_lo;
@@ -197,7 +198,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_read_events_test: Unknown event");
+      report("flim_read_events_test: Read unknown event");
       RXB0D0 <= 16#B2#;    -- REQEV, CBUS Read event variable request
       RXB0D1 <= 9;
       RXB0D2 <= 8;

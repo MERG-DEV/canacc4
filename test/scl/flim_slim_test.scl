@@ -27,7 +27,8 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("flim_boot_test: Yellow LED (FLiM) on");
       --
-      RA3 <= '0'; -- Setup button pressed
+      RA3 <= '0';
+      report("flim_slim_test: Setup button pressed");
       wait until RB6 == '0';
       report("flim_slim_test: SLiM setup started");
       --
@@ -54,8 +55,10 @@ begin
       end if;
       --
       RA3 <= '1'; -- Setup button released
+      report("flim_slim_test: Setup button released");
       --
       if RB7 != '1' then
+        report("flim_slim_test: Awaiting green LED (SLiM)");
         wait until RB7 == '1'; -- Booted into SLiM
       end if;
       report("flim_slim_test: Green LED (SLiM) on");

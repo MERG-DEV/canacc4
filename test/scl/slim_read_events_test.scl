@@ -31,11 +31,12 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_read_events_test: Green LED (SLiM) on");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_teach_test: Enter learn mode");
+      report("slim_read_events_test: Enter learn mode");
       RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low

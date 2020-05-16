@@ -31,7 +31,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_clear_test: Do not clear events");
+      report("flim_clear_test: Reject clear events request");
       RXB0D0 <= 16#55#;    -- NNCLR, CBUS clear events
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -241,7 +241,7 @@ begin
         test_state := fail;
       end if;
       --
-      report("flim_clear_test: Check events");
+      report("flim_clear_test: Check events are now ignored");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_clear_test: Failed to open event data file");

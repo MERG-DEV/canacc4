@@ -23,7 +23,9 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_query_test: Green LED (SLiM) on");
       --
+      report("slim_query_test: Query node");
       RXB0D0 <= 16#0D#; -- QNN, CBUS Query node request
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';

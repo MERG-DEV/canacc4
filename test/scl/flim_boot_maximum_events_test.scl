@@ -25,6 +25,7 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("flim_boot_maximum_events_test: Yellow LED (FLiM) on");
       --
+      report("flim_boot_maximum_events_test: Long on 0x0102, 0x0180");
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low

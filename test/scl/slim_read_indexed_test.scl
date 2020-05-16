@@ -28,6 +28,7 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_read_indexed_test: Green LED (SLiM) on");
       --
       report("slim_read_indexed_test: Read events");
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);

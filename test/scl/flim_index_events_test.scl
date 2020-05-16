@@ -28,7 +28,9 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_index_events_test: Yellow LED (FLiM) on");
       --
+      report("flim_index_events_test: Ignore read events request not addressed to node");
       RXB0D0 <= 16#57#; -- QNN, CBUS Read events request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 0;      -- NN low
@@ -45,6 +47,7 @@ begin
       end if;
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
+      report("flim_index_events_test: Read events");
       RXB0D0 <= 16#57#; -- NERD, CBUS Read events request
       RXB0D1 <= 4;      -- NN high
       RXB0D2 <= 2;      -- NN low
@@ -53,7 +56,6 @@ begin
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      report("flim_index_events_test: Read events");
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_index_events_test: Failed to open event data file");

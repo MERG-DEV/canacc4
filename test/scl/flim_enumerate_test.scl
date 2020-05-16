@@ -26,7 +26,7 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("flim_enumerate_test: Yellow LED (FLiM) on");
       --
-      report("flim_enumerate_test: Check CAN Id");
+      report("flim_enumerate_test: Check initial CAN Id");
       RXB0D0 <= 16#0D#; -- QNN, CBUS Query node request
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';

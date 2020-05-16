@@ -41,6 +41,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("flim_teach_no_space_test: Learn event 0x0102, 0x0980");
       RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -77,6 +78,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("flim_teach_no_space_test: Cannot learn event 0x0102, 0x0981");
       RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -118,6 +120,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("flim_teach_no_space_test: Cannot learn event 0x0000, 0x0982");
       RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
       RXB0D1 <= 0;         -- NN high
       RXB0D2 <= 0;         -- NN low

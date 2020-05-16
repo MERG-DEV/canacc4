@@ -27,10 +27,13 @@ begin
       wait until RB6 == '1';
       report("flim_flim_test: Booted into FLiM");
       --
-      RA3 <= '0'; -- Setup button pressed
+      RA3 <= '0';
+      report("flim_flim_test: Setup button pressed");
       wait for 1 sec;
-      RA3 <= '1'; -- Setup button released
+      RA3 <= '1';
+      report("flim_flim_test: Setup button released");
       --
+      report("flim_flim_test: Awaiting RTR");
       wait until TXB1CON.TXREQ == '1';
       if TXB1DLC.TXRTR != '1' then
         report("flim_flim_test: not RTR request");
@@ -47,6 +50,7 @@ begin
       end if;
       --
       TXB1CON.TXREQ <= '0';
+      report("flim_flim_test: Awaiting Node Number request");
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#50# then -- RQNN, CBUS request node number
         report("flim_flim_test: Sent wrong request");
@@ -74,6 +78,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("flim_flim_test: Set Node Number");
       RXB0D0 <= 16#42#; -- SNN, CBUS set node number
       RXB0D1 <= 9;      -- New NN high
       RXB0D2 <= 8;      -- New NN low
@@ -83,6 +88,7 @@ begin
       PIR3.RXB0IF <= '1';
       --
       TXB1CON.TXREQ <= '0';
+      report("flim_flim_test: Awaiting Node Number acknowledge");
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#52# then -- NNACK, CBUS node number acknowledge
         report("flim_flim_test: Sent wrong response");
@@ -107,6 +113,7 @@ begin
       end if;
       --
       if RB6 == '0' then
+        report("flim_flim_test: Awaiting yellow LED (FLiM)");
         wait until RB6 == '1';
       end if;
       report("flim_flim_test: Yellow LED (FLiM) on");

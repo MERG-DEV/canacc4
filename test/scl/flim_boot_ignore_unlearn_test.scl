@@ -96,6 +96,7 @@ begin
         test_state := fail;
       end if;
       --
+      report("flim_boot_ignore_unlearn_test: Check events");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_boot_ignore_unlearn_test: Failed to open event data file");

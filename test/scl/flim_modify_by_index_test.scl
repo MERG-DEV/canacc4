@@ -73,6 +73,7 @@ begin
         CANSTAT <= 16#0C#;
         PIR3.RXB0IF <= '1';
         --
+        -- CANACC4 does not implement learn by index so no WRACK expected
         --TXB1CON.TXREQ <= '0';
         --wait until TXB1CON.TXREQ == '1';
         --if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
@@ -99,14 +100,6 @@ begin
           readline(event_file, trigger_line);
           read(trigger_line, trigger_val);
           --
-          -- wait until PORTC != 0;
-          -- if PORTC == trigger_val then
-          --   report(report_line);
-          --else
-          --   report("flim_modify_by_index_test: Wrong output");
-          --   test_state := fail;
-          -- end if;
-          -- wait until PORTC == 0;
           wait until PORTC != 0 for 1005 ms;
           if PORTC != 0 then
             report("flim_modify_by_index_test: Unexpected trigger");
@@ -117,12 +110,6 @@ begin
           readline(event_file, report_line);
         end loop;
         --
-        --wait until PORTC != 0 for 1005 ms;
-        --if PORTC != 0 then
-        --  report("flim_modify_by_index_test: Unexpected trigger");
-        --  test_state := fail;
-        --  wait until PORTC == 0;
-        --end if;
       end loop;
       --
       file_close(event_file);
@@ -204,6 +191,7 @@ begin
       end if;
       --
       report("flim_modify_by_index_test: Check events");
+      -- CANACC4 does not implement learn by index so events are unmodified
       -- file_open(file_stat, event_file, "./data/index_modified_events.dat", read_mode);
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then

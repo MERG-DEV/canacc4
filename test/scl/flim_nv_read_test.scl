@@ -26,6 +26,7 @@ begin
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_nv_read_test: Yellow LED (FLiM) on");
       --
       file_open(file_stat, data_file, "./data/flim_ignore.dat", read_mode);
       if file_stat != open_ok then
@@ -35,7 +36,7 @@ begin
         wait;
       end if;
       --
-      report("flim_nv_read_test: Ignore other node numbers");
+      report("flim_nv_read_test: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         readline(data_file, file_line);
@@ -67,6 +68,7 @@ begin
         wait;
       end if;
       --
+      report("flim_nv_read_test: Read Node Variables");
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         if RXB0CON.RXFUL != '0' then
@@ -116,7 +118,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_nv_read_test: Test past number of node variables");
+      report("flim_nv_read_test: Test beyond number of node variables");
       nv_index := nv_index + 1;
       RXB0D0 <= 16#71#;    -- NVRD, CBUS read node variable by index
       RXB0D1 <= 4;         -- NN high
@@ -154,7 +156,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_nv_read_test: Test read node variable zero");
+      report("flim_nv_read_test: Test read node variable [0]");
       nv_index := nv_index + 1;
       RXB0D0 <= 16#71#;  -- NVRD, CBUS read node variable by index
       RXB0D1 <= 4;       -- NN high

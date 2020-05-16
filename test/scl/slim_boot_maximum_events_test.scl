@@ -25,6 +25,7 @@ begin
       wait until RB7 == '1'; -- Booted into SLiM
       report("slim_boot_maximum_events_test: Green LED (SLiM) on");
       --
+      report("slim_boot_maximum_events_test: Long on 0x0102,0x0201");
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low

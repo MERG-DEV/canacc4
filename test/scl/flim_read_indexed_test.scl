@@ -29,8 +29,8 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_read_indexed_test: Yellow LED (FLiM) on");
       --
-      report("flim_read_indexed_test: Read events");
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_read_indexed_test: Failed to open event data file");
@@ -39,6 +39,7 @@ begin
         wait;
       end if;
       --
+      report("flim_read_indexed_test: Read events");
       event_index := 1;
       while endfile(event_file) == false loop
         readline(event_file, file_line);
@@ -104,7 +105,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_read_indexed_test: EV index too low");
+      report("flim_read_indexed_test: Event Variable index too low");
       RXB0D0 <= 16#9C#; -- REVAL, CBUS Indexed read event variable request
       RXB0D1 <= 4;
       RXB0D2 <= 2;
@@ -138,7 +139,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_read_indexed_test: EV index too high");
+      report("flim_read_indexed_test: Event Variable index too high");
       RXB0D0 <= 16#9C#; -- REVAL, CBUS Indexed read event variable request
       RXB0D1 <= 4;
       RXB0D2 <= 2;

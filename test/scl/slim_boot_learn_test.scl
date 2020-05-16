@@ -40,6 +40,7 @@ begin
         wait;
       end if;
       --
+      report("slim_boot_learn_test: Learn events");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';

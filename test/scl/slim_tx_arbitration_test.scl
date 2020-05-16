@@ -26,7 +26,9 @@ begin
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_tx_arbitration_test: Green LED (SLiM) on");
       --
+      report("slim_tx_arbitration_test: Request Node Parameter");
       RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
       RXB0D1 <= 0;           -- NN high
       RXB0D2 <= 0;           -- NN low
@@ -46,6 +48,7 @@ begin
         wait;
       end if;
       --
+      report("slim_tx_arbitration_test: Loosing arbitration raises Tx priority");
       while endfile(sidh_file) == false loop
         readline(sidh_file, sidh_line);
         report(sidh_line);

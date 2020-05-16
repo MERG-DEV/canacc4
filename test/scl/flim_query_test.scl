@@ -23,7 +23,9 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_query_test: Yellow LED (FLiM) on");
       --
+      report("flim_query_test: Query Node");
       RXB0D0 <= 16#0D#; -- QNN, CBUS Query node request
       RXB0CON.RXFUL <= '1';
       RXB0DLC.DLC3 <= '1';

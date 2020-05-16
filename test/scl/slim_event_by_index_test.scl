@@ -23,7 +23,9 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_event_by_index_test: Green LED (SLiM) on");
       --
+      report("slim_event_by_index_test: Read event");
       RXB0D0 <= 16#72#; -- NENRD, CBUS Read event by index request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 0;      -- NN low

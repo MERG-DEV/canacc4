@@ -59,6 +59,7 @@ begin
       PIR3.RXB0IF <= '1';
       --
       TXB1CON.TXREQ <= '0';
+      report("flim_no_can_id_test: Waiting for RTR");
       wait until TXB1CON.TXREQ == '1';
       if TXB1DLC.TXRTR == '1' then
         report("flim_no_can_id_test: RTR request");

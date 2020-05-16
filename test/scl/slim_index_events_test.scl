@@ -23,6 +23,7 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_index_events_test: Green LED (SLiM) on");
       --
       report("slim_index_events_test: Request stored events");
       RXB0D0 <= 16#57#; -- NERD, CBUS Stored events request

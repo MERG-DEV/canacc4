@@ -190,7 +190,7 @@ begin
         test_state := fail;
       end if;
       --
-      report("flim_modify_test: Check events");
+      report("flim_modify_test: Check modified events");
       file_open(file_stat, event_file, "./data/modified_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_modify_test: Failed to open event data file");

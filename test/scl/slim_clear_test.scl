@@ -28,6 +28,7 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_clear_test: Green LED (SLiM) on");
       --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       if RXB0CON.RXFUL != '0' then

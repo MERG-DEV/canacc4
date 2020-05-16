@@ -26,6 +26,7 @@ begin
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_param_test: Yellow LED (FLiM) on");
       --
       file_open(file_stat, data_file, "./data/flim_ignore.dat", read_mode);
       if file_stat != open_ok then
@@ -35,7 +36,7 @@ begin
         wait;
       end if;
       --
-      report("flim_param_test: Ignore other node numbers");
+      report("flim_param_test: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         readline(data_file, file_line);
@@ -67,6 +68,7 @@ begin
         wait;
       end if;
       --
+      report("flim_param_test: Read Node Parameters");
       param_index := 0;
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
@@ -116,7 +118,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_param_test: Test past number of parameters");
+      report("flim_param_test: Test beyond number of parameters");
       RXB0D0 <= 16#73#;       -- RQNPN, CBUS read node parameter by index
       RXB0D1 <= 4;            -- NN high
       RXB0D2 <= 2;            -- NN low

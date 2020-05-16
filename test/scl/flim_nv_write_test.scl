@@ -26,6 +26,7 @@ begin
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB6 == '1'; -- Booted into FLiM
+      report("flim_nv_write_test: Yellow LED (FLiM) on");
       --
       file_open(file_stat, data_file, "./data/flim_ignore.dat", read_mode);
       if file_stat != open_ok then
@@ -35,7 +36,7 @@ begin
         wait;
       end if;
       --
-      report("flim_nv_write_test: Ignore other node numbers");
+      report("flim_nv_write_test: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         readline(data_file, file_line);

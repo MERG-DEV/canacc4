@@ -28,10 +28,10 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_learn_test: Green LED (SLiM) on");
       --
       RB4 <= '0'; -- Learn on
       --
-      report("slim_learn_test: Learn events");
       file_open(file_stat, event_file, "./data/learn.dat", read_mode);
       if file_stat != open_ok then
         report("slim_learn_test: Failed to open learn data file");
@@ -40,6 +40,7 @@ begin
         wait;
       end if;
       --
+      report("slim_learn_test: Learn events");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';
@@ -93,7 +94,6 @@ begin
       --
       RB4 <= '1'; -- Learn off
       --
-      report("slim_learn_test: Check events");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("slim_learn_test: Failed to open event data file");
@@ -102,6 +102,7 @@ begin
         wait;
       end if;
       --
+      report("slim_learn_test: Check events");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';

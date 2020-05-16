@@ -31,7 +31,10 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("flim_learn_test: Yellow LED (FLiM) on");
       --
-      report("flim_learn_test: Learn events");
+      RB4 <= '0';
+      report("flim_learn_test: Learn switch on");
+      --
+      report("flim_learn_test: Do not learn events");
       file_open(file_stat, event_file, "./data/learn.dat", read_mode);
       if file_stat != open_ok then
         report("flim_learn_test: Failed to open learn data file");
@@ -80,11 +83,12 @@ begin
       file_close(event_file);
       --
       RB4 <= '1'; -- Learn off
+      report("flim_learn_test: Learn switch off");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_learn_test: Reheck available event space");
+      report("flim_learn_test: Check available event space");
       RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -116,7 +120,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_learn_test: Reheck number of stored events");
+      report("flim_learn_test: Check number of stored events");
       RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -144,7 +148,7 @@ begin
         test_state := fail;
       end if;
       --
-      report("flim_learn_test: Check events");
+      report("flim_learn_test: Check events were not learnt");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_learn_test: Failed to open event data file");

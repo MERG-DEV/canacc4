@@ -23,6 +23,7 @@ begin
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
+      report("slim_learn_short_no_space_test: Green LED (SLiM) on");
       --
       -- Learn events for output 3
       RB4 <= '0'; -- Learn on
@@ -30,6 +31,7 @@ begin
       RB1 <= '1'; -- Sel 1 off
       RB5 <= '1'; -- Polarity normal, On event => A, Off event => B
       --
+      report("slim_learn_short_no_space_test: Short On 0x0102, 0x0180");
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -53,6 +55,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
+      report("slim_learn_short_no_space_test: Short On 0x0102, 0x0181");
       RXB0D0 <= 16#98#;    -- ACON, CBUS accessory short on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -63,6 +66,7 @@ begin
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
+      report("slim_learn_short_no_space_test: Awaiting CMDERR");
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
         report("slim_learn_short_no_space_test: Sent wrong response");

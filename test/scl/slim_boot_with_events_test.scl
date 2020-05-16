@@ -38,6 +38,7 @@ begin
         wait;
       end if;
       --
+      report("slim_boot_with_events_test: Check events");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';

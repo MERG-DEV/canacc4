@@ -33,7 +33,6 @@ begin
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '0'; -- UNLEARN on
       --
-      report("slim_unlearn_test: Unlearn events");
       file_open(file_stat, event_file, "./data/unlearn.dat", read_mode);
       if file_stat != open_ok then
         report("slim_unlearn_test: Failed to open unlearn data file");
@@ -42,6 +41,7 @@ begin
         wait;
       end if;
       --
+      report("slim_unlearn_test: Unlearn events");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';
@@ -71,7 +71,6 @@ begin
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
-      report("slim_unlearn_test: Check events");
       file_open(file_stat, event_file, "./data/remaining_events.dat", read_mode);
       if file_stat != open_ok then
         report("slim_unlearn_test: Failed to open event data file");
@@ -80,6 +79,7 @@ begin
         wait;
       end if;
       --
+      report("slim_unlearn_test: Check events");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';

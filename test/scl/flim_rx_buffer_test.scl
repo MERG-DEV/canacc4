@@ -27,7 +27,9 @@ begin
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB6 == '1'; -- Booted into FliM
+      report("flim_rx_buffer_test: Yellow LED (FLiM) on");
       --
+      report("flim_rx_buffer_test: Read Node Parameter, received in RXB0");
       RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
       RXB0D1 <= 4;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -41,6 +43,7 @@ begin
       wait until Datmode == 9;
       wait until Datmode == 8;
       --
+      report("flim_rx_buffer_test: Read Node Parameter, received in RXB1");
       RXB1D0 <= 16#73#;      -- CBUS read node parameter by index
       RXB1D1 <= 4;           -- NN high
       RXB1D2 <= 2;           -- NN low
@@ -66,6 +69,7 @@ begin
         read(file_line, param_value);
         --
         if TXB1CON.TXREQ == '0' then
+          report("flim_rx_buffer_test: Awaiting response");
           wait until TXB1CON.TXREQ == '1';
         end if;
         if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response

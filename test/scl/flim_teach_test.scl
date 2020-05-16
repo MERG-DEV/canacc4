@@ -47,7 +47,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_teach_test: EV index too low long 0x0102,0x0402");
+      report("flim_teach_test: Event Variable index too low long 0x0102,0x0402");
       RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -83,7 +83,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_teach_test: EV index too high long 0x0102,0x0402");
+      report("flim_teach_test: Event Variable index too high long 0x0102,0x0402");
       RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -115,7 +115,6 @@ begin
         test_state := fail;
       end if;
       --
-      report("flim_teach_test: Teach events");
       file_open(file_stat, event_file, "./data/teach.dat", read_mode);
       if file_stat != open_ok then
         report("flim_teach_test: Failed to open learn data file");
@@ -124,6 +123,7 @@ begin
         wait;
       end if;
       --
+      report("flim_teach_test: Teach events");
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
@@ -299,7 +299,6 @@ begin
         test_state := fail;
       end if;
       --
-      report("flim_teach_test: Check events");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("flim_teach_test: Failed to open event data file");
@@ -308,6 +307,7 @@ begin
         wait;
       end if;
       --
+      report("flim_teach_test: Check events");
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
