@@ -1,68 +1,10 @@
     TITLE   "Source for CAN accessory decoder using CBUS"
 ; filename CANACC4_2_v2q.asm
-; use with ACC4_2 pcb rev A or with original ACC4 pcb
-
-;ACC4_2 is a modified version of ACC4_h for use with a 12V system
-;Incorporates drive for the voltage doubler
-;Changes 07/06/10
-;RA4 is the doubler drive. Uses the LPINT for a 50Hz square wave
-;RA0 is the charge cutoff. Hi is run, low is off.
-;Tested 07/06/10. Works OK
-; 28/02/11 version b, added Id for CANACC4_2
-; 07/03/11 version c
-;     Boot command only works with NN of zero
-;       Read parameters by index now works in SLiM mode with NN of zero
-; version d clear NN_temph and NN_templ in slimset
-; 18/03/11 version e - set number of event to zero in enclear
-; 19/03/11 version f - add WRACK after NNCLR and EVLRN
-; 22/09/11 version g - add WRACK after EVULN
-
-;Rev 102_a  First version wrt CBUS Developers Guide
-;     Add code to support 0x11 (RQMN)
-;     Add code to return 8th parameter by index - Flags
-;     Add code to support QNN
-;rev 102b Ignore extended frames in packet receive routine
-;rev 102c Remove 102b fix
-
-; 27/11/11 Version 103 is a development version for Flash Ram events
-; rev 103a  derived from 102c - move Opmap to Flash from EEPROM
-; rev 103b  rearrange code
-; rev 103c  test build, add flash code
-; rev 103d  bug fixes
-; rev 103e  save opc cmd byte for On/Off type events
-; rev 103f  remove call to copyev in do_it and add call to rdfbev
-; rev 103g  Save INTCON when erasing and writing Flash
-; rev 103h  Fix SLiM mode learn bug in evhndlr code
-; rev 103j  Add Phil Wheeler's mods for output control
-
-; rev v2a - First release build
-; Rev v2b - use evhndlr_c.asm
-; Rev v2c - fix bug in unlearn event
-; Rev v2d - remove logging
-; Rev v2e - Add rdfbev for rdbak
-; Rev v2f - set default recharge timer to 200ms
-; Rev v2g - Change reply to QNN to OPC_PNN 0xB6
-; Rev v2h - add check for zero param index
-; Rev v2j - no v2i, include file now evhndlr_d.asm
-; Rev v2k - include file now evhndlr_e.asm, remove NEVER compied code
-; No Rev l
-; Rev v2m - New parameter format
-; Rev v2n New self.enum as subroutine. New enum OPCs. 0x5D and 0x75
-; Rev v2o (23Sep13) - Added configurable fire delay (Phil Wheeler)
-; Rev v2p - 11-Dec-13, improved TMR1 setting, fixed some bugs, added charge delay (Phil Wheeler)
-; Rev v2q (6Apr16)- Fix SLiM learn mode issue
-
-;end of comments for ACC4_2
-
 ;
 ; Assembly options
   LIST  P=18F2480,r=dec,N=75,C=120,T=ON
 
   include   "p18f2480.inc"
-
-; Set CONFIG
-; NOTE: There seem to be differences in the naming of the CONFIG parameters
-;       between versions of the p18F2480.inf files
 
   CONFIG  FCMEN = OFF, OSC = HSPLL, IESO = OFF
 	CONFIG  PWRT = ON,BOREN = BOHW, BORV=0
@@ -81,7 +23,11 @@
 ;******************************************************************************
 ; Definitions
 
+
+
   include   "cbuslib/cbusdefs.inc"
+
+
 
 MANUFACTURER_ID               equ  MANU_MERG
 FIRMWARE_MAJOR_VERSION        equ  2
@@ -188,9 +134,9 @@ AFTER_NODE_PARAMETERS      equ  NODE_PARAMETERS + NUMBER_OF_NODE_PARAMETERS
 EVENT_RAM                  equ  0x0100
 
 
-;******************************************************************************
+
   include   "cbuslib/boot_loader.inc"
-;******************************************************************************
+
 
 
 ;******************************************************************************
@@ -242,39 +188,39 @@ EVENT_RAM                  equ  0x0100
   TempCANCON
   TempCANSTAT
   TempINTCON
-  Datmode     ;flag for data waiting
-  loop_counter     ;counter for loading
+  Datmode                   ; Bit 0 = New message received
+                            ; Bit 1 = Enumerating CAN Id
+                            ; Bit 2 = In FLiM setup
+                            ; Bit 3 = Running normally
+                            ; Bit 4 = In learn event mode, FLiM only
+  loop_counter
   loop_counter1
   loop_counter2
 
-  DNindex   ;holds number of allowed DNs
-  Match   ;match flag
+  event_not_matched
 
-  ENcount   ;which EN matched
-  ENcount1
+  event_count
+  event_count1
   event_variable_1
   event_variable_2
   copy_of_event_variable_1
 
-  received_can_id          ; CAN Id received whilst self enumerating
-  received_can_id_bitmask  ; Rolling bitmask to record received CAN Id
-  unused_can_id            ; CAN Id available for self enumeration
-  unused_can_id_bitmask    ; Rolling bitmask to find unused CAN Id
+  received_can_id           ; CAN Id received whilst self enumerating
+  received_can_id_bitmask   ; Rolling bitmask to record received CAN Id
+  unused_can_id             ; CAN Id available for self enumeration
+  unused_can_id_bitmask     ; Rolling bitmask to find unused CAN Id
 
-  Latcount
-  Mode    ;for FLiM / SLiM etc
-  Mask
-  Shift
-  Shift1
+  tx_arbitration_count
+  Mode
+  shift_count
 
-  Temp      ;temps
+  Temp
   Temp1
-  CanID_tmp ;temp for CAN Node ID
-  IDtemph   ;used in ID shuffle
-  IDtempl
-  node_number_high    ;node number in RAM
+  CanID_tmp
+  sid_high
+  sid_low
+  node_number_high
   node_number_low
-  ENtemp1     ;number of events
 
   Rx_sidh   ; Start of received frame
   Rx_sidl
@@ -304,14 +250,14 @@ EVENT_RAM                  equ  0x0100
   Tx_d6
   Tx_d7
 
-  output_pulse_timer    ; Output timer (countdown)
-  output_trigger_bits    ; Output channel trigger mask
-  output_off_bitmask    ; Output flags  Timout    ;used in timer routines
-  output_interval_timer    ; Output fire delay
-  charge_pump_delay_timer    ; Output charge delay
-  low_priority_interrupt_counter    ; LPint Counter
+  output_pulse_timer
+  output_trigger_bits
+  output_off_bitmask
+  output_interval_timer
+  charge_pump_delay_timer
+  low_priority_interrupt_counter
 
-  output_1a_pulse_time     ;timer registers for each output
+  output_1a_pulse_time
   output_1b_pulse_time
   output_2a_pulse_time
   output_2b_pulse_time
@@ -319,10 +265,9 @@ EVENT_RAM                  equ  0x0100
   output_3b_pulse_time
   output_4a_pulse_time
   output_4b_pulse_time
-  output_recharge_time   ; Recharge Time. Must follow output_4b_pulse_time
-  output_interval_duration   ; Fire delay. Must follow output_recharge_time
-  charge_pump_delay_time   ; Charge delay. Must follow output_interval_duration
-  ;End of timer values
+  output_recharge_time      ; Recharge Time. Must follow output_4b_pulse_time
+  output_interval_duration  ; Fire delay. Must follow output_recharge_time
+  charge_pump_delay_time    ; Charge delay. Must follow output_interval_duration
 
   output_1a_mask   ; Mask for output 1a
   output_1b_mask   ; Mask for output 1b
@@ -332,8 +277,6 @@ EVENT_RAM                  equ  0x0100
   output_3b_mask   ; Mask for output 3b
   output_4a_mask   ; Mask for output 4a
   output_4b_mask   ; Mask for output 4b
-
-  ;variables used by Flash Ram event handling
 
   current_event_address_high
   current_event_address_low
@@ -356,10 +299,10 @@ EVENT_RAM                  equ  0x0100
   ev1
   ev2
   ev3
-  event_variable_index   ; EV index from learn cmd
-  event_variable_value    ; EV data from learn cmd
+  event_variable_index
+  event_variable_value
+  event_index
 
-  event_index   ; event index from commands which access events by index
   flash_access_counter_0  ; counters used by Flash handling
   flash_access_counter_1
 
@@ -454,7 +397,7 @@ errint
   btfss   TXB1CON, TXLARB
   bra     exit_error_interrupt
 
-  decfsz  Latcount,F
+  decfsz  tx_arbitration_count,F
   bra     exit_error_interrupt
 
   movlw   B'00111111'
@@ -1706,22 +1649,22 @@ reload_tx_sid_and_node_number
 
   ; Transform single byte CAN Id into SIDH and SIDL
   ; CAN Id 0HHHHLLL => SIDL LLL00000 & SIDH 000HHHH
-  movwf   IDtemph           ; CAN Id                     0HHHHLLL
-  swapf   IDtemph,F         ; Swap high and low nibbles  HLLL0HHH
-  rlncf   IDtemph,F         ; Rotate left one bit        LLL0HHHH
+  movwf   sid_high          ; CAN Id                     0HHHHLLL
+  swapf   sid_high,F        ; Swap high and low nibbles  HLLL0HHH
+  rlncf   sid_high,F        ; Rotate left one bit        LLL0HHHH
   movlw   B'11100000'
-  andwf   IDtemph,W         ; W = LLL00000
-  movwf   IDtempl           ; SIDL = LLL00000
+  andwf   sid_high,W        ; W = LLL00000
+  movwf   sid_low           ; SIDL = LLL00000
   movlw   B'00001111'       ; Mask out upper nibble
-  andwf   IDtemph,F         ; SIDH = 0000HHHH
+  andwf   sid_high,F        ; SIDH = 0000HHHH
 
   ; Load SIDH into Tx buffer maintaining current priority value
   movlw   B'11110000'
   andwf   Tx_sidh,F
-  movf    IDtemph,W
+  movf    sid_high,W
   iorwf   Tx_sidh,F
 
-  movff   IDtempl, Tx_sidl
+  movff   sid_low, Tx_sidl
 
   movlw   low NodeID
   call    read_ee_at_address
@@ -1736,8 +1679,8 @@ new_1
   btfsc   TXB2CON, TXREQ
   bra     new_1
 
-  movff   IDtemph, TXB2SIDH
-  movff   IDtempl, TXB2SIDL
+  movff   sid_high, TXB2SIDH
+  movff   sid_low, TXB2SIDL
   movlw   0xB0
   iorwf   TXB2SIDH          ; Set priority
   clrf    TXB2DLC           ; No data nor RTR
@@ -1921,7 +1864,7 @@ tx_message
   movlw   B'10110000'
   iorwf   Tx_sidh,F         ; Set low transmission priority
   movlw   10
-  movwf   Latcount
+  movwf   tx_arbitration_count
 
   ; Send contents of Tx_ buffer via CAN TXB1
   lfsr    FSR1, TXB1CON
@@ -2030,16 +1973,17 @@ get_selected_output_pair
   movlw   1
   movwf   event_variable_1      ; Initialise output selection bit
 
+  ; Read output pair selection from switch inputs
   movlw   B'00000011'
   andwf   PORTB,W
   btfsc   STATUS, Z
   return
 
-  movwf   Shift
+  movwf   shift_count
 
 test_next_output_pair_selection
   rlncf   event_variable_1,F    ; Shift ouput selection one bit left
-  decfsz  Shift,F
+  decfsz  shift_count,F
   bra     test_next_output_pair_selection
 
   return
