@@ -164,7 +164,7 @@ EVENT_RAM                  equ  0x0100
   ENDC
 
 
-  ; Bank 1 is reserved for use by evhndlr
+  ; Bank 1 is reserved for use by event_store
 
 
   CBLOCK  0x0080
@@ -1619,7 +1619,7 @@ new_1
 
 
 
-#include "cbuslib/evhndlr.asm"
+#include "cbuslib/event_store.inc"
 
 
 
