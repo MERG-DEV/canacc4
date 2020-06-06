@@ -62,8 +62,8 @@ MAXIMUM_NUMBER_OF_CAN_IDS equ  100  ; Maximum CAN Ids allowed in a CAN segment
 ;            Output 4b <- RC3|14     15|RC4 -> Output 4a
 ;                            +---------+
 
-#define  Charge_Pump_Output         PORTA,4  ; CANACC2 charger doubler drive
-#define  Charge_Pump_Enable_Output  PORTA,0  ; CANACC2 charger enable
+#define  Charge_Pump_Output         PORTA,4
+#define  Charge_Pump_Enable_Output  PORTA,0
 #define  Learn_Input                PORTB,4
 #define  Yellow_LED_Output          PORTB,6
 #define  Green_LED_Output           PORTB,7
@@ -324,7 +324,7 @@ node_type_name
   db      "ACC4_2 "
 
 
-  ORG   NODE_PARAMETERS
+  ORG     NODE_PARAMETERS
 node_parameters
 	db      MANUFACTURER_ID, FIRMWARE_MINOR_VERSION, MODULE_TYPE, NUMBER_OF_EVENTS
 	db      VARIABLES_PER_EVENT, NUMBER_OF_NODE_VARIABLES
@@ -354,11 +354,11 @@ NODE_PARAMETER_CHECKSUM  set NODE_PARAMETER_CHECKSUM + low RESET_VECTOR
 NODE_PARAMETER_CHECKSUM  set NODE_PARAMETER_CHECKSUM + NODE_PARAMETER_COUNT
 
 
-  ORG AFTER_NODE_PARAMETERS
-  dw  NODE_PARAMETER_COUNT     ; Number of parameters implemented
-  dw  node_type_name           ; Pointer to module type name
-  dw  0                        ; Top 2 bytes of 32 bit address not used
-  dw  NODE_PARAMETER_CHECKSUM  ; Checksum of parameters
+  ORG     AFTER_NODE_PARAMETERS
+  dw      NODE_PARAMETER_COUNT     ; Number of parameters implemented
+  dw      node_type_name           ; Pointer to module type name
+  dw      0                        ; Top 2 bytes of 32 bit address not used
+  dw      NODE_PARAMETER_CHECKSUM  ; Checksum of parameters
 
 
 
@@ -821,44 +821,60 @@ check_for_received_message
 
 ;  Process received messages valid in both SLiM and FLiM
 
-  movlw   OPC_ACON
-  subwf   received_opcode,W
-  bz      process_long_event
+Test_And_Handle_Received_Message macro candidate_opcode, message_handler
 
-  movlw   OPC_ACOF
+  movlw   candidate_opcode
   subwf   received_opcode,W
-  bz      process_long_event
+  btfsc   STATUS,Z
+  bra     message_handler
 
-  movlw   OPC_ASON
-  subwf   received_opcode,W
-  bz      process_short_event
+  endm
 
-  movlw   OPC_ASOF
-  subwf   received_opcode,W
-  bz      process_short_event
+  Test_And_Handle_Received_Message OPC_ACON,  process_long_event
+  Test_And_Handle_Received_Message OPC_ACOF,  process_long_event
+  Test_And_Handle_Received_Message OPC_ASON,  process_short_event
+  Test_And_Handle_Received_Message OPC_ASOF,  process_short_event
+  Test_And_Handle_Received_Message OPC_RQNPN, read_node_parameter
+  Test_And_Handle_Received_Message OPC_RQNP,  read_key_node_parameters
+  Test_And_Handle_Received_Message OPC_RQMN,  read_name
+  Test_And_Handle_Received_Message OPC_BOOT,  reboot
+  Test_And_Handle_Received_Message OPC_QNN,   respond_to_query_node
 
-  movlw   OPC_RQNPN
-  subwf   received_opcode,W
-  bz      read_node_parameter
+  Skip_If_FLiM
+  bra     main_loop
 
-  movlw   OPC_RQNP
-  subwf   received_opcode,W
-  bz      read_key_node_parameters
 
-  movlw   OPC_RQMN
-  subwf   received_opcode,W
-  bz      read_name
+  ; Process received messages only valid in FLiM
 
-  movlw   OPC_BOOT
-  subwf   received_opcode,W
-  bz      reboot
+  Test_And_Handle_Received_Message OPC_SNN, set_node_number
 
-  movlw   OPC_QNN
-  subwf   received_opcode,W
-  bz      respond_to_query_node
+  Skip_If_In_Learn_Mode
+  bra     check_if_addressed_message
 
-  Skip_If_SLiM
-  bra     flim_process_received_message
+  Test_And_Handle_Received_Message OPC_EVULN, unlearn_event
+  Test_And_Handle_Received_Message OPC_EVLRN, learn_event_and_variable
+  Test_And_Handle_Received_Message OPC_REQEV, read_event_variable
+
+check_if_addressed_message
+  call    is_message_for_this_node
+  btfss   STATUS, Z
+  bra     main_loop
+
+
+  ; Process received messages only valid in FLiM and addressed to this node
+
+  Test_And_Handle_Received_Message OPC_CANID, set_link_id
+  Test_And_Handle_Received_Message OPC_ENUM,  force_self_enumeration
+  Test_And_Handle_Received_Message OPC_NNLRN, enter_learn_mode
+  Test_And_Handle_Received_Message OPC_NNULN, exit_learn_mode
+  Test_And_Handle_Received_Message OPC_NNCLR, clear_all_events
+  Test_And_Handle_Received_Message OPC_NNEVN, read_free_event_space
+  Test_And_Handle_Received_Message OPC_RQEVN, read_number_of_events
+  Test_And_Handle_Received_Message OPC_NERD,  read_all_events
+  Test_And_Handle_Received_Message OPC_NENRD, read_indexed_event
+  Test_And_Handle_Received_Message OPC_REVAL, read_indexed_event_and_variable
+  Test_And_Handle_Received_Message OPC_NVSET, set_node_variable
+  Test_And_Handle_Received_Message OPC_NVRD,  read_node_variable
 
   bra     main_loop
 
@@ -986,37 +1002,6 @@ respond_to_query_node
 
 
 ;******************************************************************************
-;  Process received messages only valid in FLiM
-
-flim_process_received_message
-  movlw   OPC_SNN
-  subwf   received_opcode,W
-  bz      set_node_number
-
-  Skip_If_In_Learn_Mode
-  bra     check_if_addressed_message
-
-  movlw   OPC_EVULN
-  subwf   received_opcode,W
-  bz      unlearn_event
-
-  movlw   OPC_EVLRN
-  subwf   received_opcode,W
-  bz      learn_event_and_variable
-
-  movlw   OPC_REQEV
-  subwf   received_opcode,W
-  bz      read_event_variable
-
-check_if_addressed_message
-  call    is_message_for_this_node
-  btfsc   STATUS, Z
-  bra     flim_process_addressed_message
-  bra     main_loop
-
-
-
-;******************************************************************************
 set_node_number
   Skip_If_In_Setup
   bra     main_loop
@@ -1120,62 +1105,6 @@ no_event_to_read
 event_variable_index_invalid
   movlw   CMDERR_INV_EV_IDX
   bra     abort_and_send_error_message
-
-
-
-;******************************************************************************
-;  Process received messages only valid in FLiM and addressed to this node
-
-flim_process_addressed_message
-  movlw   OPC_CANID
-  subwf   received_opcode,W
-  bz      set_link_id
-
-  movlw   OPC_ENUM
-  subwf   received_opcode,W
-  bz      force_self_enumeration
-
-  movlw   OPC_NNLRN
-  subwf   received_opcode,W
-  bz      enter_learn_mode
-
-  movlw   OPC_NNULN
-  subwf   received_opcode,W
-  bz      exit_learn_mode
-
-  movlw   OPC_NNCLR
-  subwf   received_opcode,W
-  bz      clear_all_events
-
-  movlw   OPC_NNEVN
-  subwf   received_opcode,W
-  bz      read_free_event_space
-
-  movlw   OPC_RQEVN
-  subwf   received_opcode,W
-  bz      read_number_of_events
-
-  movlw   OPC_NERD
-  subwf   received_opcode,W
-  bz      read_all_events
-
-  movlw   OPC_NENRD
-  subwf   received_opcode,W
-  bz      read_indexed_event
-
-  movlw   OPC_REVAL
-  subwf   received_opcode,W
-  bz      read_indexed_event_and_variable
-
-  movlw   OPC_NVSET
-  subwf   received_opcode,W
-  bz      set_node_variable
-
-  movlw   OPC_NVRD
-  subwf   received_opcode,W
-  bz      read_node_variable
-
-  bra     main_loop
 
 
 
