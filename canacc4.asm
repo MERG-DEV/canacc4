@@ -895,14 +895,34 @@ slim_setup
   clrf    node_number_low
 
   Skip_If_Not_Learn
-  bra     keep_events
+  bra     reset_trigger_times
 
   Skip_If_Not_Unlearn
   call    initialise_event_data
 
-keep_events
-  call    reset_trigger_times
+reset_trigger_times
+  movlw   8
+  movwf   loop_counter
+  movlw   low trigger_time_defaults
+  movwf   Temp
+  movwf   EEADR
 
+trigger_times_reset_loop
+  call    read_ee
+  movwf   Temp1
+  movlw   low node_variables - low trigger_time_defaults
+  addwf   EEADR,F
+  movf    Temp1,W
+  call    write_ee
+  dcfsnz  loop_counter
+  bra     trigger_times_reset
+
+  incf    Temp,F
+  movf    Temp,W
+  movwf   EEADR
+  bra     trigger_times_reset_loop
+
+trigger_times_reset
   Set_FLiM_LED_Off
   Set_SLiM_LED_On
 
