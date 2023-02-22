@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<test name="flim_enumerate_test" processor="PIC18F2480" timeout="1182">
-  <configuration/>
-  <procedure>
-    <set_register register="RXB0D0" value="0D"/>
-    <test_register register="TXB1SIDH" expected="B1"/>
-    <test_register register="TXB1SIDL" expected="80"/>
-  </procedure>
-</test>
