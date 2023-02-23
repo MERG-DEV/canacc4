@@ -22,10 +22,10 @@ $(log_dir):
 	mkdir -p $(log_dir)
 
 $(mdbs): $(mdb_dir)/%.mdb: $(mdb_dir)/%.m4
-	@cd $(mdb_dir); m4 $(<F) > $(@F)
+	@cd $(mdb_dir) && m4 $(<F) > $(@F)
 
 $(scls): $(scl_dir)/%.scl: $(scl_dir)/%.m4
-	@cd $(scl_dir); m4 $(<F) > $(@F)
+	@cd $(scl_dir) && m4 $(<F) > $(@F)
 
 clean:
 	rm $(log_dir)/*.log
