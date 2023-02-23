@@ -1,13 +1,13 @@
 cof_dir = ../dist/default/production
 log_dir = ./logs
-mdb_dir = .
+mdb_dir = ./mdb
 m4_dir  = ./m4
 scl_dir = ./scl
 
-mdbs = $(wildcard $(mdb_dir)/*.mdb)
-tests = $(basename $(notdir $(mdbs)))
-scls = $(addprefix $(scl_dir)/, $(addsuffix .scl, $(tests)))
+tests = $(basename $(notdir $(wildcard $(mdb_dir)/*.m4)))
 logs = $(addprefix $(log_dir)/, $(addsuffix .log, $(tests)))
+mdbs = $(addprefix $(mdb_dir)/, $(addsuffix .mdb, $(tests)))
+scls = $(addprefix $(scl_dir)/, $(addsuffix .scl, $(tests)))
 
 test: $(logs)
 	@echo
@@ -21,9 +21,13 @@ $(logs): $(log_dir)/%.log: $(mdb_dir)/%.mdb $(scl_dir)/%.scl $(cof_dir)/*.produc
 $(log_dir):
 	mkdir -p $(log_dir)
 
+$(mdbs): $(mdb_dir)/%.mdb: $(mdb_dir)/%.m4
+	@cd $(mdb_dir); m4 $(<F) > $(@F)
+
 $(scls): $(scl_dir)/%.scl: $(scl_dir)/%.m4
-	m4 --include=$(m4_dir) $< > $@
+	@cd $(scl_dir); m4 $(<F) > $(@F)
 
 clean:
-	rm $(scl_dir)/*.scl
 	rm $(log_dir)/*.log
+	rm $(mdb_dir)/*.mdb
+	rm $(scl_dir)/*.scl
