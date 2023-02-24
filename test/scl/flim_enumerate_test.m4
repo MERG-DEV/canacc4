@@ -1,6 +1,6 @@
 changecom(--)dnl
 define(test_name, flim_enumerate_test)dnl
-include(rx_tx.m4)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
