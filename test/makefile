@@ -1,10 +1,9 @@
 cof_dir = ../dist/default/production
 log_dir = ./logs
 mdb_dir = ./mdb
-m4_dir  = ./m4
 scl_dir = ./scl
 
-tests = $(basename $(notdir $(wildcard $(mdb_dir)/*.m4)))
+tests = $(basename $(notdir $(wildcard $(mdb_dir)/*_test.m4)))
 logs = $(addprefix $(log_dir)/, $(addsuffix .log, $(tests)))
 mdbs = $(addprefix $(mdb_dir)/, $(addsuffix .mdb, $(tests)))
 scls = $(addprefix $(scl_dir)/, $(addsuffix .scl, $(tests)))
