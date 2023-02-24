@@ -20,11 +20,11 @@ $(logs): $(log_dir)/%.log: $(mdb_dir)/%.mdb $(scl_dir)/%.scl $(cof_dir)/*.produc
 $(log_dir):
 	mkdir -p $(log_dir)
 
-$(mdbs): $(mdb_dir)/%.mdb: $(mdb_dir)/%.m4
-	@cd $(mdb_dir) && m4 $(<F) > $(@F)
+$(mdbs): %.mdb: %.m4
+	@cd $(@D) && m4 $(<F) > $(@F)
 
-$(scls): $(scl_dir)/%.scl: $(scl_dir)/%.m4
-	@cd $(scl_dir) && m4 $(<F) > $(@F)
+$(scls): %.scl: %.m4
+	@cd $(@D) && m4 $(<F) > $(@F)
 
 clean:
 	rm $(log_dir)/*.log
