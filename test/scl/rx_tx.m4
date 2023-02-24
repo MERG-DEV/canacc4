@@ -7,11 +7,11 @@ define(check_tx_can_id,
          report("test_name: Incorrect $1 CAN Id SIDL");
          test_state := fail;
        end if;)dnl
-define(tx_ready,
+define(tx_wait_for_ready,
        TXB1CON.TXREQ <= '0';
        wait until TXB1CON.TXREQ == '1';)dnl
 define(tx_rtr,
-       tx_ready()
+       tx_wait_for_ready()
        if TXB1DLC.TXRTR == '1' then
          report("test_name: RTR request");
        else
@@ -22,18 +22,18 @@ define(rx_frame,
        RXB0CON.RXFUL <= '1';
        CANSTAT <= 16#0C#;
        PIR3.RXB0IF <= '1';)dnl
-define(rx_ready,
+define(rx_wait_for_ready,
        if RXB0CON.RXFUL != '0' then
          wait until RXB0CON.RXFUL == '0';
        end if;)dnl
 define(rx_sid,
-       rx_ready()
+       rx_wait_for_ready()
        RXB0SIDH <= $1;
        RXB0SIDL <= $2;
        RXB0DLC <= 0;
        rx_frame())dnl
 define(rx_2_data,
-       rx_ready()
+       rx_wait_for_ready()
        RXB0D0 <= $1;
        RXB0D1 <= $2;
        RXB0D2 <= $3;
