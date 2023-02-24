@@ -30,3 +30,5 @@ clean:
 	rm $(log_dir)/*.log
 	rm $(mdb_dir)/*.mdb
 	rm $(scl_dir)/*.scl
+
+$(scl_dir)/flim_enumerate_test.scl: $(scl_dir)/rx_tx.inc
