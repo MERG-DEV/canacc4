@@ -7,9 +7,13 @@ define(check_tx_can_id,
          report("test_name: Incorrect $1 CAN Id SIDL");
          test_state := fail;
        end if;)dnl
+define(tx_wait_if_not_ready,
+       if TXB1CON.TXREQ == '0'then
+       {ifelse($1, {},   wait until TXB1CON.TXREQ == '1';,   wait until TXB1CON.TXREQ == '1' for $1 ms;)}
+       end if;)dnl
 define(tx_wait_for_ready,
        TXB1CON.TXREQ <= '0';
-       {ifelse($1, {}, wait until TXB1CON.TXREQ == '1';, wait until TXB1CON.TXREQ == '1' for $1 ms;)})dnl
+       {ifelse($1, {}, tx_wait_if_not_ready;, tx_wait_if_not_ready($1))})dnl
 define(tx_rtr,
        tx_wait_for_ready
        if TXB1DLC.TXRTR == '1' then
