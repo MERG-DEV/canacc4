@@ -19,6 +19,7 @@ define(tx_rtr,
          test_state := fail;
        end if;)dnl
 define(rx_frame,
+       RXB0DLC <= 16#0$1#;
        RXB0CON.RXFUL <= '1';
        CANSTAT <= 16#0C#;
        PIR3.RXB0IF <= '1';)dnl
@@ -30,8 +31,7 @@ define(rx_sid,
        rx_wait_for_ready()
        RXB0SIDH <= $1;
        RXB0SIDL <= $2;
-       RXB0DLC <= 0;
-       rx_frame)dnl
+       rx_frame(0))dnl
 define(rx_data,
        rx_wait_for_ready
        `ifelse($1, `', RXB0D0 <= 0;, RXB0D0 <= $1;)'
@@ -42,5 +42,4 @@ define(rx_data,
        `ifelse($6, `', RXB0D5 <= 0;, RXB0D5 <= $6;)'
        `ifelse($7, `', RXB0D6 <= 0;, RXB0D6 <= $7;)'
        `ifelse($8, `', RXB0D7 <= 0;, RXB0D7 <= $8;)'
-       RXB0DLC <= 16#0$##;
-       rx_frame)dnl
+       rx_frame($#))dnl
