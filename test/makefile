@@ -1,12 +1,21 @@
-cof_dir = ../dist/default/production
-log_dir = ./logs
-mdb_dir = ./mdb
-scl_dir = ./scl
+.SUFFIXES:
 
-tests = $(basename $(notdir $(wildcard $(mdb_dir)/*_test.m4)))
-logs = $(addprefix $(log_dir)/, $(addsuffix .log, $(tests)))
-mdbs = $(addprefix $(mdb_dir)/, $(addsuffix .mdb, $(tests)))
-scls = $(addprefix $(scl_dir)/, $(addsuffix .scl, $(tests)))
+cof_dir := ../dist/default/production
+dat_dir := ./data
+log_dir := ./logs
+mdb_dir := ./mdb
+scl_dir := ./scl
+
+tests := $(basename $(notdir $(wildcard $(mdb_dir)/*_test.m4)))
+logs := $(addprefix $(log_dir)/, $(addsuffix .log, $(tests)))
+mdbs := $(addprefix $(mdb_dir)/, $(addsuffix .mdb, $(tests)))
+scls := $(addprefix $(scl_dir)/, $(addsuffix .scl, $(tests)))
+
+dats := $(wildcard $(dat_dir)/*.dat)
+mdb_incs := $(wildcard $(mdb_dir)/*.inc)
+mdb_m4s := $(wildcard $(mdb_dir)/*.m4)
+scl_incs := $(wildcard $(scl_dir)/*.inc)
+scl_m4s := $(wildcard $(scl_dir)/*.m4)
 
 test: $(logs)
 	@echo
@@ -26,9 +35,33 @@ $(mdbs): %.mdb: %.m4
 $(scls): %.scl: %.m4
 	@cd $(@D) && m4 $(<F) > $(@F)
 
+.PHONY: clean
 clean:
-	rm $(log_dir)/*.log
-	rm $(mdb_dir)/*.mdb
-	rm $(scl_dir)/*.scl
+	rm -f $(log_dir)/*.log $(mdb_dir)/*.mdb $(scl_dir)/*.scl *.dep
 
-$(scl_dir)/flim_enumerate_test.scl: $(scl_dir)/rx_tx.inc
+data.dep: $(scl_m4s) $(dats)
+	@rm -f $@
+	@touch $@
+	@for dat_file in $(dats);                                                    \
+	  do for m4_file in $$(grep -l $${dat_file} $(scl_m4s));                     \
+	    do echo $(log_dir)/$$(basename $${m4_file} .m4).log: $${dat_file} >> $@; \
+	  done;                                                                      \
+	done
+
+inc.dep: $(mdb_m4s) $(mdb_incs) $(scl_m4s) $(scl_incs)
+	@rm -f $@
+	@touch $@
+	@for inc_file in $(mdb_incs);                                                     \
+	  do for m4_file in $$(grep -l $$(basename $${inc_file}) $(mdb_m4s) $(mdb_incs)); \
+	    do echo $${m4_file}: $${inc_file} >> $@; echo \\t @touch $${m4_file} >> $@;   \
+	  done;                                                                           \
+	done
+	@for inc_file in $(scl_incs);                                                     \
+	  do for m4_file in $$(grep -l $$(basename $${inc_file}) $(scl_m4s) $(scl_incs)); \
+	    do echo $${m4_file}: $${inc_file} >> $@; echo \\t @touch $${m4_file} >> $@;   \
+	  done;                                                                           \
+	done
+
+ifeq ($(filter clean, $(MAKECMDGOALS)), )
+include data.dep inc.dep
+endif

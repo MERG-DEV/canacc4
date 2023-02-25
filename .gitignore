@@ -1,4 +1,5 @@
 *.cof
+*.dep
 *.err
 *.ERR
 *.log
