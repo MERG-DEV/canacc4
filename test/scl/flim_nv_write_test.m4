@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, flim_nv_write_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,13 +8,13 @@ begin
   test_timeout: process is
     begin
       wait for 1374 ms;
-      report("flim_nv_write_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  flim_nv_write_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state  : test_result;
     file     data_file   : text;
@@ -21,22 +23,22 @@ begin
     variable fire_time1  : cycle;
     variable fire_time2  : cycle;
     begin
-      report("flim_nv_write_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB6 == '1'; -- Booted into FLiM
-      report("flim_nv_write_test: Yellow LED (FLiM) on");
+      report("test_name: Yellow LED (FLiM) on");
       --
       file_open(file_stat, data_file, "./data/flim_ignore.dat", read_mode);
       if file_stat != open_ok then
-        report("flim_nv_write_test: Failed to open ignored addresses data file");
-        report("flim_nv_write_test: FAIL");
+        report("test_name: Failed to open ignored addresses data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
       --
-      report("flim_nv_write_test: Ignore requests not addressed to node");
+      report("test_name: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         readline(data_file, file_line);
@@ -54,7 +56,7 @@ begin
         TXB1CON.TXREQ <= '0';
         wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
         if TXB1CON.TXREQ == '1' then
-          report("flim_nv_write_test: Unexpected response");
+          report("test_name: Unexpected response");
           test_state := fail;
         end if;
       end loop;
@@ -65,7 +67,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_nv_write_test: Check original 3A fire time");
+      report("test_name: Check original 3A fire time");
       RXB0D0 <= 16#71#;      -- NVRD, CBUS read node variable by index
       RXB0D1 <= 4;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -78,23 +80,23 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#97# then -- NVANS, CBUS node variable response
-        report("flim_nv_write_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 4 then
-        report("flim_nv_write_test: Sent wrong Node Number (high)");
+        report("test_name: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 2 then
-        report("flim_nv_write_test: Sent wrong Node Number (low)");
+        report("test_name: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 5 then
-        report("flim_nv_write_test: Wrong node variable index");
+        report("test_name: Wrong node variable index");
         test_state := fail;
       end if;
       if TXB1D4 != 5 then
-        report("flim_nv_write_test: Unexpected fire time value");
+        report("test_name: Unexpected fire time value");
         test_state := fail;
       end if;
       --
@@ -102,7 +104,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_nv_write_test: Long off 0x0102,0x0204, trigger 3A");
+      report("test_name: Long off 0x0102,0x0204, trigger 3A");
       RXB0D0 <= 16#91#;      -- ACOF, CBUS long off
       RXB0D1 <= 1;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -116,9 +118,9 @@ begin
       wait until PORTC != 0;
       fire_time1 := now();
       if PORTC == 32 then
-        report("flim_nv_write_test: Triggered 3A");
+        report("test_name: Triggered 3A");
       else
-        report("flim_nv_write_test: Wrong output");
+        report("test_name: Wrong output");
         test_state := fail;
       end if;
       wait until PORTC == 0;
@@ -128,7 +130,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_nv_write_test: Change 3A fire time");
+      report("test_name: Change 3A fire time");
       RXB0D0 <= 16#96#;      -- NVSET, CBUS set node variable by index
       RXB0D1 <= 4;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -143,15 +145,15 @@ begin
       --TXB1CON.TXREQ <= '0';
       --wait until TXB1CON.TXREQ == '1';
       --if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
-      --  report("flim_nv_write_test: Sent wrong response");
+      --  report("test_name: Sent wrong response");
       --  test_state := fail;
       --end if;
       --if TXB1D1 != 4 then
-      --  report("flim_nv_write_test: Sent wrong Node Number (high)");
+      --  report("test_name: Sent wrong Node Number (high)");
       --  test_state := fail;
       --end if;
       --if TXB1D2 != 2 then
-      --  report("flim_nv_write_test: Sent wrong Node Number (low)");
+      --  report("test_name: Sent wrong Node Number (low)");
       --  test_state := fail;
       --end if;
       --
@@ -159,7 +161,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_nv_write_test: Read back new 3A fire time");
+      report("test_name: Read back new 3A fire time");
       RXB0D0 <= 16#71#;      -- NVRD, CBUS read node variable by index
       RXB0D1 <= 4;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -172,23 +174,23 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#97# then -- NVANS, CBUS node variable response
-        report("flim_nv_write_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 4 then
-        report("flim_nv_write_test: Sent wrong Node Number (high)");
+        report("test_name: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 2 then
-        report("flim_nv_write_test: Sent wrong Node Number (low)");
+        report("test_name: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 5 then
-        report("flim_nv_write_test: Wrong node variable index");
+        report("test_name: Wrong node variable index");
         test_state := fail;
       end if;
       if TXB1D4 != 2 then
-        report("flim_nv_write_test: Incorrect fire time value");
+        report("test_name: Incorrect fire time value");
         test_state := fail;
       end if;
       --
@@ -196,7 +198,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_nv_write_test: Repeat long off 0x0102,0x0204, trigger 3A");
+      report("test_name: Repeat long off 0x0102,0x0204, trigger 3A");
       RXB0D0 <= 16#91#;      -- ACOF, CBUS long off
       RXB0D1 <= 1;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -210,16 +212,16 @@ begin
       wait until PORTC != 0;
       fire_time2 := now();
       if PORTC == 32 then
-        report("flim_nv_write_test: Triggered 3A");
+        report("test_name: Triggered 3A");
       else
-        report("flim_nv_write_test: Wrong output");
+        report("test_name: Wrong output");
         test_state := fail;
       end if;
       wait until PORTC == 0;
       fire_time2 := now() - fire_time2;
       --
       if fire_time2 > fire_time1 / 2 then
-        report("flim_nv_write_test: 3A trigger too long");
+        report("test_name: 3A trigger too long");
         test_state := fail;
       end if;
       --
@@ -227,7 +229,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_nv_write_test: Node variable index too low");
+      report("test_name: Node variable index too low");
       RXB0D0 <= 16#96#;      -- NVSET, CBUS set node variable by index
       RXB0D1 <= 4;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -262,7 +264,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_nv_write_test: Node variable index too high");
+      report("test_name: Node variable index too high");
       RXB0D0 <= 16#96#;      -- NVSET, CBUS set node variable by index
       RXB0D1 <= 4;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -294,11 +296,11 @@ begin
       --end if;
       --
      if test_state == pass then
-        report("flim_nv_write_test: PASS");
+        report("test_name: PASS");
       else
-        report("flim_nv_write_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process flim_nv_write_test;
+    end process test_name;
 end testbench;

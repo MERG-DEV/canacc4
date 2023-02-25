@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_flim_test)dnl
 configuration for "PIC18F2480" is
   shared label    main_loop;
   shared label    setup;
@@ -8,47 +10,47 @@ begin
   test_timeout: process is
     begin
       wait for 29376 ms;
-      report("slim_flim_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_flim_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     variable test_sidh : integer;
     variable test_sidl : integer;
     begin
-      report("slim_flim_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_flim_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
       RA3 <= '0';
-      report("slim_flim_test: Setup button pressed");
+      report("test_name: Setup button pressed");
       wait until RB7 == '0';
-      report("slim_flim_test: FLiM setup started");
+      report("test_name: FLiM setup started");
       --
       RA3 <= '1'; -- Setup button released
-      report("slim_flim_test: Setup button released");
-      report("slim_flim_test: Waiting for RTR");
+      report("test_name: Setup button released");
+      report("test_name: Waiting for RTR");
       wait until TXB1CON.TXREQ == '1';
       if TXB1DLC.TXRTR != '1' then
-        report("slim_flim_test: not RTR request");
+        report("test_name: not RTR request");
         test_state := fail;
       end if;
-      report("slim_flim_test: RTR request");
+      report("test_name: RTR request");
       if TXB1SIDH != 16#BF# then
-        report("slim_flim_test: Incorrect default SIDH");
+        report("test_name: Incorrect default SIDH");
         test_state := fail;
       end if;
       if TXB1SIDL != 16#E0# then
-        report("slim_flim_test: Incorrect default SIDL");
+        report("test_name: Incorrect default SIDL");
         test_state := fail;
       end if;
       --
@@ -82,37 +84,37 @@ begin
       RXB0DLC <= 0;
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_flim_test: RTR, first free CAN Id is 12");
+      report("test_name: RTR, first free CAN Id is 12");
       --
       TXB1CON.TXREQ <= '0';
-      report("slim_flim_test: Waiting for Node Number request");
+      report("test_name: Waiting for Node Number request");
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#50# then -- RQNN, CBUS request Node Number
-        report("slim_flim_test: Sent wrong request");
+        report("test_name: Sent wrong request");
         test_state := fail;
       end if;
-      report("slim_flim_test: RQNN request");
+      report("test_name: RQNN request");
       if TXB1SIDH != 16#B1# then
-        report("slim_flim_test: Incorrect new SIDH");
+        report("test_name: Incorrect new SIDH");
         test_state := fail;
       end if;
       if TXB1SIDL != 16#80# then
-        report("slim_flim_test: Incorrect new SIDL");
+        report("test_name: Incorrect new SIDL");
         test_state := fail;
       end if;
       if TXB1D1 != 0 then
-        report("slim_flim_test: NN request wrong Node Number (high)");
+        report("test_name: NN request wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 0 then
-        report("slim_flim_test: NN request wrong Node Number (low)");
+        report("test_name: NN request wrong Node Number (low)");
         test_state := fail;
       end if;
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_flim_test: Request Node Parameters");
+      report("test_name: Request Node Parameters");
       RXB0D0 <= 16#10#; -- RQNP, CBUS node parameters request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 0;      -- NN low
@@ -124,36 +126,36 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#EF# then -- PARAMS, CBUS node parameters response
-        report("slim_flim_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
-      report("slim_flim_test: Params response");
+      report("test_name: Params response");
       if TXB1D1 != 165 then
-        report("slim_flim_test: Sent wrong manufacturer id");
+        report("test_name: Sent wrong manufacturer id");
         test_state := fail;
       end if;
       if TXB1D2 != 114 then -- r
-        report("slim_flim_test: Sent wrong minor version");
+        report("test_name: Sent wrong minor version");
         test_state := fail;
       end if;
       if TXB1D3 != 8 then
-        report("slim_flim_test: Sent wrong module id");
+        report("test_name: Sent wrong module id");
         test_state := fail;
       end if;
       if TXB1D4 != 128 then
-        report("slim_flim_test: Sent wrong number of events allowed");
+        report("test_name: Sent wrong number of events allowed");
         test_state := fail;
       end if;
       if TXB1D5 != 2 then
-        report("slim_flim_test: Sent wrong number of variables per event");
+        report("test_name: Sent wrong number of variables per event");
         test_state := fail;
       end if;
       if TXB1D6 != 16 then
-        report("slim_flim_test: Sent wrong number of node variables");
+        report("test_name: Sent wrong number of node variables");
         test_state := fail;
       end if;
       if TXB1D7 != 2 then
-        report("slim_flim_test: Sent wrong major version");
+        report("test_name: Sent wrong major version");
         test_state := fail;
       end if;
       --
@@ -161,7 +163,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_flim_test: Request Module Name");
+      report("test_name: Request Module Name");
       RXB0D0 <= 16#11#; -- RQMN, CBUS module name request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 0;      -- NN low
@@ -169,41 +171,41 @@ begin
       RXB0DLC.DLC3 <= '1';
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
-      report("slim_flim_test: Name request");
+      report("test_name: Name request");
       --
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#E2# then -- NAME, CBUS module name response
-        report("slim_flim_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
-      report("slim_flim_test: Name response");
+      report("test_name: Name response");
       if TXB1D1 != 65 then -- A
-        report("slim_flim_test: Sent wrong name [0]");
+        report("test_name: Sent wrong name [0]");
         test_state := fail;
       end if;
       if TXB1D2 != 67 then -- C
-        report("slim_flim_test: Sent wrong name [1]");
+        report("test_name: Sent wrong name [1]");
         test_state := fail;
       end if;
       if TXB1D3 != 67 then -- C
-        report("slim_flim_test: Sent wrong name [2]");
+        report("test_name: Sent wrong name [2]");
         test_state := fail;
       end if;
       if TXB1D4 != 52 then -- 4
-        report("slim_flim_test: Sent wrong name [3]");
+        report("test_name: Sent wrong name [3]");
         test_state := fail;
       end if;
       if TXB1D5 != 95 then -- _
-        report("slim_flim_test: Sent wrong name [4]");
+        report("test_name: Sent wrong name [4]");
         test_state := fail;
       end if;
       if TXB1D6 != 50 then -- 2
-        report("slim_flim_test: Sent wrong name [5]");
+        report("test_name: Sent wrong name [5]");
         test_state := fail;
       end if;
       if TXB1D7 != 32 then -- ' '
-        report("slim_flim_test: Sent wrong name [6]");
+        report("test_name: Sent wrong name [6]");
         test_state := fail;
       end if;
       --
@@ -211,12 +213,12 @@ begin
       wait until RB6 == '0';
       wait until RB6 == '1';
       wait until RB6 == '0';
-      report("slim_flim_test: Yellow LED (FLiM) flashing");
+      report("test_name: Yellow LED (FLiM) flashing");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_flim_test: Set Node Number");
+      report("test_name: Set Node Number");
       RXB0D0 <= 16#42#; -- SNN, CBUS set node number
       RXB0D1 <= 4;      -- New NN high
       RXB0D2 <= 2;      -- New NN low
@@ -226,39 +228,39 @@ begin
       PIR3.RXB0IF <= '1';
       --
       TXB1CON.TXREQ <= '0';
-      report("slim_flim_test: Awaiting Node Number Acknowledge");
+      report("test_name: Awaiting Node Number Acknowledge");
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#52# then -- NNACK, CBUS node number acknowledge
-        report("slim_flim_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
-      report("slim_flim_test: Node number response");
+      report("test_name: Node number response");
       if TXB1SIDL != 16#80# then
-        report("slim_flim_test: NN acknowledge wrong CAN Id, SIDL");
+        report("test_name: NN acknowledge wrong CAN Id, SIDL");
         test_state := fail;
       end if;
       if TXB1SIDH != 16#B1# then
-        report("slim_flim_test: NN acknowledge wrong CAN Id, SIDH");
+        report("test_name: NN acknowledge wrong CAN Id, SIDH");
         test_state := fail;
       end if;
       if TXB1D1 != 4 then
-        report("slim_flim_test: NN acknowledge wrong Node Number (high)");
+        report("test_name: NN acknowledge wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 2 then
-        report("slim_flim_test: NN acknowledge wrong Node Number (low)");
+        report("test_name: NN acknowledge wrong Node Number (low)");
         test_state := fail;
       end if;
       --
       wait until RB6 == '1';
-      report("slim_flim_test: Yellow LED (FLiM) now on");
+      report("test_name: Yellow LED (FLiM) now on");
       --
       if RB7 == '1' then
-        report("slim_flim_test: Green LED (SLiM) on");
+        report("test_name: Green LED (SLiM) on");
         test_state := fail;
       end if;
       --
-      report("slim_flim_test: Restart");
+      report("test_name: Restart");
       wait until PC == main_loop;
       PC <= setup;
       --
@@ -266,12 +268,12 @@ begin
         wait until RB6 == '0';
       end if;
       wait until RB6 == '1';
-      report("slim_flim_test: Yellow LED (FLiM) back on");
+      report("test_name: Yellow LED (FLiM) back on");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_flim_test: Check Node Number and event space after restart");
+      report("test_name: Check Node Number and event space after restart");
       RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -300,11 +302,11 @@ begin
       end if;
       --
       if test_state == pass then
-        report("slim_flim_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_flim_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_flim_test;
+    end process test_name;
 end testbench;

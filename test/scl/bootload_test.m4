@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, bootload_test)dnl
 configuration for "PIC18F2480" is
   shared label    _CANMain;
 end configuration;
@@ -7,27 +9,27 @@ begin
   test_timeout: process is
     begin
       wait for 1 ms;
-      report("bootload_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
-  bootload_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("bootload_test: START");
+      report("test_name: START");
       test_state := pass;
       --
       wait until PC == _CANMain;
-      report("bootload_test: Reached _CANMain");
+      report("test_name: Reached _CANMain");
       --
       if test_state == pass then
-        report("bootload_test: PASS");
+        report("test_name: PASS");
       else
-        report("bootload_test: FAIL");
+        report("test_name: FAIL");
       end if;
       PC <= 0;
       wait;
-    end process bootload_test;
+    end process test_name;
 end testbench;

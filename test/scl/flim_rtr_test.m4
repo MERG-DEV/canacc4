@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, flim_rtr_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,27 +8,27 @@ begin
   test_timeout: process is
     begin
       wait for 3 ms;
-      report("flim_rtr_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  flim_rtr_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     variable test_sidl : integer;
     begin
-      report("flim_rtr_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
       wait until RB6 == '1'; -- Booted into FLiM
-      report("flim_rtr_test: Yellow LED (FLiM) on");
+      report("test_name: Yellow LED (FLiM) on");
       --
-      report("flim_rtr_test: Receive RTR");
+      report("test_name: Receive RTR");
       RXB0CON.RXFUL <= '1';
       RXB0DLC.RXRTR <= '1';
       CANSTAT <= 16#0C#;
@@ -35,24 +37,24 @@ begin
       TXB2CON.TXREQ <= '0';
       wait until TXB2CON.TXREQ == '1';
       if TXB2SIDH != 16#B1# then
-        report("flim_rtr_test: Incorrect SIDH");
+        report("test_name: Incorrect SIDH");
         test_state := fail;
       end if;
       if TXB2SIDL != 16#80# then
-        report("flim_rtr_test: Incorrect SIDL");
+        report("test_name: Incorrect SIDL");
         test_state := fail;
       end if;
       if TXB2DLC != 0 then
-        report("flim_rtr_test: Incorrect data length");
+        report("test_name: Incorrect data length");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("flim_rtr_test: PASS");
+        report("test_name: PASS");
       else
-        report("flim_rtr_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process flim_rtr_test;
+    end process test_name;
 end testbench;

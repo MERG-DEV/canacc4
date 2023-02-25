@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, flim_learn_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,13 +8,13 @@ begin
   test_timeout: process is
     begin
       wait for 23964 ms;
-      report("flim_learn_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  flim_learn_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state   : test_result;
     file     event_file   : text;
@@ -22,23 +24,23 @@ begin
     variable trigger_line : string;
     variable trigger_val  : integer;
     begin
-      report("flim_learn_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB6 == '1'; -- Booted into FLiM
-      report("flim_learn_test: Yellow LED (FLiM) on");
+      report("test_name: Yellow LED (FLiM) on");
       --
       RB4 <= '0';
-      report("flim_learn_test: Learn switch on");
+      report("test_name: Learn switch on");
       --
-      report("flim_learn_test: Do not learn events");
+      report("test_name: Do not learn events");
       file_open(file_stat, event_file, "./data/learn.dat", read_mode);
       if file_stat != open_ok then
-        report("flim_learn_test: Failed to open learn data file");
-        report("flim_learn_test: FAIL");
+        report("test_name: Failed to open learn data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -74,7 +76,7 @@ begin
         --
         wait until PORTC != 0 for 1005 ms;
         if PORTC != 0 then
-          report("flim_learn_test: Unexpected trigger");
+          report("test_name: Unexpected trigger");
           test_state := fail;
           wait until PORTC == 0;
         end if;
@@ -83,12 +85,12 @@ begin
       file_close(event_file);
       --
       RB4 <= '1'; -- Learn off
-      report("flim_learn_test: Learn switch off");
+      report("test_name: Learn switch off");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_learn_test: Check available event space");
+      report("test_name: Check available event space");
       RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -100,19 +102,19 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
-        report("flim_learn_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 4 then
-        report("flim_learn_test: Sent wrong Node Number (high)");
+        report("test_name: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 2 then
-        report("flim_learn_test: Sent wrong Node Number (low)");
+        report("test_name: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 128 then
-        report("flim_learn_test: Sent wrong available event space");
+        report("test_name: Sent wrong available event space");
         test_state := fail;
       end if;
       --
@@ -120,7 +122,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_learn_test: Check number of stored events");
+      report("test_name: Check number of stored events");
       RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -132,27 +134,27 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#74# then -- NNEVN, CBUS number of stored events response
-        report("flim_learn_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 4 then
-        report("flim_learn_test: Sent wrong Node Number (high)");
+        report("test_name: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 2 then
-        report("flim_learn_test: Sent wrong Node Number (low)");
+        report("test_name: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 0 then
-        report("flim_learn_test: Sent wrong number of stored events");
+        report("test_name: Sent wrong number of stored events");
         test_state := fail;
       end if;
       --
-      report("flim_learn_test: Check events were not learnt");
+      report("test_name: Check events were not learnt");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
-        report("flim_learn_test: Failed to open event data file");
-        report("flim_learn_test: FAIL");
+        report("test_name: Failed to open event data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -181,18 +183,18 @@ begin
         --
         wait until PORTC != 0 for 1005 ms;
         if PORTC != 0 then
-          report("flim_learn_test: Unexpected trigger");
+          report("test_name: Unexpected trigger");
           test_state := fail;
           wait until PORTC == 0;
         end if;
       end loop;
       --
       if test_state == pass then
-        report("flim_learn_test: PASS");
+        report("test_name: PASS");
       else
-        report("flim_learn_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process flim_learn_test;
+    end process test_name;
 end testbench;

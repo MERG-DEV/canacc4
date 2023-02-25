@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_boot_ignore_unlearn_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,13 +8,13 @@ begin
   test_timeout: process is
     begin
       wait for 23286 ms;
-      report("slim_boot_ignore_unlearn_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_boot_ignore_unlearn_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     file     event_file   : text;
@@ -21,27 +23,27 @@ begin
     variable trigger_line : string;
     variable trigger_val  : integer;
     begin
-      report("slim_boot_ignore_unlearn_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '0'; -- UNLEARN on
       --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_boot_ignore_unlearn_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
-        report("slim_boot_ignore_unlearn_test: Failed to open event data file");
-        report("slim_boot_ignore_unlearn_test: FAIL");
+        report("test_name: Failed to open event data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
       --
-      report("slim_boot_ignore_unlearn_test: Check events");
+      report("test_name: Check events");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';
@@ -67,7 +69,7 @@ begin
           if PORTC == trigger_val then
             report(report_line);
          else
-            report("slim_boot_ignore_unlearn_test: Wrong output");
+            report("test_name: Wrong output");
             test_state := fail;
           end if;
           wait until PORTC == 0;
@@ -77,18 +79,18 @@ begin
         --
         wait on PORTC for 1005 ms;
         if PORTC != 0 then
-          report("slim_boot_ignore_unlearn_test: Unexpected trigger");
+          report("test_name: Unexpected trigger");
           test_state := fail;
           wait until PORTC == 0;
         end if;
       end loop;
       --
       if test_state == pass then
-        report("slim_boot_ignore_unlearn_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_boot_ignore_unlearn_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_boot_ignore_unlearn_test;
+    end process test_name;
 end testbench;

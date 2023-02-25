@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, flim_tx_arbitration_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,13 +8,13 @@ begin
   test_timeout: process is
     begin
       wait for 16 ms;
-      report("flim_tx_arbitration_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  flim_tx_arbitration_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     file     sidh_file  : text;
@@ -21,14 +23,14 @@ begin
     variable tx_count  : integer;
      variable sidh_val   : integer;
     begin
-      report("flim_tx_arbitration_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB6 == '1'; -- Booted into FLiM
-      report("flim_tx_arbitration_test: Yellow LED (FLiM) on");
+      report("test_name: Yellow LED (FLiM) on");
       --
-      report("flim_tx_arbitration_test: Request Node Parameter");
+      report("test_name: Request Node Parameter");
       RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
       RXB0D1 <= 4;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -48,7 +50,7 @@ begin
         wait;
       end if;
       --
-      report("flim_tx_arbitration_test: Loosing arbitration raises Tx priority");
+      report("test_name: Loosing arbitration raises Tx priority");
       while endfile(sidh_file) == false loop
         readline(sidh_file, sidh_line);
         report(sidh_line);
@@ -64,7 +66,7 @@ begin
           if TXB1SIDH == sidh_val then
             --
           else
-            report("flim_tx_arbitration_test: Wrong SIDH");
+            report("test_name: Wrong SIDH");
             test_state := fail;
           end if;
           TXB1CON.TXLARB <= '1';
@@ -77,11 +79,11 @@ begin
       end loop;
       --
       if test_state == pass then
-        report("flim_tx_arbitration_test: PASS");
+        report("test_name: PASS");
       else
-        report("flim_tx_arbitration_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process flim_tx_arbitration_test;
+    end process test_name;
 end testbench;

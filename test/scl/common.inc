@@ -1,0 +1,2 @@
+changecom(--)dnl
+changequote({,})dnl

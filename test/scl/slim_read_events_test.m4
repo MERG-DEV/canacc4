@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_read_events_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,13 +8,13 @@ begin
   test_timeout: process is
     begin
       wait for 65 ms;
-      report("slim_read_events_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_read_events_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state  : test_result;
     file     event_file  : text;
@@ -24,19 +26,19 @@ begin
     variable event_lo    : integer;
     variable ev_index    : integer;
     begin
-      report("slim_read_events_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_read_events_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_read_events_test: Enter learn mode");
+      report("test_name: Enter learn mode");
       RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -45,11 +47,11 @@ begin
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      report("slim_read_events_test: Read events");
+      report("test_name: Read events");
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
       if file_stat != open_ok then
-        report("slim_read_events_test: Failed to open event data file");
-        report("slim_read_events_test: FAIL");
+        report("test_name: Failed to open event data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -86,7 +88,7 @@ begin
           TXB1CON.TXREQ <= '0';
           wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
           if TXB1CON.TXREQ == '1' then
-            report("slim_read_events_test: Unexpected response");
+            report("test_name: Unexpected response");
             test_state := fail;
           end if;
           --
@@ -96,11 +98,11 @@ begin
       end loop;
       --
       if test_state == pass then
-        report("slim_read_events_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_read_events_test: FAIL");
-      end if;          
+        report("test_name: FAIL");
+      end if;
       PC <= 0;
       wait;
-    end process slim_read_events_test;
+    end process test_name;
 end testbench;

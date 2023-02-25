@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, flim_reboot_test)dnl
 configuration for "PIC18F2480" is
   shared label    _CANInit;
   shared label    _CANMain;
@@ -8,24 +10,24 @@ begin
   test_timeout: process is
     begin
       wait for 28 ms;
-      report("flim_reboot_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  flim_reboot_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("flim_reboot_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB6 == '1'; -- Booted into FLiM
-      report("flim_reboot_test: Yellow LED (FLiM) on");
+      report("test_name: Yellow LED (FLiM) on");
       --
-      report("flim_reboot_test: Addressed 00");
+      report("test_name: Addressed 00");
       RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 0;      -- NN low
@@ -36,7 +38,7 @@ begin
       --
       wait until RB6 == '0' for 6 ms; -- Wait for LED output reset on reboot
       if RB6 == '0' then
-        report("flim_reboot_test: Unexpected reboot");
+        report("test_name: Unexpected reboot");
         test_state := fail;
       end if;
       --
@@ -44,7 +46,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_reboot_test: Ignore request addressed to Node 0x40");
+      report("test_name: Ignore request addressed to Node 0x40");
       RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
       RXB0D1 <= 4;      -- NN high
       RXB0D2 <= 0;      -- NN low
@@ -55,7 +57,7 @@ begin
       --
       wait until RB6 == '0' for 6 ms; -- Wait for LED output reset on reboot
       if RB6 == '0' then
-        report("flim_reboot_test: Unexpected reboot");
+        report("test_name: Unexpected reboot");
         test_state := fail;
       end if;
       --
@@ -63,7 +65,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_reboot_test: Ignore request addressed to Node 0x02");
+      report("test_name: Ignore request addressed to Node 0x02");
       RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 2;      -- NN low
@@ -74,7 +76,7 @@ begin
       --
       wait until RB6 == '0' for 6 ms; -- Wait for LED output reset on reboot
       if RB6 == '0' then
-        report("flim_reboot_test: Unexpected reboot");
+        report("test_name: Unexpected reboot");
         test_state := fail;
       end if;
       --
@@ -82,7 +84,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_reboot_test: Reboot request");
+      report("test_name: Reboot request");
       RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
       RXB0D1 <= 4;      -- NN high
       RXB0D2 <= 2;      -- NN low
@@ -92,20 +94,20 @@ begin
       PIR3.RXB0IF <= '1';
       --
       wait until RB6 == '0'; -- Wait for LED output reset on reboot
-      report("flim_reboot_test: Rebooting");
+      report("test_name: Rebooting");
       --
       wait until PC == 0;
       PC <= _CANInit;
       --
       wait until PC == _CANMain;
-      report("flim_reboot_test: Reached _CANMain, in bootloader");
+      report("test_name: Reached _CANMain, in bootloader");
       --
       if test_state == pass then
-        report("flim_reboot_test: PASS");
+        report("test_name: PASS");
       else
-        report("flim_reboot_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process flim_reboot_test;
+    end process test_name;
 end testbench;

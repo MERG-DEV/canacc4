@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_learn_long_no_space_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,24 +8,24 @@ begin
   test_timeout: process is
     begin
       wait for 333 ms;
-      report("slim_learn_long_no_space_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_learn_long_no_space_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("slim_learn_long_no_space_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_learn_long_no_space_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
       -- Learn events for output 3
       RB4 <= '0'; -- Learn on
@@ -31,7 +33,7 @@ begin
       RB1 <= '1'; -- Sel 1 off
       RB5 <= '1'; -- Polarity normal, On event => A, Off event => B
       --
-      report("slim_learn_long_no_space_test: Long On 0x0102, 0x0180");
+      report("test_name: Long On 0x0102, 0x0180");
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -46,16 +48,16 @@ begin
       wait until PORTC == 0;
       --
       if TXB1CON.TXREQ == '1' then
-        report("slim_learn_long_no_space_test: Unexpected message");
+        report("test_name: Unexpected message");
         test_state := fail;
       end if;
       --
-      report("slim_learn_long_no_space_test: Learnt 128 events");
+      report("test_name: Learnt 128 events");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_learn_long_no_space_test: Long On 0x0102, 0x0181");
+      report("test_name: Long On 0x0102, 0x0181");
       RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
       RXB0D1 <= 1;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -66,22 +68,22 @@ begin
       CANSTAT <= 16#0C#;
       PIR3.RXB0IF <= '1';
       --
-      report("slim_learn_long_no_space_test: Awaiting CMDERR");
+      report("test_name: Awaiting CMDERR");
       wait until TXB1CON.TXREQ == '1';
       if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("slim_learn_long_no_space_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 0 then
-        report("slim_learn_long_no_space_test: Sent wrong Node Number (high)");
+        report("test_name: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 0 then
-        report("slim_learn_long_no_space_test: Sent wrong Node Number (low)");
+        report("test_name: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 4 then -- No event space left
-        report("slim_learn_long_no_space_test: Sent wrong error number");
+        report("test_name: Sent wrong error number");
         test_state := fail;
       end if;
       --
@@ -92,11 +94,11 @@ begin
       --wait until RB6 == '1';
       --
       if test_state == pass then
-        report("slim_learn_long_no_space_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_learn_long_no_space_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_learn_long_no_space_test;
+    end process test_name;
 end testbench;

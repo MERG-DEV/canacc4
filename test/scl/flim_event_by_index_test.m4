@@ -1,3 +1,6 @@
+include(common.inc)dnl
+define(test_name, flim_event_by_index_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,13 +9,13 @@ begin
   test_timeout: process is
     begin
       wait for 789 ms;
-      report("flim_event_by_index_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  flim_event_by_index_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state  : test_result;
     variable event_index : integer;
@@ -21,37 +24,29 @@ begin
     variable file_line   : string;
     variable line_val    : integer;
     begin
-      report("flim_event_by_index_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB6 == '1'; -- Booted into FLiM
-      report("flim_event_by_index_test: Yellow LED (FLiM) on");
+      report("test_name: Yellow LED (FLiM) on");
       --
-      report("flim_event_by_index_test: Ignore read events by index not addressed to node");
-      RXB0D0 <= 16#72#; -- NENRD, CBUS Read event by index request
-      RXB0D1 <= 0;      -- NN high
-      RXB0D2 <= 0;      -- NN low
-      RXB0D3 <= 1;      -- Event index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      report("test_name: Ignore read events by index not addressed to node");
+      rx_data(16#72#, 0, 0, 1) -- NENRD, CBUS Read event by index request, node 0, index 1
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
+      tx_wait_for_ready(776)
       if TXB1CON.TXREQ == '1' then
-        report("flim_event_by_index_test: Unexpected response");
+        report("test_name: Unexpected response");
         test_state := fail;
       end if;
       --
-      report("flim_event_by_index_test: Read events");
+      report("test_name: Read events");
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
       if file_stat != open_ok then
-        report("flim_event_by_index_test: Failed to open event data file");
-        report("flim_event_by_index_test: FAIL");
+        report("test_name: Failed to open event data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -62,58 +57,47 @@ begin
         report(file_line);
         --
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
-        RXB0D0 <= 16#72#; -- NENRD, CBUS Read event by index request
-        RXB0D1 <= 4;      -- NN high
-        RXB0D2 <= 2;      -- NN low
-        RXB0D3 <= event_index;
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
+        rx_data(16#72#, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
         --
-        TXB1CON.TXREQ <= '0';
-        wait until TXB1CON.TXREQ == '1';
+        tx_wait_for_ready
         if TXB1D0 != 16#F2# then -- ENRSP, CBUS stored event response
-          report("flim_event_by_index_test: Sent wrong response");
+          report("test_name: Sent wrong response");
           test_state := fail;
         end if;
         if TXB1D1 != 4 then
-          report("flim_event_by_index_test: Sent wrong Node Number (high)");
+          report("test_name: Sent wrong Node Number (high)");
           test_state := fail;
         end if;
         if TXB1D2 != 2 then
-          report("flim_event_by_index_test: Sent wrong Node Number (low)");
+          report("test_name: Sent wrong Node Number (low)");
           test_state := fail;
         end if;
         readline(event_file, file_line);
         read(file_line, line_val);
         if TXB1D3 != line_val then
-          report("flim_event_by_index_test: Sent wrong Event Node Number (high)");
+          report("test_name: Sent wrong Event Node Number (high)");
           test_state := fail;
         end if;
         readline(event_file, file_line);
         read(file_line, line_val);
         if TXB1D4 != line_val then
-          report("flim_event_by_index_test: Sent wrong Event Node Number (low)");
+          report("test_name: Sent wrong Event Node Number (low)");
           test_state := fail;
         end if;
         readline(event_file, file_line);
         read(file_line, line_val);
         if TXB1D5 != line_val then
-          report("flim_event_by_index_test: Sent wrong Event Number (high)");
+          report("test_name: Sent wrong Event Number (high)");
           test_state := fail;
         end if;
         readline(event_file, file_line);
         read(file_line, line_val);
         if TXB1D6 != line_val then
-          report("flim_event_by_index_test: Sent wrong Event Number (low)");
+          report("test_name: Sent wrong Event Number (low)");
           test_state := fail;
         end if;
         if TXB1D7 != event_index then
-          report("flim_event_by_index_test: Sent wrong Event Index");
+          report("test_name: Sent wrong Event Index");
           test_state := fail;
         end if;
         --
@@ -125,35 +109,24 @@ begin
       end loop;
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("flim_event_by_index_test: Reject request with too high event index");
-      RXB0D0 <= 16#72#; -- NENRD, CBUS Read event by index request
-      RXB0D1 <= 4;      -- NN high
-      RXB0D2 <= 2;      -- NN low
-      RXB0D3 <= event_index;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      report("test_name: Reject request with too high event index");
+      rx_data(16#72#, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
+      tx_wait_for_ready
       if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("flim_event_by_index_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 4 then
-        report("flim_event_by_index_test: Sent wrong Node Number (high)");
+        report("test_name: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 2 then
-        report("flim_event_by_index_test: Sent wrong Node Number (low)");
+        report("test_name: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 7 then -- Invalid event index
-        report("flim_event_by_index_test: Sent wrong error number");
+        report("test_name: Sent wrong error number");
         test_state := fail;
       end if;
       --
@@ -161,41 +134,33 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("flim_event_by_index_test: Event index too low");
-      RXB0D0 <= 16#72#; -- NENRD, CBUS Read event by index request
-      RXB0D1 <= 4;      -- NN high
-      RXB0D2 <= 2;      -- NN low
-      RXB0D3 <= 0;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      report("test_name: Event index too low");
+      rx_data(16#72#, 4, 2, 0) -- NENRD, CBUS Read event by index request to node 4 2
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
+      tx_wait_for_ready
       if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("flim_event_by_index_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 4 then
-        report("flim_event_by_index_test: Sent wrong Node Number (high)");
+        report("test_name: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 2 then
-        report("flim_event_by_index_test: Sent wrong Node Number (low)");
+        report("test_name: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 7 then -- Invalid event index
-        report("flim_event_by_index_test: Sent wrong error number");
+        report("test_name: Sent wrong error number");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("flim_event_by_index_test: PASS");
+        report("test_name: PASS");
       else
-        report("flim_event_by_index_test: FAIL");
-      end if;          
+        report("test_name: FAIL");
+      end if;
       PC <= 0;
       wait;
-    end process flim_event_by_index_test;
+    end process test_name;
 end testbench;

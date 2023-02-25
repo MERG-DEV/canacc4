@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_event_by_index_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,26 +8,26 @@ begin
   test_timeout: process is
     begin
       wait for 811 ms;
-      report("slim_event_by_index_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_event_by_index_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state  : test_result;
     begin
-      report("slim_event_by_index_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_event_by_index_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
-      report("slim_event_by_index_test: Read event");
+      report("test_name: Read event");
       RXB0D0 <= 16#72#; -- NENRD, CBUS Read event by index request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 0;      -- NN low
@@ -38,16 +40,16 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
       if TXB1CON.TXREQ == '1' then
-        report("slim_event_by_index_test: Unexpected response");
+        report("test_name: Unexpected response");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("slim_event_by_index_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_event_by_index_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_event_by_index_test;
+    end process test_name;
 end testbench;

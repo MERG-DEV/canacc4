@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, flim_unlearn_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,13 +8,13 @@ begin
   test_timeout: process is
     begin
       wait for 25687 ms;
-      report("flim_unlearn_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  flim_unlearn_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     file     event_file   : text;
@@ -21,14 +23,14 @@ begin
     variable trigger_line : string;
     variable trigger_val  : integer;
     begin
-      report("flim_unlearn_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- DOLEARN off
       RA5 <= '1'; -- UNLEARN off
       --
       wait until RB6 == '1'; -- Booted into FLiM
-      report("flim_unlearn_test: Yellow LED (FLiM) on");
+      report("test_name: Yellow LED (FLiM) on");
       --
       RB4 <= '0'; -- DOLEARN on
       RA5 <= '0'; -- UNLEARN on
@@ -36,12 +38,12 @@ begin
       file_open(file_stat, event_file, "./data/unlearn.dat", read_mode);
       if file_stat != open_ok then
         report("slim_unlearn_test: Failed to open unlearn data file");
-        report("flim_unlearn_test: FAIL");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
       --
-      report("flim_unlearn_test: Unlearn events");
+      report("test_name: Unlearn events");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';
@@ -70,12 +72,12 @@ begin
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
         report("slim_unlearn_test: Failed to open event data file");
-        report("flim_unlearn_test: FAIL");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
       --
-      report("flim_unlearn_test: Check remaining events");
+      report("test_name: Check remaining events");
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
           wait until RXB0CON.RXFUL == '0';
@@ -118,12 +120,12 @@ begin
       end loop;
       --
       if test_state == pass then
-        report("flim_unlearn_test: PASS");
+        report("test_name: PASS");
       else
-        report("flim_unlearn_test: FAIL");
+        report("test_name: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
       end if;          
       PC <= 0;
       wait;
-    end process flim_unlearn_test;
+    end process test_name;
 end testbench;

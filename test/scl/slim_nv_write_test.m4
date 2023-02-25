@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_nv_write_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,29 +8,29 @@ begin
   test_timeout: process is
     begin
       wait for 873 ms;
-      report("slim_nv_write_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_nv_write_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state  : test_result;
     begin
-      report("slim_nv_write_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
      --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_nv_write_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_nv_write_test: Change 3A fire time");
+      report("test_name: Change 3A fire time");
       RXB0D0 <= 16#96#;      -- NVSET, CBUS set node variable by index
       RXB0D1 <= 0;           -- NN high
       RXB0D2 <= 0;           -- NN low
@@ -42,7 +44,7 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
       if TXB1CON.TXREQ == '1' then
-        report("slim_nv_write_test: Unexpected response");
+        report("test_name: Unexpected response");
         test_state := fail;
       end if;
       --
@@ -50,7 +52,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_nv_write_test: Test long off 0x0102,0x0204, trigger 3A");
+      report("test_name: Test long off 0x0102,0x0204, trigger 3A");
       RXB0D0 <= 16#91#;      -- ACOF, CBUS long off
       RXB0D1 <= 1;           -- NN high
       RXB0D2 <= 2;           -- NN low
@@ -63,23 +65,23 @@ begin
       --
       wait until PORTC != 0;
       if PORTC == 32 then
-        report("slim_nv_write_test: Triggered 3A");
+        report("test_name: Triggered 3A");
       else
-        report("slim_nv_write_test: Wrong output");
+        report("test_name: Wrong output");
         test_state := fail;
       end if;
       wait until PORTC == 0 for 25 ms;
       if PORTC == 0 then
-        report("slim_nv_write_test: Trigger too short");
+        report("test_name: Trigger too short");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("slim_nv_write_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_nv_write_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_nv_write_test;
+    end process test_name;
 end testbench;

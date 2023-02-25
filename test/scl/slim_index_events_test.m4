@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_index_events_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,26 +8,26 @@ begin
   test_timeout: process is
     begin
       wait for 2364 ms;
-      report("slim_index_events_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_index_events_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     begin
-      report("slim_index_events_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_index_events_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
-      report("slim_index_events_test: Request stored events");
+      report("test_name: Request stored events");
       RXB0D0 <= 16#57#; -- NERD, CBUS Stored events request
       RXB0D1 <= 0;      -- NN high
       RXB0D2 <= 0;      -- NN low
@@ -37,14 +39,14 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
       if TXB1CON.TXREQ == '1' then
-        report("slim_index_events_test: Unexpected response");
+        report("test_name: Unexpected response");
         test_state := fail;
       end if;
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_index_events_test: Request available event space");
+      report("test_name: Request available event space");
       RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
       RXB0D1 <= 0;         -- NN high
       RXB0D2 <= 0;         -- NN low
@@ -56,7 +58,7 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
       if TXB1CON.TXREQ == '1' then
-        report("slim_index_events_test: Unexpected response");
+        report("test_name: Unexpected response");
         test_state := fail;
       end if;
       --
@@ -64,7 +66,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_index_events_test: Request number of stored events");
+      report("test_name: Request number of stored events");
       RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
       RXB0D1 <= 0;         -- NN high
       RXB0D2 <= 0;         -- NN low
@@ -76,16 +78,16 @@ begin
       TXB1CON.TXREQ <= '0';
       wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
       if TXB1CON.TXREQ == '1' then
-        report("slim_index_events_test: Unexpected response");
+        report("test_name: Unexpected response");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("slim_index_events_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_index_events_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_index_events_test;
+    end process test_name;
 end testbench;

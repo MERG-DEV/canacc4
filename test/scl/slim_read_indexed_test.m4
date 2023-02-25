@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_read_indexed_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,13 +8,13 @@ begin
   test_timeout: process is
     begin
       wait for 65 ms;
-      report("slim_read_indexed_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_read_indexed_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state  : test_result;
     variable event_index : integer;
@@ -21,20 +23,20 @@ begin
     variable file_line   : string;
     variable ev_index    : integer;
     begin
-      report("slim_read_indexed_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_read_indexed_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
-      report("slim_read_indexed_test: Read events");
+      report("test_name: Read events");
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
       if file_stat != open_ok then
-        report("slim_read_indexed_test: Failed to open event data file");
-        report("slim_read_indexed_test: FAIL");
+        report("test_name: Failed to open event data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -68,7 +70,7 @@ begin
           TXB1CON.TXREQ <= '0';
           wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
           if TXB1CON.TXREQ == '1' then
-            report("slim_read_indexed_test: Unexpected response");
+            report("test_name: Unexpected response");
             test_state := fail;
           end if;
           --
@@ -79,11 +81,11 @@ begin
       end loop;
       --
       if test_state == pass then
-        report("slim_read_indexed_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_read_indexed_test: FAIL");
-      end if;          
+        report("test_name: FAIL");
+      end if;
       PC <= 0;
       wait;
-    end process slim_read_indexed_test;
+    end process test_name;
 end testbench;

@@ -9,7 +9,7 @@ define(check_tx_can_id,
        end if;)dnl
 define(tx_wait_for_ready,
        TXB1CON.TXREQ <= '0';
-       wait until TXB1CON.TXREQ == '1';)dnl
+       {ifelse($1, {}, wait until TXB1CON.TXREQ == '1';, wait until TXB1CON.TXREQ == '1' for $1 ms;)})dnl
 define(tx_rtr,
        tx_wait_for_ready
        if TXB1DLC.TXRTR == '1' then
@@ -34,12 +34,12 @@ define(rx_sid,
        rx_frame(0))dnl
 define(rx_data,
        rx_wait_for_ready
-       `ifelse($1, `', RXB0D0 <= 0;, RXB0D0 <= $1;)'
-       `ifelse($2, `', RXB0D1 <= 0;, RXB0D1 <= $2;)'
-       `ifelse($3, `', RXB0D2 <= 0;, RXB0D2 <= $3;)'
-       `ifelse($4, `', RXB0D3 <= 0;, RXB0D3 <= $4;)'
-       `ifelse($5, `', RXB0D4 <= 0;, RXB0D4 <= $5;)'
-       `ifelse($6, `', RXB0D5 <= 0;, RXB0D5 <= $6;)'
-       `ifelse($7, `', RXB0D6 <= 0;, RXB0D6 <= $7;)'
-       `ifelse($8, `', RXB0D7 <= 0;, RXB0D7 <= $8;)'
+       {ifelse($1, {}, RXB0D0 <= 0;, RXB0D0 <= $1;)}
+       {ifelse($2, {}, RXB0D1 <= 0;, RXB0D1 <= $2;)}
+       {ifelse($3, {}, RXB0D2 <= 0;, RXB0D2 <= $3;)}
+       {ifelse($4, {}, RXB0D3 <= 0;, RXB0D3 <= $4;)}
+       {ifelse($5, {}, RXB0D4 <= 0;, RXB0D4 <= $5;)}
+       {ifelse($6, {}, RXB0D5 <= 0;, RXB0D5 <= $6;)}
+       {ifelse($7, {}, RXB0D6 <= 0;, RXB0D6 <= $7;)}
+       {ifelse($8, {}, RXB0D7 <= 0;, RXB0D7 <= $8;)}
        rx_frame($#))dnl

@@ -1,3 +1,4 @@
+include(common.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --

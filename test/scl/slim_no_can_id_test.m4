@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_no_can_id_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,47 +8,47 @@ begin
   test_timeout: process is
     begin
       wait for 23000 ms;
-      report("slim_no_can_id_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_no_can_id_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
     variable test_sidh : integer;
     variable test_sidl : integer;
     begin
-      report("slim_no_can_id_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_no_can_id_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
       RA3 <= '0';
-      report("slim_no_can_id_test: Setup button pressed");
+      report("test_name: Setup button pressed");
       wait until RB7 == '0';
-      report("slim_no_can_id_test: FLiM setup started");
+      report("test_name: FLiM setup started");
       --
       RA3 <= '1';
-      report("slim_no_can_id_test: Setup button released");
+      report("test_name: Setup button released");
       --
-      report("slim_no_can_id_test: Awaiting RTR");
+      report("test_name: Awaiting RTR");
       wait until TXB1CON.TXREQ == '1';
       if TXB1DLC.TXRTR == '1' then
-        report("slim_no_can_id_test: RTR request");
+        report("test_name: RTR request");
       else
-        report("slim_no_can_id_test: not RTR request");
+        report("test_name: not RTR request");
         test_state := fail;
       end if;
       if TXB1SIDH != 16#BF# then
-        report("slim_no_can_id_test: Incorrect default SIDH");
+        report("test_name: Incorrect default SIDH");
         test_state := fail;
       end if;
       if TXB1SIDL != 16#E0# then
-        report("slim_no_can_id_test: Incorrect default SIDL");
+        report("test_name: Incorrect default SIDL");
         test_state := fail;
       end if;
       --
@@ -66,42 +68,42 @@ begin
         test_sidh := test_sidh + 1;
         test_sidl := 0;
       end loop;
-      report("slim_no_can_id_test: RTR, all CAN Ids taken");
+      report("test_name: RTR, all CAN Ids taken");
       --
       TXB1CON.TXREQ <= '0';
-      report("slim_no_can_id_test: Awaiting CMDERR");
+      report("test_name: Awaiting CMDERR");
       wait until TXB1CON.TXREQ == '1';
       if TXB1SIDH != 16#BF# then
-        report("slim_no_can_id_test: Unexpected SIDH change");
+        report("test_name: Unexpected SIDH change");
         test_state := fail;
       end if;
       if TXB1SIDL != 16#E0# then
-        report("slim_no_can_id_test: Unexpected SIDH change");
+        report("test_name: Unexpected SIDH change");
         test_state := fail;
       end if;
       if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("slim_no_can_id_test: Sent wrong response");
+        report("test_name: Sent wrong response");
         test_state := fail;
       end if;
       if TXB1D1 != 0 then
-        report("slim_no_can_id_test: Sent wrong Node Number (high)");
+        report("test_name: Sent wrong Node Number (high)");
         test_state := fail;
       end if;
       if TXB1D2 != 0 then
-        report("slim_no_can_id_test: Sent wrong Node Number (low)");
+        report("test_name: Sent wrong Node Number (low)");
         test_state := fail;
       end if;
       if TXB1D3 != 7 then -- Invalid event
-        report("slim_no_can_id_test: Sent wrong error number");
+        report("test_name: Sent wrong error number");
         test_state := fail;
       end if;
       --
       if test_state == pass then
-        report("slim_no_can_id_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_no_can_id_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_no_can_id_test;
+    end process test_name;
 end testbench;

@@ -1,3 +1,5 @@
+include(common.inc)dnl
+define(test_name, slim_modify_by_index_test)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -6,13 +8,13 @@ begin
   test_timeout: process is
     begin
       wait for 30371 ms;
-      report("slim_modify_by_index_test: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_modify_by_index_test: process is
+  test_name: process is
     type test_result is (pass, fail);
     variable test_state   : test_result;
     file     event_file   : text;
@@ -22,19 +24,19 @@ begin
     variable trigger_line : string;
     variable trigger_val  : integer;
     begin
-      report("slim_modify_by_index_test: START");
+      report("test_name: START");
       test_state := pass;
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
       --
       wait until RB7 == '1'; -- Booted into SLiM
-      report("slim_modify_by_index_test: Green LED (SLiM) on");
+      report("test_name: Green LED (SLiM) on");
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_modify_by_index_test: Enter learn mode");
+      report("test_name: Enter learn mode");
       RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -45,13 +47,13 @@ begin
       --
       file_open(file_stat, event_file, "./data/modify_indexed.dat", read_mode);
       if file_stat != open_ok then
-        report("slim_modify_by_index_test: Failed to open learn data file");
-        report("slim_modify_by_index_test: FAIL");
+        report("test_name: Failed to open learn data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
       --
-      report("slim_modify_by_index_test: Modify events");
+      report("test_name: Modify events");
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
@@ -76,13 +78,13 @@ begin
         TXB1CON.TXREQ <= '0';
         wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
         if TXB1CON.TXREQ == '1' then
-          report("slim_modify_by_index_test: Unexpected response");
+          report("test_name: Unexpected response");
           test_state := fail;
         end if;
         --
           wait until PORTC != 0 for 1005 ms;
           if PORTC != 0 then
-            report("slim_modify_by_index_test: Unexpected trigger");
+            report("test_name: Unexpected trigger");
             test_state := fail;
             wait until PORTC == 0;
           end if;
@@ -97,7 +99,7 @@ begin
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
-      report("slim_modify_by_index_test: Exit learn mode");
+      report("test_name: Exit learn mode");
       RXB0D0 <= 16#54#;    -- NNULN, exit learn mode
       RXB0D1 <= 4;         -- NN high
       RXB0D2 <= 2;         -- NN low
@@ -108,13 +110,13 @@ begin
       --
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
-        report("slim_modify_by_index_test: Failed to open event data file");
-        report("slim_modify_by_index_test: FAIL");
+        report("test_name: Failed to open event data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
       --
-      report("slim_modify_by_index_test: Check events are unchanged");
+      report("test_name: Check events are unchanged");
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         if RXB0CON.RXFUL != '0' then
@@ -141,7 +143,7 @@ begin
           if PORTC == trigger_val then
             report(report_line);
          else
-            report("slim_modify_by_index_test: Wrong output");
+            report("test_name: Wrong output");
             test_state := fail;
           end if;
           wait until PORTC == 0;
@@ -151,7 +153,7 @@ begin
         --
         wait until PORTC != 0 for 1005 ms;
         if PORTC != 0 then
-          report("slim_modify_by_index_test: Unexpected trigger");
+          report("test_name: Unexpected trigger");
           test_state := fail;
           wait until PORTC == 0;
         end if;
@@ -160,11 +162,11 @@ begin
       file_close(event_file);
       --
       if test_state == pass then
-        report("slim_modify_by_index_test: PASS");
+        report("test_name: PASS");
       else
-        report("slim_modify_by_index_test: FAIL");
+        report("test_name: FAIL");
       end if;          
       PC <= 0;
       wait;
-    end process slim_modify_by_index_test;
+    end process test_name;
 end testbench;
