@@ -48,20 +48,24 @@ data.dep: $(scl_m4s) $(dats)
 	  done;                                                                      \
 	done
 
-inc.dep: $(mdb_m4s) $(mdb_incs) $(scl_m4s) $(scl_incs)
+mdb.dep: $(mdb_m4s) $(mdb_incs)
 	@rm -f $@
 	@touch $@
 	@for inc_file in $(mdb_incs);                                                                \
 	  do for m4_file in $$(grep -l include\($$(basename $${inc_file})\) $(mdb_m4s) $(mdb_incs)); \
-	    do echo $${m4_file}: $${inc_file} >> $@; echo \\t @touch $${m4_file} >> $@;              \
+	    do echo $(mdb_dir)/$$(basename $${m4_file} .m4).mdb: $${inc_file} >> $@;                            \
 	  done;                                                                                      \
 	done
+
+scl.dep: $(scl_m4s) $(scl_incs)
+	@rm -f $@
+	@touch $@
 	@for inc_file in $(scl_incs);                                                                \
 	  do for m4_file in $$(grep -l include\($$(basename $${inc_file})\) $(scl_m4s) $(scl_incs)); \
-	    do echo $${m4_file}: $${inc_file} >> $@; echo \\t @touch $${m4_file} >> $@;              \
+	    do echo $(scl_dir)/$$(basename $${m4_file} .m4).scl: $${inc_file} >> $@;                            \
 	  done;                                                                                      \
 	done
 
 ifeq ($(filter clean, $(MAKECMDGOALS)), )
-include data.dep inc.dep
+include data.dep mdb.dep scl.dep
 endif
