@@ -51,15 +51,15 @@ data.dep: $(scl_m4s) $(dats)
 inc.dep: $(mdb_m4s) $(mdb_incs) $(scl_m4s) $(scl_incs)
 	@rm -f $@
 	@touch $@
-	@for inc_file in $(mdb_incs);                                                     \
-	  do for m4_file in $$(grep -l $$(basename $${inc_file}) $(mdb_m4s) $(mdb_incs)); \
-	    do echo $${m4_file}: $${inc_file} >> $@; echo \\t @touch $${m4_file} >> $@;   \
-	  done;                                                                           \
+	@for inc_file in $(mdb_incs);                                                                \
+	  do for m4_file in $$(grep -l include\($$(basename $${inc_file})\) $(mdb_m4s) $(mdb_incs)); \
+	    do echo $${m4_file}: $${inc_file} >> $@; echo \\t @touch $${m4_file} >> $@;              \
+	  done;                                                                                      \
 	done
-	@for inc_file in $(scl_incs);                                                     \
-	  do for m4_file in $$(grep -l $$(basename $${inc_file}) $(scl_m4s) $(scl_incs)); \
-	    do echo $${m4_file}: $${inc_file} >> $@; echo \\t @touch $${m4_file} >> $@;   \
-	  done;                                                                           \
+	@for inc_file in $(scl_incs);                                                                \
+	  do for m4_file in $$(grep -l include\($$(basename $${inc_file})\) $(scl_m4s) $(scl_incs)); \
+	    do echo $${m4_file}: $${inc_file} >> $@; echo \\t @touch $${m4_file} >> $@;              \
+	  done;                                                                                      \
 	done
 
 ifeq ($(filter clean, $(MAKECMDGOALS)), )
