@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_nv_read_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -40,59 +41,27 @@ begin
       report("test_name: Read Node Variables");
       while endfile(data_file) == false loop
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
         readline(data_file, file_line);
         report(file_line);
         readline(data_file, file_line);
         read(file_line, nv_index);
         readline(data_file, file_line);
         --
-        RXB0D0 <= 16#71#;      -- NVRD, CBUS read node variable by index
-        RXB0D1 <= 0;           -- NN high
-        RXB0D2 <= 0;           -- NN low
-        RXB0D3 <= nv_index;
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
-        --
-        TXB1CON.TXREQ <= '0';
-        wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-        if TXB1CON.TXREQ == '1' then
-          report("test_name: Unexpected response");
-          test_state := fail;
-        end if;
+        rx_data(16#71#, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
+        tx_check_no_response(776)
       end loop;
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Test past number of Node Variables");
       nv_index := nv_index + 1;
-      RXB0D0 <= 16#71#;    -- NVRD, CBUS read node variable by index
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
-      RXB0D3 <= nv_index;  -- Node Variable index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
+      rx_data(16#71#, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
+      tx_check_no_response(776)
       --
       if test_state == pass then
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

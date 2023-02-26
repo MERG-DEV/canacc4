@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_index_events_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -28,65 +29,26 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Request stored events");
-      RXB0D0 <= 16#57#; -- NERD, CBUS Stored events request
-      RXB0D1 <= 0;      -- NN high
-      RXB0D2 <= 0;      -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
+      rx_data(16#57#, 0, 0) -- NERD, CBUS Stored events request, node 0 0
+      tx_check_no_response(776)
       --
       if RXB0CON.RXFUL != '0' then
         wait until RXB0CON.RXFUL == '0';
       end if;
       report("test_name: Request available event space");
-      RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
+      rx_data(16#56#, 0, 0) -- NNEVN, CBUS request available event space, node 0 0
+      tx_check_no_response(776)
       --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Request number of stored events");
-      RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
+      rx_data(16#58#, 0, 0) -- RQEVN, CBUS request number of stored events, node 0 0
+      tx_check_no_response(776)
       --
       if test_state == pass then
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

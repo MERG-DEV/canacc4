@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_boot_maximum_events_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -28,15 +29,7 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Long on 0x0102,0x0201");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 1;
-      RXB0D4 <= 128;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#90#, 1, 2, 1, 128) -- ACON, CBUS accessory on, node 1 2, event 1 128
       --
       wait until PORTC != 0;
       if PORTC == 32 then
@@ -50,7 +43,7 @@ begin
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

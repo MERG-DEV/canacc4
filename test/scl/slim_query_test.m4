@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_query_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -28,18 +29,8 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Query node");
-      RXB0D0 <= 16#0D#; -- QNN, CBUS Query node request
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
+      rx_data(16#0D#) -- QNN, CBUS Query node request
+      tx_check_no_response(776)
       --
       if test_state == pass then
         report("test_name: PASS");

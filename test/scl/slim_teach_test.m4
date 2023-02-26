@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_teach_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -33,68 +34,20 @@ begin
       wait until RB7 == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Enter learn mode");
-      RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#53#, 0, 0) -- NNLRN, CBUS enter learn mode, node 0 0
       --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Teach long 0x0102,0x0402");
-      RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 4;
-      RXB0D4 <= 2;
-      RXB0D5 <= 1;         -- Event variable index, triggers
-      RXB0D6 <= 4;         -- Event variable value, trigger 3A
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#D2#, 1, 2, 4, 2, 1, 4) -- EVLRN, CBUS learn event, node 1 2, event 4 2, variable 1 value 4
+      tx_check_no_response(776) -- Test if response sent
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
-      --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Exit learn mode");
-      RXB0D0 <= 16#54#;    -- NNULN, exit learn mode
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#54#, 0, 0) -- NNULN, CBUS exit learn mode, node 0 0
       --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Test long on 0x0102,0x0402");
-      RXB0D0 <= 16#90#;  -- ACON, CBUS long on
-      RXB0D1 <= 1;       -- NN high
-      RXB0D2 <= 2;       -- NN low
-      RXB0D3 <= 4;       -- Event number high
-      RXB0D4 <= 2;       -- Event number low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#90#, 1, 2 , 4, 2) -- ACON, CBUS long on, node 1 2, event 4 2
       --
       wait until PORTC != 0 for 1005 ms;
       if PORTC != 0 then

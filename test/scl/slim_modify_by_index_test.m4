@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_modify_by_index_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -33,17 +34,8 @@ begin
       wait until RB7 == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Enter learn mode");
-      RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode, node 4, 2
       --
       file_open(file_stat, event_file, "./data/modify_indexed.dat", read_mode);
       if file_stat != open_ok then
@@ -56,9 +48,7 @@ begin
       report("test_name: Modify events");
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
+        rx_wait_if_not_ready
         readline(event_file, report_line);
         report(report_line);
         --
@@ -70,17 +60,8 @@ begin
         read(event_file, RXB0D5, 1);
         read(event_file, RXB0D6, 1);
         read(event_file, RXB0D7, 1);
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
-        --
-        TXB1CON.TXREQ <= '0';
-        wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-        if TXB1CON.TXREQ == '1' then
-          report("test_name: Unexpected response");
-          test_state := fail;
-        end if;
+        rx_frame(8)
+        tx_check_no_response(776)
         --
           wait until PORTC != 0 for 1005 ms;
           if PORTC != 0 then
@@ -100,13 +81,7 @@ begin
         wait until RXB0CON.RXFUL == '0';
       end if;
       report("test_name: Exit learn mode");
-      RXB0D0 <= 16#54#;    -- NNULN, exit learn mode
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#54#, 4, 2) -- NNULN, exit learn mode, node 4, 2
       --
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then
@@ -119,9 +94,7 @@ begin
       report("test_name: Check events are unchanged");
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
+        rx_wait_if_not_ready
         readline(event_file, report_line);
         report(report_line);
         read(event_file, RXB0D0, 1);
@@ -129,10 +102,7 @@ begin
         read(event_file, RXB0D2, 1);
         read(event_file, RXB0D3, 1);
         read(event_file, RXB0D4, 1);
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
+        rx_frame(5)
         --
         readline(event_file, report_line);
         while match(report_line, "Done") == false loop
@@ -165,7 +135,7 @@ begin
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

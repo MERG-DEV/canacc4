@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_tx_arbitration_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -31,21 +32,14 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Request Node Parameter");
-      RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
-      RXB0D1 <= 0;           -- NN high
-      RXB0D2 <= 0;           -- NN low
-      RXB0D3 <= 0;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#73#, 0, 0, 0); -- CBUS read node parameter by index
       wait until INTCON < 128;
       wait until INTCON > 127;
       --
       file_open(file_stat, sidh_file, "./data/slim_sidh.dat", read_mode);
       if file_stat != open_ok then
-        report("flim_unteach_test: Failed to open SIDH data file");
-        report("flim_unteach_test: FAIL");
+        report("test_name: Failed to open SIDH data file");
+        report("test_name: FAIL");
         PC <= 0;
         wait;
       end if;
@@ -60,12 +54,8 @@ begin
         read(sidh_line, sidh_val);
         --
         while tx_count > 0 loop
-          if TXB1CON.TXREQ == '0' then
-            wait until TXB1CON.TXREQ == '1';
-          end if;
-          if TXB1SIDH == sidh_val then
-            --
-          else
+          tx_wait_if_not_ready
+          if TXB1SIDH != sidh_val then
             report("test_name: Wrong SIDH");
             test_state := fail;
           end if;

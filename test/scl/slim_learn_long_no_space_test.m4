@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_learn_long_no_space_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -34,23 +35,12 @@ begin
       RB5 <= '1'; -- Polarity normal, On event => A, Off event => B
       --
       report("test_name: Long On 0x0102, 0x0180");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 1;
-      RXB0D4 <= 128;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#90#, 1, 2, 1, 128) -- ACON, CBUS accessory on, node 1 2, event 1 128
       --
       wait until PORTC != 0;
       wait until PORTC == 0;
       --
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected message");
-        test_state := fail;
-      end if;
+      tx_check_no_response
       --
       report("test_name: Learnt 128 events");
       --
@@ -58,34 +48,11 @@ begin
         wait until RXB0CON.RXFUL == '0';
       end if;
       report("test_name: Long On 0x0102, 0x0181");
-      RXB0D0 <= 16#90#;    -- ACON, CBUS accessory on
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 129;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#90#, 1, 2, 2, 129) -- ACON, CBUS accessory on, node 1 2, event 2 129
       --
       report("test_name: Awaiting CMDERR");
       wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 0 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 0 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 4 then -- No event space left
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
+      tx_check_node_response(16#6F#, 0, 0, 4, error number) -- CMDERR, CBUS error response, node 0 0, no event space left
       --
       -- FIXME yellow LED should flash
       --if RB6 == '0' then
@@ -97,7 +64,7 @@ begin
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

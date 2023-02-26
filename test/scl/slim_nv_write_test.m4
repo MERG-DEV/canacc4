@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_nv_write_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -27,41 +28,13 @@ begin
       wait until RB7 == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Change 3A fire time");
-      RXB0D0 <= 16#96#;      -- NVSET, CBUS set node variable by index
-      RXB0D1 <= 0;           -- NN high
-      RXB0D2 <= 0;           -- NN low
-      RXB0D3 <= 5;           -- Output 3A fire time
-      RXB0D4 <= 2;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
+      rx_data(16#96#, 0, 0, 5, 2) -- NVSET, CBUS set node variable by index, node 0 0, index = output 3A fire time
+      tx_check_no_response(776)
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Test long off 0x0102,0x0204, trigger 3A");
-      RXB0D0 <= 16#91#;      -- ACOF, CBUS long off
-      RXB0D1 <= 1;           -- NN high
-      RXB0D2 <= 2;           -- NN low
-      RXB0D3 <= 2;           -- Event number high
-      RXB0D4 <= 4;           -- Event number low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#91#, 1, 2, 2, 4) -- ACOF, CBUS long off, node 1 2, event 2 4
       --
       wait until PORTC != 0;
       if PORTC == 32 then
@@ -80,7 +53,7 @@ begin
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

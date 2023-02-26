@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_rtr_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -29,17 +30,8 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Receive RTR");
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.RXRTR <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB2CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB2CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
+      rx_rtr
+      tx_check_no_rtr_response(776)
       --
       if test_state == pass then
         report("test_name: PASS");

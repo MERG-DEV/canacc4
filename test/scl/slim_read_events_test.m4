@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_read_events_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -35,17 +36,8 @@ begin
       wait until RB7 == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Enter learn mode");
-      RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode, node 4 2
       --
       report("test_name: Read events");
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
@@ -73,24 +65,9 @@ begin
         while match(file_line, "Done") == false loop
           wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
           report(file_line);
-          RXB0D0 <= 16#B2#; -- REQEV, CBUS Read event variable request
-          RXB0D1 <= node_hi;
-          RXB0D2 <= node_lo;
-          RXB0D3 <= event_hi;
-          RXB0D4 <= event_lo;
           read(file_line, ev_index);
-          RXB0D5 <= ev_index;
-          RXB0CON.RXFUL <= '1';
-          RXB0DLC.DLC3 <= '1';
-          CANSTAT <= 16#0C#;
-          PIR3.RXB0IF <= '1';
-          --
-          TXB1CON.TXREQ <= '0';
-          wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
-          if TXB1CON.TXREQ == '1' then
-            report("test_name: Unexpected response");
-            test_state := fail;
-          end if;
+          rx_data(16#B2#;, node_hi, node_lo, event_hi, event_lo, ev_index) -- REQEV, CBUS Read event variable request
+          tx_check_no_response(2)
           --
           readline(event_file, file_line);
           readline(event_file, file_line);

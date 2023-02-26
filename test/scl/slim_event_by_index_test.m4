@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_event_by_index_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -28,27 +29,14 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Read event");
-      RXB0D0 <= 16#72#; -- NENRD, CBUS Read event by index request
-      RXB0D1 <= 0;      -- NN high
-      RXB0D2 <= 0;      -- NN low
-      RXB0D3 <= 1;      -- Event index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
+      rx_data(16#72#, 0, 0, 1) -- NENRD, CBUS Read event by index request, node 0 0 , event index 1
+      tx_check_no_response(776)
       --
       if test_state == pass then
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

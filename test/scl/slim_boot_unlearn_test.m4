@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_boot_unlearn_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -43,9 +44,7 @@ begin
       --
       report("test_name: Check events forgotten");
       while endfile(event_file) == false loop
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
+        rx_wait_if_not_ready
         readline(event_file, file_line);
         report(file_line);
         read(event_file, RXB0D0, 1);
@@ -53,10 +52,7 @@ begin
         read(event_file, RXB0D2, 1);
         read(event_file, RXB0D3, 1);
         read(event_file, RXB0D4, 1);
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
+        rx_frame(5)
         --
         readline(event_file, file_line);
         while match(file_line, "Done") == false loop
@@ -77,7 +73,7 @@ begin
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

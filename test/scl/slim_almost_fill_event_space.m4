@@ -1,4 +1,6 @@
 include(common.inc)dnl
+define(test_name, slim_almost_fill_event_space)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -7,20 +9,20 @@ begin
   test_timeout: process is
     begin
       wait for 153995 ms;
-      report("slim_almost_fill_event_space: TIMEOUT");
+      report("test_name: TIMEOUT");
       report(PC); -- Crashes simulator, MDB will report current source line
       PC <= 0;
       wait;
     end process test_timeout;
     --
-  slim_almost_fill_event_space: process is
+  test_name: process is
     variable event_low   : integer;
     variable node_low    : integer;
     variable sel_setting : integer;
     variable pol_setting : boolean;
     variable short_event : boolean;
     begin
-      report("slim_almost_fill_event_space: START");
+      report("test_name: START");
       RA3 <= '1'; -- Setup button not pressed
       RB4 <= '1'; -- Learn off
       RA5 <= '1'; -- Unlearn off
@@ -39,30 +41,11 @@ begin
       pol_setting := false;
       short_event := false;
       while event_low < 127 loop
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
         if short_event then
-          RXB0D0 <= 16#90#;   -- ACON, CBUS accessory on
-          RXB0D1 <= 1;        -- NN high
-          RXB0D2 <= node_low; -- NN low
-          RXB0D3 <= 9;
-          RXB0D4 <= event_low;
-          RXB0CON.RXFUL <= '1';
-          RXB0DLC.DLC3 <= '1';
-          CANSTAT <= 16#0C#;
-          PIR3.RXB0IF <= '1';
+          rx_data(16#90#, 1, node_low, 9, event_low) -- ACON, CBUS accessory on, node 1 node_low, event 9 event_low
           short_event := true;
         else
-          RXB0D0 <= 16#98#;   -- ACON, CBUS accessory short on
-          RXB0D1 <= 1;        -- NN high
-          RXB0D2 <= node_low; -- NN low
-          RXB0D3 <= 9;
-          RXB0D4 <= event_low;
-          RXB0CON.RXFUL <= '1';
-          RXB0DLC.DLC3 <= '1';
-          CANSTAT <= 16#0C#;
-          PIR3.RXB0IF <= '1';
+          rx_data(16#98#, 1, node_low, 9, event_low) -- ASON, CBUS accessory short on, node 1 node_low, event 9 event_low
           short_event := false;
         end if;
         --
@@ -102,9 +85,9 @@ begin
           sel_setting := 0;
         end if;
       end loop;
-      report("slim_almost_fill_event_space: Learnt 127 events");
+      report("test_name: Learnt 127 events");
       --
       PC <= 0;
       wait;
-    end process slim_almost_fill_event_space;
+    end process test_name;
 end testbench;

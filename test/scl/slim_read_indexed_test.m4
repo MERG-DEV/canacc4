@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, slim_read_indexed_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -56,23 +57,9 @@ begin
         while match(file_line, "Done") == false loop
           wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
           report(file_line);
-          RXB0D0 <= 16#9C#; -- REVAL, CBUS Indexed read event variable request
-          RXB0D1 <= 4;
-          RXB0D2 <= 2;
-          RXB0D3 <= event_index;
           read(file_line, ev_index);
-          RXB0D4 <= ev_index;
-          RXB0CON.RXFUL <= '1';
-          RXB0DLC.DLC3 <= '1';
-          CANSTAT <= 16#0C#;
-          PIR3.RXB0IF <= '1';
-          --
-          TXB1CON.TXREQ <= '0';
-          wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
-          if TXB1CON.TXREQ == '1' then
-            report("test_name: Unexpected response");
-            test_state := fail;
-          end if;
+          rx_data(16#9C#, 4, 2, event_index, ev_index) -- REVAL, CBUS Indexed read event variable request, node 4 2
+          tx_check_no_response(2)
           --
           readline(event_file, file_line);
           readline(event_file, file_line);
