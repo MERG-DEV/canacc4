@@ -40,7 +40,7 @@ begin
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Clear events");
       rx_data(16#55#, 0, 0) -- NNCLR, CBUS clear events, node 0 0
-      tx_check_no_response(776)
+      tx_check_no_message(776)
       --
       report("test_name: Exit learn mode");
       rx_data(16#54#, 0, 0) -- NNULN, exit learn mode, node 0 0

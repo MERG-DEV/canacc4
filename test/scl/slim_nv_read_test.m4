@@ -48,14 +48,14 @@ begin
         readline(data_file, file_line);
         --
         rx_data(16#71#, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
-        tx_check_no_response(776)
+        tx_check_no_message(776)
       end loop;
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Test past number of Node Variables");
       nv_index := nv_index + 1;
       rx_data(16#71#, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
-      tx_check_no_response(776)
+      tx_check_no_message(776)
       --
       if test_state == pass then
         report("test_name: PASS");

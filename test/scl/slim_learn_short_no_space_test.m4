@@ -40,7 +40,7 @@ begin
       wait until PORTC != 0;
       wait until PORTC == 0;
       --
-      tx_check_no_response
+      tx_check_no_message
       --
       report("test_name: Learnt 128 events");
       --
@@ -48,7 +48,7 @@ begin
       rx_data(16#98#, 1, 2, 2, 129) -- ASON, CBUS accessory short on, node 1 2, event 2 129
       --
       report("test_name: Awaiting CMDERR");
-      tx_wait_for_node_response(16#6F#, 0, 0, 4, error number) -- CMDERR, CBUS error response, node 0 0, no event space left
+      tx_wait_for_node_message(16#6F#, 0, 0, 4, error number) -- CMDERR, CBUS error response, node 0 0, no event space left
       --
       -- FIXME yellow LED should flash
       --if RB6 == '0' then

@@ -61,7 +61,7 @@ begin
         read(event_file, RXB0D6, 1);
         read(event_file, RXB0D7, 1);
         rx_frame(8)
-        tx_check_no_response(776)
+        tx_check_no_message(776)
         --
           wait until PORTC != 0 for 1005 ms;
           if PORTC != 0 then

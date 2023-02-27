@@ -30,7 +30,7 @@ begin
       --
       report("test_name: Query node");
       rx_data(16#0D#) -- QNN, CBUS Query node request
-      tx_check_no_response(776)
+      tx_check_no_message(776)
       --
       if test_state == pass then
         report("test_name: PASS");

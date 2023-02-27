@@ -30,7 +30,7 @@ begin
       --
       report("test_name: Change 3A fire time");
       rx_data(16#96#, 0, 0, 5, 2) -- NVSET, CBUS set node variable by index, node 0 0, index = output 3A fire time
-      tx_check_no_response(776)
+      tx_check_no_message(776)
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Test long off 0x0102,0x0204, trigger 3A");

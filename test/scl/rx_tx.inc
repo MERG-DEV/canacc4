@@ -48,7 +48,7 @@ define(tx_check_data,
          report("test_name: Tx wrong $3");
          test_state := fail;
        end if;)dnl
-define(tx_wait_for_response,
+define(tx_wait_for_message,
        tx_wait_if_not_ready
        {ifelse( $1, {}, {--}, tx_check_data(TXB1D0,  $1,   $2))}
        {ifelse( $3, {}, {--}, tx_check_data(TXB1D1,  $3,   $4))}
@@ -58,16 +58,16 @@ define(tx_wait_for_response,
        {ifelse($11, {}, {--}, tx_check_data(TXB1D5, $11,  $12))}
        {ifelse($13, {}, {--}, tx_check_data(TXB1D6, $13,  $14))}
        {ifelse($15, {}, {--}, tx_check_data(TXB1D7, $15,  $16))})dnl
-define(tx_wait_for_node_response,
-       {tx_wait_for_response($1, response, $2, Node Number (high), $3, Node Number (low), $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)})dnl
-define(tx_check_no_response,
+define(tx_wait_for_node_message,
+       {tx_wait_for_message($1, opcode, $2, Node Number (high), $3, Node Number (low), $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)})dnl
+define(tx_check_no_message,
        {ifelse($1, {}, {--}, tx_wait_if_not_ready($1))}
        if TXB1CON.TXREQ == '1' then
-         report("test_name: Unexpected response sent");
+         report("test_name: Unexpected message sent");
          test_state := fail;
          TXB1CON.TXREQ <= '0';
        else
-         {ifelse($1, {}, report("test_name: No response sent");, report("test_name: No response sent in $1 ms");)}
+         {ifelse($1, {}, report("test_name: No message sent");, report("test_name: No message sent in $1 ms");)}
        end if;)dnl
 define(tx_rtr,
        tx_wait_if_not_ready
@@ -97,7 +97,8 @@ define(rx_frame,
        RXB0DLC <= 16#0$1#;
        RXB0CON.RXFUL <= '1';
        CANSTAT <= 16#0C#;
-       PIR3.RXB0IF <= '1';)dnl
+       PIR3.RXB0IF <= '1';
+       report("test_name: Rx");)dnl
 define(rx_rtr,
        rx_wait_if_not_ready
        rx_frame(40))dnl

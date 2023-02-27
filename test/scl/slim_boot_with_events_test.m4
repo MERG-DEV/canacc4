@@ -80,12 +80,12 @@ begin
       --
       report("test_name: Request available event space");
       rx_data(16#56#, 0, 0) -- NNEVN, CBUS request available event space, node 0 0
-      tx_check_no_response(776)
+      tx_check_no_message(776)
       --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Request number of stored events");
       rx_data(16#58#, 0, 0) -- RQEVN, CBUS request number of stored events, node 0 0
-      tx_check_no_response(776)
+      tx_check_no_message(776)
       --
       if test_state == pass then
         report("test_name: PASS");

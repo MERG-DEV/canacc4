@@ -35,7 +35,7 @@ begin
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Set CAN Id");
       rx_data(16#75#, 0, 0, 3) -- CBUS set CAN Id, node 0 0, new CAN Id = 3
-      tx_check_no_response(776)
+      tx_check_no_message(776)
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Verify CAN Id unchanged");

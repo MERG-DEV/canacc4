@@ -30,7 +30,7 @@ begin
       --
       report("test_name: Read event");
       rx_data(16#72#, 0, 0, 1) -- NENRD, CBUS Read event by index request, node 0 0 , event index 1
-      tx_check_no_response(776)
+      tx_check_no_message(776)
       --
       if test_state == pass then
         report("test_name: PASS");

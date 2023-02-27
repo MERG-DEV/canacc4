@@ -31,7 +31,7 @@ begin
       --
       report("test_name: Request enumerate");
       rx_data(16#5D#, 0, 0) -- CBUS enumerate request, node 0 0
-      tx_check_no_response(776)
+      tx_check_no_message(776)
       --
       if test_state == pass then
         report("test_name: PASS");

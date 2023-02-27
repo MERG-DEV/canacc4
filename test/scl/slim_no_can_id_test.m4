@@ -51,7 +51,7 @@ begin
       report("test_name: RTR, all CAN Ids taken");
       --
       report("test_name: Awaiting CMDERR");
-      tx_wait_for_node_response(16#6F#, 0, 0 ,7) -- CMDERR, CBUS error response, node 0 0, error 7
+      tx_wait_for_node_message(16#6F#, 0, 0 ,7) -- CMDERR, CBUS error response, node 0 0, error 7
       tx_check_can_id(unchanged, 16#BF#, 16#E0#)
       --
       if test_state == pass then

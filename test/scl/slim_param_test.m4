@@ -51,7 +51,7 @@ begin
         readline(data_file, file_line);
         read(file_line, node_lo);
         rx_data(16#73#, node_hi, node_lo, 0) -- RQNPN, CBUS read node parameter by index, 0 == number of parameters
-        tx_check_no_response(2)
+        tx_check_no_message(2)
       end loop;
       --
       file_close(data_file);
@@ -78,14 +78,14 @@ begin
         --
         rx_data(16#73#, 0, 0, param_index) -- RQNPN, CBUS read node parameter by index, node 0 0, index = param_index
         --
-        tx_wait_for_node_response(16#9B#, 0, 0, param_index, parameter index, param_value, parameter value) then -- PARAN, CBUS individual parameter response
+        tx_wait_for_node_message(16#9B#, 0, 0, param_index, parameter index, param_value, parameter value) then -- PARAN, CBUS individual parameter response
         param_index := param_index + 1;
       end loop;
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Test past number of parameters");
       rx_data(16#73#, 0, 0, param_index) -- RQNPN, CBUS read node parameter by index
-      tx_wait_for_node_response(16#6F#, 0, 0, 9, error number) -- CMDERR, CBUS error response
+      tx_wait_for_node_message(16#6F#, 0, 0, 9, error number) -- CMDERR, CBUS error response
       --
       if test_state == pass then
         report("test_name: PASS");

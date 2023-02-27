@@ -67,7 +67,7 @@ begin
           report(file_line);
           read(file_line, ev_index);
           rx_data(16#B2#;, node_hi, node_lo, event_hi, event_lo, ev_index) -- REQEV, CBUS Read event variable request
-          tx_check_no_response(2)
+          tx_check_no_message(2)
           --
           readline(event_file, file_line);
           readline(event_file, file_line);

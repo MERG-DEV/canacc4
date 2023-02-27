@@ -39,13 +39,13 @@ begin
       report("test_name: Check available event space");
       rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
       --
-      tx_wait_for_node_response(16#70#, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response node 4 2
+      tx_wait_for_node_message(16#70#, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response node 4 2
       --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Check number of stored events");
       rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
       --
-      tx_wait_for_node_response(16#74#, 4, 2, 5, number of stored events) -- EVLNF, CBUS available event space response node 4 2
+      tx_wait_for_node_message(16#74#, 4, 2, 5, number of stored events) -- EVLNF, CBUS available event space response node 4 2
       --
       report("test_name: Check events");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
