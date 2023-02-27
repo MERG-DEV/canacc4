@@ -57,9 +57,8 @@ begin
         readline(data_file, file_line);
         read(file_line, param_value);
         --
-        tx_check_node_response(16#9B#, 0, 0, param_index, parameter index, param_value, parameter value) -- PARAN, CBUS individual parameter response node 0 0
+        tx_wait_for_node_response(16#9B#, 0, 0, param_index, parameter index, param_value, parameter value) -- PARAN, CBUS individual parameter response node 0 0
         param_index := param_index + 1;
-        tx_not_ready
       end loop;
       --
       if test_state == pass then

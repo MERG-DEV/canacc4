@@ -32,15 +32,15 @@ begin
       report("test_name: Check initial CAN Id");
       rx_data(16#0D#) -- QNN, CBUS Query node request)
       --
-      tx_wait_for_ready
-      check_tx_can_id(initial, 16#B1#, 16#80#)
+      tx_wait_if_not_ready
+      tx_check_can_id(initial, 16#B1#, 16#80#)
 
       wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Request enumerate");
       rx_data(16#5D#, 4, 2) -- CBUS enumerate request to node 4 2
       --
       tx_rtr
-      check_tx_can_id(default, 16#BF#, 16#E0#)
+      tx_check_can_id(default, 16#BF#, 16#E0#)
       --
       test_sidl := 16#20#;
       while test_sidl < 16#60# loop
@@ -50,7 +50,7 @@ begin
       rx_sid(0, 16#80#)
       report("test_name: RTR, first free CAN Id is 3");
       --
-      tx_wait_for_ready
+      tx_wait_if_not_ready
       if TXB1D0 != 16#52# then -- NNACK, CBUS node number acknowledge
         report("test_name: Sent wrong response");
         test_state := fail;
@@ -63,7 +63,7 @@ begin
         report("test_name: NN acknowledge wrong Node Number (low)");
         test_state := fail;
       end if;
-      check_tx_can_id(`NN acknowledge', 16#B0#, 16#60#)
+      tx_check_can_id({NN acknowledge}, 16#B0#, 16#60#)
       --
       if test_state == pass then
         report("test_name: PASS");

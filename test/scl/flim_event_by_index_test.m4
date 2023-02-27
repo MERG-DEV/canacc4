@@ -36,7 +36,7 @@ begin
       report("test_name: Ignore read events by index not addressed to node");
       rx_data(16#72#, 0, 0, 1) -- NENRD, CBUS Read event by index request, node 0, index 1
       --
-      tx_wait_for_ready(776)
+      tx_wait_if_not_ready(776)
       if TXB1CON.TXREQ == '1' then
         report("test_name: Unexpected response");
         test_state := fail;
@@ -59,7 +59,7 @@ begin
         wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         rx_data(16#72#, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
         --
-        tx_wait_for_ready
+        tx_wait_if_not_ready
         if TXB1D0 != 16#F2# then -- ENRSP, CBUS stored event response
           report("test_name: Sent wrong response");
           test_state := fail;
@@ -112,7 +112,7 @@ begin
       report("test_name: Reject request with too high event index");
       rx_data(16#72#, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
       --
-      tx_wait_for_ready
+      tx_wait_if_not_ready
       if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
         report("test_name: Sent wrong response");
         test_state := fail;
@@ -137,7 +137,7 @@ begin
       report("test_name: Event index too low");
       rx_data(16#72#, 4, 2, 0) -- NENRD, CBUS Read event by index request to node 4 2
       --
-      tx_wait_for_ready
+      tx_wait_if_not_ready
       if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
         report("test_name: Sent wrong response");
         test_state := fail;

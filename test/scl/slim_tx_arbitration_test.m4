@@ -54,7 +54,9 @@ begin
         read(sidh_line, sidh_val);
         --
         while tx_count > 0 loop
-          tx_wait_if_not_ready
+          if TXB1CON.TXREQ == '0' then
+            wait until TXB1CON.TXREQ == '1';
+          end if;
           if TXB1SIDH != sidh_val then
             report("test_name: Wrong SIDH");
             test_state := fail;
