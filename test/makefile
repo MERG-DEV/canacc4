@@ -24,6 +24,11 @@ test: $(logs)
 	@grep -h -e '_test: PASS' -e '_test: FAIL' -e '_test: TIMEOUT' $(log_dir)/*_test.log|sort -k2,2 -k1,1
 	@echo \\n`grep -l '_test: PASS' $(log_dir)/*_test.log|wc -l` of `echo $(tests)|wc -w)` passed
 
+.PHONY: run
+run:
+	@rm -f $(log_dir)/*.log
+	@$(MAKE) test
+
 $(logs): $(log_dir)/%.log: $(mdb_dir)/%.mdb $(scl_dir)/%.scl $(cof_dir)/*.production.cof | $(log_dir)
 	@echo $(*F)
 	@-mdb $< > $@ 2>&1
