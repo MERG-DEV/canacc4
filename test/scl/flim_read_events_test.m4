@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_read_events_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -36,17 +37,8 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("test_name: Enter learn mode");
-      RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
       if file_stat != open_ok then
@@ -72,170 +64,34 @@ begin
         --
         readline(event_file, file_line);
         while match(file_line, "Done") == false loop
-          wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-          if RXB0CON.RXFUL != '0' then
-            wait until RXB0CON.RXFUL == '0';
-          end if;
           report(file_line);
-          RXB0D0 <= 16#B2#; -- REQEV, CBUS Read event variable request
-          RXB0D1 <= node_hi;
-          RXB0D2 <= node_lo;
-          RXB0D3 <= event_hi;
-          RXB0D4 <= event_lo;
           read(file_line, variable_index);
-          RXB0D5 <= variable_index;
-          RXB0CON.RXFUL <= '1';
-          RXB0DLC.DLC3 <= '1';
-          CANSTAT <= 16#0C#;
-          PIR3.RXB0IF <= '1';
-          --
-          TXB1CON.TXREQ <= '0';
-          wait until TXB1CON.TXREQ == '1';
-          if TXB1D0 != 16#D3# then -- EVANS, CBUS event variable response
-            report("test_name: Sent wrong response");
-            test_state := fail;
-          end if;
-          if TXB1D1 != node_hi then
-            report("test_name: Sent wrong Node Number (high)");
-            test_state := fail;
-          end if;
-          if TXB1D2 != node_lo then
-            report("test_name: Sent wrong Node Number (low)");
-            test_state := fail;
-          end if;
-          if TXB1D3 != event_hi then
-            report("test_name: Sent wrong Event Number (high)");
-            test_state := fail;
-          end if;
-          if TXB1D4 != event_lo then
-            report("test_name: Sent wrong Event Number (low)");
-            test_state := fail;
-          end if;
-          if TXB1D5 != variable_index then
-            report("test_name: Sent wrong Event Variable Index");
-            test_state := fail;
-          end if;
+          rx_data(16#B2#, node_hi, node_lo, event_hi, event_lo, variable_index) -- REQEV, CBUS Read event variable request
           readline(event_file, file_line);
           read(file_line, variable_value);
-          if TXB1D6 != variable_value then
-            report("test_name: Sent wrong Event Variable value");
-            test_state := fail;
-          end if;
+          tx_wait_for_message(16#D3#, opcode, node_hi, node high, node_lo, node low, event_hi, event high, event_lo, event low, variable_index, event variable index, variable_value, event variable value) -- EVANS, CBUS event variable response
           --
           readline(event_file, file_line);
         end loop;
       end loop;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Event Variable index too low");
-      RXB0D0 <= 16#B2#;    -- REQEV, CBUS Read event variable request
-      RXB0D1 <= node_hi;
-      RXB0D2 <= node_lo;
-      RXB0D3 <= event_hi;
-      RXB0D4 <= event_lo;
-      RXB0D5 <= 0;         -- Event variable index, out of range
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#B2#, node_hi, node_lo, event_hi, event_lo, 0) -- REQEV, CBUS Read event variable request
+      tx_wait_for_cmderr_message(4, 2, 6) -- CMDERR, CBUS error response, node 4 2, Invalid event variable index
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 6 then -- Invalid event variable index
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Event Variable index too high");
-      RXB0D0 <= 16#B2#;    -- REQEV, CBUS Read event variable request
-      RXB0D1 <= node_hi;
-      RXB0D2 <= node_lo;
-      RXB0D3 <= event_hi;
-      RXB0D4 <= event_lo;
-      RXB0D5 <= 3;         -- Event variable index, out of range
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#B2#, node_hi, node_lo, event_hi, event_lo, 3) -- REQEV, CBUS Read event variable request
+      tx_wait_for_cmderr_message(4, 2, 6) -- CMDERR, CBUS error response, node 4 2, Invalid event variable index
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 6 then -- Invalid event variable index
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Read unknown event");
-      RXB0D0 <= 16#B2#;    -- REQEV, CBUS Read event variable request
-      RXB0D1 <= 9;
-      RXB0D2 <= 8;
-      RXB0D3 <= 7;
-      RXB0D4 <= 6;
-      RXB0D5 <= 1;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 5 then -- Event not found
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
+      rx_data(16#B2#, 9, 8, 7, 6, 1) -- REQEV, CBUS Read event variable request
+      tx_wait_for_cmderr_message(4, 2, 5) -- CMDERR, CBUS error response, node 4 2, unknown event
       --
       if test_state == pass then
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

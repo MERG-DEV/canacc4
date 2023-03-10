@@ -22,7 +22,10 @@ begin
     file     event_file  : text;
     variable file_stat   : file_open_status;
     variable file_line   : string;
-    variable line_val    : integer;
+    variable ev_node_hi  : integer;
+    variable ev_node_lo  : integer;
+    variable ev_ev_hi    : integer;
+    variable ev_ev_lo    : integer;
     begin
       report("test_name: START");
       test_state := pass;
@@ -36,11 +39,7 @@ begin
       report("test_name: Ignore read events by index not addressed to node");
       rx_data(16#72#, 0, 0, 1) -- NENRD, CBUS Read event by index request, node 0, index 1
       --
-      tx_wait_if_not_ready(776)
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
+      tx_check_no_message(776)
       --
       report("test_name: Read events");
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
@@ -55,51 +54,17 @@ begin
       while endfile(event_file) == false loop
         readline(event_file, file_line);
         report(file_line);
+        readline(event_file, file_line);
+        read(file_line, ev_node_hi);
+        readline(event_file, file_line);
+        read(file_line, ev_node_lo);
+        readline(event_file, file_line);
+        read(file_line, ev_ev_hi);
+        readline(event_file, file_line);
+        read(file_line, ev_ev_lo);
         --
-        wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         rx_data(16#72#, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
-        --
-        tx_wait_if_not_ready
-        if TXB1D0 != 16#F2# then -- ENRSP, CBUS stored event response
-          report("test_name: Sent wrong response");
-          test_state := fail;
-        end if;
-        if TXB1D1 != 4 then
-          report("test_name: Sent wrong Node Number (high)");
-          test_state := fail;
-        end if;
-        if TXB1D2 != 2 then
-          report("test_name: Sent wrong Node Number (low)");
-          test_state := fail;
-        end if;
-        readline(event_file, file_line);
-        read(file_line, line_val);
-        if TXB1D3 != line_val then
-          report("test_name: Sent wrong Event Node Number (high)");
-          test_state := fail;
-        end if;
-        readline(event_file, file_line);
-        read(file_line, line_val);
-        if TXB1D4 != line_val then
-          report("test_name: Sent wrong Event Node Number (low)");
-          test_state := fail;
-        end if;
-        readline(event_file, file_line);
-        read(file_line, line_val);
-        if TXB1D5 != line_val then
-          report("test_name: Sent wrong Event Number (high)");
-          test_state := fail;
-        end if;
-        readline(event_file, file_line);
-        read(file_line, line_val);
-        if TXB1D6 != line_val then
-          report("test_name: Sent wrong Event Number (low)");
-          test_state := fail;
-        end if;
-        if TXB1D7 != event_index then
-          report("test_name: Sent wrong Event Index");
-          test_state := fail;
-        end if;
+        tx_wait_for_node_message(16#F2#, 4, 2, ev_node_hi, event node high, ev_node_lo, event node low, ev_ev_hi, event event high, ev_ev_lo, event event low, event_index, event index) -- ENRSP, CBUS stored event response
         --
         while match(file_line, "Done") == false loop
           readline(event_file, file_line);
@@ -108,52 +73,13 @@ begin
         event_index := event_index + 1;
       end loop;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Reject request with too high event index");
       rx_data(16#72#, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
+      tx_wait_for_node_message(16#6F#, 4, 2, 7, error number) -- CMDERR, CBUS error response
       --
-      tx_wait_if_not_ready
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 7 then -- Invalid event index
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Event index too low");
       rx_data(16#72#, 4, 2, 0) -- NENRD, CBUS Read event by index request to node 4 2
-      --
-      tx_wait_if_not_ready
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 7 then -- Invalid event index
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
+      tx_wait_for_node_message(16#6F#, 4, 2, 7, error number) -- CMDERR, CBUS error response
       --
       if test_state == pass then
         report("test_name: PASS");

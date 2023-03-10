@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_set_can_id_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -29,65 +30,20 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Check CAN Id");
-      RXB0D0 <= 16#0D#; -- QNN, CBUS Query node request
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#0D#) -- QNN, CBUS Query node request
+      tx_can_id(initial, 16#B1#, 16#80#)
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1SIDH != 16#B1# then
-        report("test_name: Incorrect SIDH");
-        test_state := fail;
-      end if;
-      if TXB1SIDL != 16#80# then
-        report("test_name: Incorrect SIDL");
-        test_state := fail;
-      end if;
-
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Set CAN Id");
-      RXB0D0 <= 16#75#; -- CBUS set CAN Id request
-      RXB0D1 <= 4;      -- NN high
-      RXB0D2 <= 2;      -- NN low
-      RXB0D3 <= 3;      -- New CAN Id
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#75#, 4, 2, 3) -- CBUS set CAN Id request, node 4 2, CAN Id 3
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#52# then -- NNACK, CBUS node number acknowledge
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: NN acknowledge wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: NN acknowledge wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1SIDH != 16#B0# then
-        report("test_name: NN acknowledge wrong CAN Id, SIDH");
-        test_state := fail;
-      end if;
-      if TXB1SIDL != 16#60# then
-        report("test_name: NN acknowledge wrong CAN Id, SIDL");
-        test_state := fail;
-      end if;
+      tx_wait_for_node_message(16#52#, 4, 2) -- NNACK, CBUS node number acknowledge, node 4 2
+      tx_check_can_id(NN acknowledge, 16#B0#, 16#60#)
       --
       if test_state == pass then
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

@@ -63,7 +63,6 @@ begin
         --
         readline(event_file, file_line);
         while match(file_line, "Done") == false loop
-          wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
           report(file_line);
           read(file_line, ev_index);
           rx_data(16#B2#;, node_hi, node_lo, event_hi, event_lo, ev_index) -- REQEV, CBUS Read event variable request

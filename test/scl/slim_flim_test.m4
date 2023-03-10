@@ -66,7 +66,6 @@ begin
       rx_data(16#10#, 0, 0) -- RQNP, CBUS node parameters request, node 0 0
       tx_wait_for_message(16#EF#, response, 165, manufacturer id, 114, minor version, 8, module id, 128, number of events allowed, 2, number of variables per event, 16, number of node variables, 2, major version) -- PARAMS, CBUS node parameters response
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Request Module Name");
       rx_data(16#11#, 0, 0) -- RQMN, CBUS module name request, node 0 0
       report("test_name: Name request");

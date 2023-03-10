@@ -33,138 +33,34 @@ begin
       --
       report("test_name: Reject clear events request");
       rx_data(16#55#, 4, 2) -- NNCLR, CBUS clear events to node 4 2
+      tx_wait_for_node_message(16#6F#, 4, 2, 2, error number) -- CMDERR, CBUS error response
       --
-      tx_wait_if_not_ready
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("flim_teach_test: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("flim_teach_test: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("flim_teach_test: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 2 then -- Not in learn event mode
-        report("flim_teach_test: Sent wrong error number");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Check available event space");
       rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
+      tx_wait_for_node_message(16#70#, 4, 2, 123) -- EVLNF, CBUS available event space response
       --
-      tx_wait_if_not_ready
-      if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 123 then
-        report("test_name: Sent wrong available event space");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Check number of stored events");
       rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(16#74#, 4, 2, 5, number of stored events) -- NNEVN, CBUS number of stored events response
       --
-      tx_wait_if_not_ready
-      if TXB1D0 != 16#74# then -- NNEVN, CBUS number of stored events response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 5 then
-        report("test_name: Sent wrong number of stored events");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Enter learn mode");
       rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
-      --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      --
       report("test_name: Clear events");
       rx_data(16#55#, 4, 2) -- NNCLR, CBUS clear events to node 4 2
+      tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response
       --
-      tx_wait_if_not_ready
-      if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Exit learn mode");
       rx_data(16#54#, 4, 2) -- NNULN, exit learn mode to node 4 2
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Reheck available event space");
       rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
+      tx_wait_for_node_message(16#70#, 4, 2, 128) -- EVLNF, CBUS available event space response
       --
-      tx_wait_if_not_ready
-      if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 128 then
-        report("test_name: Sent wrong available event space");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Reheck number of stored events");
       rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
-      --
-      tx_wait_if_not_ready
-      if TXB1D0 != 16#74# then -- NNEVN, CBUS number of stored events response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 0 then
-        report("test_name: Sent wrong number of stored events");
-        test_state := fail;
-      end if;
+      tx_wait_for_node_message(16#74#, 4, 2, 0, number of stored events) -- NNEVN, CBUS number of stored events response
       --
       report("test_name: Check events are now ignored");
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
@@ -175,7 +71,6 @@ begin
         wait;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         rx_wait_if_not_ready
         readline(event_file, file_line);

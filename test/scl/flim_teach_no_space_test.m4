@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_teach_no_space_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -27,90 +28,22 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Enter learn mode");
-      RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
+      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
-      report("test_name: Learn event 0x0102, 0x0980");
-      RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 9;
-      RXB0D4 <= 128;
-      RXB0D5 <= 1;         -- Event variable index, trigger bitmap
-      RXB0D6 <= 4;         -- Event variable[1], output pair 3 triggered
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
+      report("test_name: Learn event");
+      rx_data(16#D2#, 1, 2, 9, 128, 1, 4) -- EVLRN, CBUS learn event, node 1 2, event 9 128, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
+      tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response, node 4 2
       --
       wait until PORTC != 0;
       wait until PORTC == 0;
       --
       report("test_name: Learnt 128 events");
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Cannot learn event 0x0102, 0x0981");
-      RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 9;
-      RXB0D4 <= 129;
-      RXB0D5 <= 1;         -- Event variable index, trigger bitmap
-      RXB0D6 <= 4;         -- Event variable[1], output pair 3 triggered
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 4 then -- No event space left
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
+      rx_data(16#D2#, 1, 2, 9, 129, 1, 4) -- EVLRN, CBUS learn event, node 1 2, event 9 129, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
+      tx_wait_for_cmderr_message(4, 2, 4) -- CMDERR, CBUS error response, node 4 2, No event space left
       --
       -- FIXME yellow LED should flash
       --if RB6 == '0' then
@@ -118,41 +51,9 @@ begin
       --end if;
       --wait until RB6 == '1';
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Cannot learn event 0x0000, 0x0982");
-      RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
-      RXB0D1 <= 0;         -- NN high
-      RXB0D2 <= 0;         -- NN low
-      RXB0D3 <= 9;
-      RXB0D4 <= 130;
-      RXB0D5 <= 1;         -- Event variable index, trigger bitmap
-      RXB0D6 <= 4;         -- Event variable[1], output pair 3 triggered
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 4 then -- No event space left
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
+      rx_data(16#D2#, 0, 0, 9, 130, 1, 4) -- EVLRN, CBUS learn event, node 0 0, event 9 130, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
+      tx_wait_for_cmderr_message(4, 2, 4) -- CMDERR, CBUS error response, node 4 2, No event space left
       --
       -- FIXME yellow LED should flash
       --if RB6 == '0' then
@@ -164,7 +65,7 @@ begin
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

@@ -33,17 +33,17 @@ begin
       wait until RB7 == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       report("test_name: Enter learn mode");
       rx_data(16#53#, 0, 0) -- NNLRN, CBUS enter learn mode, node 0 0
-      --
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
+      --
       report("test_name: Clear events");
       rx_data(16#55#, 0, 0) -- NNCLR, CBUS clear events, node 0 0
       tx_check_no_message(776)
       --
       report("test_name: Exit learn mode");
       rx_data(16#54#, 0, 0) -- NNULN, exit learn mode, node 0 0
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
       if file_stat != open_ok then

@@ -43,7 +43,6 @@ begin
       --
       report("test_name: Ignore requests not addressed to this node");
       while endfile(data_file) == false loop
-        wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         readline(data_file, file_line);
         report(file_line);
         readline(data_file, file_line);
@@ -67,10 +66,6 @@ begin
       report("test_name: Read Node Parameters");
       param_index := 0;
       while endfile(data_file) == false loop
-        wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
         readline(data_file, file_line);
         report(file_line);
         readline(data_file, file_line);
@@ -82,10 +77,9 @@ begin
         param_index := param_index + 1;
       end loop;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Test past number of parameters");
       rx_data(16#73#, 0, 0, param_index) -- RQNPN, CBUS read node parameter by index
-      tx_wait_for_node_message(16#6F#, 0, 0, 9, error number) -- CMDERR, CBUS error response
+      tx_wait_for_cmderr_message(0, 0, 9) -- CMDERR, CBUS error response
       --
       if test_state == pass then
         report("test_name: PASS");

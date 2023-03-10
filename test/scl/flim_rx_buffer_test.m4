@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_rx_buffer_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
   shared variable Datmode; -- FIXME, kludge to prevent overwriting Rx packet
 end configuration;
@@ -32,28 +33,14 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Read Node Parameter, received in RXB0");
-      RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
-      RXB0D1 <= 4;           -- NN high
-      RXB0D2 <= 2;           -- NN low
-      RXB0D3 <= 0;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#73#, 4, 2, 0) -- CBUS read node parameter by index, node 4 2, index 0 - parameter count
       --
       -- FIXME, kludge to prevent overwriting Rx packet
       wait until Datmode == 9;
       wait until Datmode == 8;
       --
       report("test_name: Read Node Parameter, received in RXB1");
-      RXB1D0 <= 16#73#;      -- CBUS read node parameter by index
-      RXB1D1 <= 4;           -- NN high
-      RXB1D2 <= 2;           -- NN low
-      RXB1D3 <= 1;
-      RXB1CON.RXFUL <= '1';
-      RXB1DLC.DLC3 <= '1';
-      CANSTAT <= 16#0A#;
-      PIR3.RXB1IF <= '1';
+      rxb1_data(16#73#, 4, 2, 1) -- CBUS read node parameter by index, node 4 2, index 1
       --
       file_open(file_stat, data_file, "./data/flim_params.dat", read_mode);
       if file_stat != open_ok then
@@ -70,39 +57,15 @@ begin
         readline(data_file, file_line);
         read(file_line, param_value);
         --
-        if TXB1CON.TXREQ == '0' then
-          report("test_name: Awaiting response");
-          wait until TXB1CON.TXREQ == '1';
-        end if;
-        if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-          report("test_name: Sent wrong response");
-          test_state := fail;
-        end if;
-        if TXB1D1 != 4 then
-          report("test_name: Sent wrong Node Number (high)");
-          test_state := fail;
-        end if;
-        if TXB1D2 != 2 then
-          report("test_name: Sent wrong Node Number (low)");
-          test_state := fail;
-        end if;
-        if TXB1D3 != param_index then
-          report("test_name: Sent wrong parameter index");
-          test_state := fail;
-        end if;
-        if TXB1D4 != param_value then
-          report("test_name: Sent wrong parameter value");
-          test_state := fail;
-        end if;
+        tx_wait_for_node_message(16#9B#, 4, 2, param_index, parameter index, param_value, parameter value) -- PARAN, CBUS individual parameter response node 4 2
         param_index := param_index + 1;
-        TXB1CON.TXREQ <= '0';
       end loop;
       --
       if test_state == pass then
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

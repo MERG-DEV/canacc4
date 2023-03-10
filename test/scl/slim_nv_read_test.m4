@@ -40,7 +40,6 @@ begin
       --
       report("test_name: Read Node Variables");
       while endfile(data_file) == false loop
-        wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         readline(data_file, file_line);
         report(file_line);
         readline(data_file, file_line);
@@ -51,7 +50,6 @@ begin
         tx_check_no_message(776)
       end loop;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Test past number of Node Variables");
       nv_index := nv_index + 1;
       rx_data(16#71#, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0

@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_tx_arbitration_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -31,14 +32,7 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Request Node Parameter");
-      RXB0D0 <= 16#73#;      -- CBUS read node parameter by index
-      RXB0D1 <= 4;           -- NN high
-      RXB0D2 <= 2;           -- NN low
-      RXB0D3 <= 0;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#73#, 4, 2, 0); -- CBUS read node parameter by index
       wait until INTCON < 128;
       wait until INTCON > 127;
       --
@@ -63,9 +57,7 @@ begin
           if TXB1CON.TXREQ == '0' then
             wait until TXB1CON.TXREQ == '1';
           end if;
-          if TXB1SIDH == sidh_val then
-            --
-          else
+          if TXB1SIDH != sidh_val then
             report("test_name: Wrong SIDH");
             test_state := fail;
           end if;
@@ -82,7 +74,7 @@ begin
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

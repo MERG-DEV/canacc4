@@ -37,7 +37,6 @@ begin
         test_state := fail;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Reboot request addressed to node 0x0400");
       rx_data(16#5C#, 4, 0) -- BOOTM, CBUS bootload mode request, node 4 0
       --
@@ -47,7 +46,6 @@ begin
         test_state := fail;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Reboot request addressed to node 0x0002");
       rx_data(16#5C#, 0, 2) -- BOOTM, CBUS bootload mode request, node 0 2
       --
@@ -57,7 +55,6 @@ begin
         test_state := fail;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Reboot request addressed to node 0x0000");
       rx_data(16#5C#, 0, 0) -- BOOTM, CBUS bootload mode request, node 0 0
       --

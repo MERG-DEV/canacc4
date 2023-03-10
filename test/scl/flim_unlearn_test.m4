@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_unlearn_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -45,9 +46,7 @@ begin
       --
       report("test_name: Unlearn events");
       while endfile(event_file) == false loop
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
+        rx_wait_if_not_ready
         readline(event_file, report_line);
         report(report_line);
         read(event_file, RXB0D0, 1);
@@ -55,10 +54,7 @@ begin
         read(event_file, RXB0D2, 1);
         read(event_file, RXB0D3, 1);
         read(event_file, RXB0D4, 1);
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
+        rx_frame(5)
         --
         wait until PORTC != 0;
         wait until PORTC == 0;
@@ -79,9 +75,7 @@ begin
       --
       report("test_name: Check remaining events");
       while endfile(event_file) == false loop
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
+        rx_wait_if_not_ready
         readline(event_file, report_line);
         report(report_line);
         read(event_file, RXB0D0, 1);
@@ -89,10 +83,7 @@ begin
         read(event_file, RXB0D2, 1);
         read(event_file, RXB0D3, 1);
         read(event_file, RXB0D4, 1);
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
+        rx_frame(5)
         --
         readline(event_file, report_line);
         while match(report_line, "Done") == false loop
@@ -124,7 +115,7 @@ begin
       else
         report("test_name: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_no_can_id_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -30,65 +31,21 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Check CAN Id");
-      RXB0D0 <= 16#0D#; -- QNN, CBUS Query node request
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#0D#) -- QNN, CBUS Query node request
+      tx_can_id(initial, 16#B1#, 16#80#)
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1SIDH != 16#B1# then
-        report("test_name: Incorrect SIDH");
-        test_state := fail;
-      end if;
-      if TXB1SIDL != 16#80# then
-        report("test_name: Incorrect SIDL");
-        test_state := fail;
-      end if;
-
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Request enumerate");
-      RXB0D0 <= 16#5D#; -- CBUS enumerate request
-      RXB0D1 <= 4;      -- NN high
-      RXB0D2 <= 2;      -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#5D#, 4, 2) -- CBUS enumerate request
       --
-      TXB1CON.TXREQ <= '0';
       report("test_name: Waiting for RTR");
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1DLC.TXRTR == '1' then
-        report("test_name: RTR request");
-      else
-        report("test_name: not RTR request");
-        test_state := fail;
-      end if;
-      if TXB1SIDH != 16#BF# then
-        report("test_name: Incorrect default SIDH");
-        test_state := fail;
-      end if;
-      if TXB1SIDL != 16#E0# then
-        report("test_name: Incorrect default SIDL");
-        test_state := fail;
-      end if;
+      tx_rtr
+      tx_check_can_id(default, 16#BF#, 16#E0#)
       --
       test_sidh := 0;
       test_sidl := 16#20#;
       while test_sidh < 16#10# loop
         while test_sidl < 16#100# loop
-          RXB0SIDH <= test_sidh;
-          RXB0SIDL <= test_sidl;
-          RXB0CON.RXFUL <= '1';
-          RXB0DLC <= 0;
-          CANSTAT <= 16#0C#;
-          PIR3.RXB0IF <= '1';
-          wait until RXB0CON.RXFUL == '0';
+          rx_sid(test_sidh, test_sidl)
           test_sidl := test_sidl + 16#20#;
         end loop;
         test_sidh := test_sidh + 1;
@@ -96,38 +53,14 @@ begin
       end loop;
       report("test_name: RTR, all CAN Ids taken");
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1SIDH != 16#BF# then
-        report("test_name: Unexpected SIDH change");
-        test_state := fail;
-      end if;
-      if TXB1SIDL != 16#E0# then
-        report("test_name: Unexpected SIDH change");
-        test_state := fail;
-      end if;
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 7 then -- Invalid event
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
+      tx_wait_for_cmderr_message(4, 2 ,7) -- CMDERR, CBUS error response, node 4 2, error 7
+      tx_check_can_id(unchanged, 16#BF#, 16#E0#)
       --
       if test_state == pass then
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

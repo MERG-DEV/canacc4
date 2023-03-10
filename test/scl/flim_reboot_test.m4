@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_reboot_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
   shared label    _CANInit;
   shared label    _CANMain;
@@ -27,77 +28,37 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      report("test_name: Addressed 00");
-      RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
-      RXB0D1 <= 0;      -- NN high
-      RXB0D2 <= 0;      -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
+      report("test_name: Ignore request addressed to Node 00");
+      rx_data(16#5C#, 0, 0) -- BOOTM, CBUS bootload mode request, node 0 0
       wait until RB6 == '0' for 6 ms; -- Wait for LED output reset on reboot
       if RB6 == '0' then
         report("test_name: Unexpected reboot");
         test_state := fail;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Ignore request addressed to Node 0x40");
-      RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
-      RXB0D1 <= 4;      -- NN high
-      RXB0D2 <= 0;      -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
+      rx_data(16#5C#, 4, 0) -- BOOTM, CBUS bootload mode request, node 0 0
       wait until RB6 == '0' for 6 ms; -- Wait for LED output reset on reboot
       if RB6 == '0' then
         report("test_name: Unexpected reboot");
         test_state := fail;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Ignore request addressed to Node 0x02");
-      RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
-      RXB0D1 <= 0;      -- NN high
-      RXB0D2 <= 2;      -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
+      rx_data(16#5C#, 0, 2) -- BOOTM, CBUS bootload mode request, node 0 0
       wait until RB6 == '0' for 6 ms; -- Wait for LED output reset on reboot
       if RB6 == '0' then
         report("test_name: Unexpected reboot");
         test_state := fail;
       end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Reboot request");
-      RXB0D0 <= 16#5C#; -- BOOTM, CBUS bootload mode request
-      RXB0D1 <= 4;      -- NN high
-      RXB0D2 <= 2;      -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
+      rx_data(16#5C#, 4, 2) -- BOOTM, CBUS bootload mode request, node 4 2
       wait until RB6 == '0'; -- Wait for LED output reset on reboot
       report("test_name: Rebooting");
       --
       wait until PC == 0;
-      PC <= _CANInit;
+      PC <= _CANInit; -- Avoid MDB breakpoint @0x0
       --
       wait until PC == _CANMain;
       report("test_name: Reached _CANMain, in bootloader");
@@ -106,7 +67,7 @@ begin
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

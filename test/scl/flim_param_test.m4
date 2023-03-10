@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_param_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -20,6 +21,8 @@ begin
     file     data_file  : text;
     variable file_stat   : file_open_status;
     variable file_line   : string;
+    variable node_hi     : integer;
+    variable node_lo     : integer;
     variable param_index : integer;
     variable param_value : integer;
     begin
@@ -40,24 +43,15 @@ begin
       --
       report("test_name: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
-        wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
         readline(data_file, file_line);
         report(file_line);
-        RXB0D0 <= 16#73#; -- RQNPN, CBUS read node parameter by index
-        read(data_file, RXB0D1, 1); -- NN high
-        read(data_file, RXB0D2, 1); -- NN low
-        RXB0D3 <= 0;                -- Index, 0 == number of parameters
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
+        readline(data_file, file_line);
+        read(file_line, node_hi);
+        readline(data_file, file_line);
+        read(file_line, node_lo);
         --
-        TXB1CON.TXREQ <= '0';
-        wait until TXB1CON.TXREQ == '1' for 2 ms; -- Test if response sent
-        if TXB1CON.TXREQ == '1' then
-          report("test_name: Unexpected response");
-          test_state := fail;
-        end if;
+        rx_data(16#73#, node_hi, node_lo) -- RQNPN, CBUS read node parameter by index
+        tx_check_no_message(2) -- Test if response sent
       end loop;
       --
       file_close(data_file);
@@ -73,87 +67,25 @@ begin
       report("test_name: Read Node Parameters");
       param_index := 0;
       while endfile(data_file) == false loop
-        wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
         readline(data_file, file_line);
         report(file_line);
         readline(data_file, file_line);
         read(file_line, param_value);
         --
-        RXB0D0 <= 16#73#;      -- RQNPN, CBUS read node parameter by index
-        RXB0D1 <= 4;           -- NN high
-        RXB0D2 <= 2;           -- NN low
-        RXB0D3 <= param_index;
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
-        --
-        TXB1CON.TXREQ <= '0';
-        wait until TXB1CON.TXREQ == '1';
-        if TXB1D0 != 16#9B# then -- PARAN, CBUS individual parameter response
-          report("test_name: Sent wrong response");
-          test_state := fail;
-        end if;
-        if TXB1D1 != 4 then
-          report("test_name: Sent wrong Node Number (high)");
-          test_state := fail;
-        end if;
-        if TXB1D2 != 2 then
-          report("test_name: Sent wrong Node Number (low)");
-          test_state := fail;
-        end if;
-        if TXB1D3 != param_index then
-          report("test_name: Sent wrong parameter index");
-          test_state := fail;
-        end if;
-        if TXB1D4 != param_value then
-          report("test_name: Sent wrong parameter value");
-          test_state := fail;
-        end if;
+        rx_data(16#73#, 4, 2, param_index) -- RQNPN, CBUS read node parameter by index
+        tx_wait_for_node_message(16#9B#, 4, 2, param_index, param_value) -- PARAN, CBUS individual parameter response
         param_index := param_index + 1;
       end loop;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Test beyond number of parameters");
-      RXB0D0 <= 16#73#;       -- RQNPN, CBUS read node parameter by index
-      RXB0D1 <= 4;            -- NN high
-      RXB0D2 <= 2;            -- NN low
-      RXB0D3 <= param_index;  -- Parameter index
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 9 then -- Invalid parameter index
-        report("test_name: Sent wrong error number");
-        test_state := fail;
-      end if;
+      rx_data(16#73#, 4, 2, param_index) -- RQNPN, CBUS read node parameter by index
+      tx_wait_for_cmderr_message(4, 2, 9) -- CMDERR, CBUS error response, node 4 2, Invalid parameter index
       --
       if test_state == pass then
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

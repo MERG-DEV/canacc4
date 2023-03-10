@@ -45,7 +45,6 @@ begin
       end if;
       --
       report("test_name: Modify events");
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         rx_wait_if_not_ready
         readline(event_file, report_line);
@@ -87,7 +86,6 @@ begin
       end if;
       --
       report("test_name: Check events are unchanged");
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       while endfile(event_file) == false loop
         rx_wait_if_not_ready
         readline(event_file, report_line);

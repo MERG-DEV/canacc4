@@ -33,14 +33,14 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Read Node Parameter, received in RXB0");
-      rx_data(16#73#, 0, 0, 0) -- CBUS read node parameter by index, node 0 0, index 0
+      rx_data(16#73#, 0, 0, 0) -- CBUS read node parameter by index, node 0 0, index 0 - parameter count
       --
       -- FIXME, kludge to prevent overwriting Rx packet
       wait until Datmode == 1;
       wait until Datmode == 0;
       --
       report("test_name: Read Node Parameter, received in RXB1");
-      rx_data(16#73#, 0, 0, 1) -- CBUS read node parameter by index, node 0 0, index 1
+      rxb1_data(16#73#, 0, 0, 1) -- CBUS read node parameter by index, node 0 0, index 1
       --
       file_open(file_stat, data_file, "./data/slim_params.dat", read_mode);
       if file_stat != open_ok then

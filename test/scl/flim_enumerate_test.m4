@@ -35,7 +35,6 @@ begin
       tx_wait_if_not_ready
       tx_check_can_id(initial, 16#B1#, 16#80#)
 
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Request enumerate");
       rx_data(16#5D#, 4, 2) -- CBUS enumerate request to node 4 2
       --
@@ -50,20 +49,8 @@ begin
       rx_sid(0, 16#80#)
       report("test_name: RTR, first free CAN Id is 3");
       --
-      tx_wait_if_not_ready
-      if TXB1D0 != 16#52# then -- NNACK, CBUS node number acknowledge
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: NN acknowledge wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: NN acknowledge wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      tx_check_can_id({NN acknowledge}, 16#B0#, 16#60#)
+      tx_wait_for_node_message(16#52#, 4, 2) -- NNACK, CBUS node number acknowledge
+      tx_check_can_id(new CAN Id, 16#B0#, 16#60#)
       --
       if test_state == pass then
         report("test_name: PASS");

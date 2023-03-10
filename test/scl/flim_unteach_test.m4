@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_unteach_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -32,81 +33,17 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Check available event space");
-      RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
+      tx_wait_for_node_message(16#70#, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response node 4 2
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 123 then
-        report("test_name: Sent wrong available event space");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Check number of stored events");
-      RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(16#74#, 4, 2, 5, number of stored events) -- EVLNF, CBUS available event space response node 4 2
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#74# then -- NNEVN, CBUS number of stored events response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 5 then
-        report("test_name: Sent wrong number of stored events");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Enter learn mode");
-      RXB0D0 <= 16#53#;    -- NNLRN, CBUS enter learn mode
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
+      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       file_open(file_stat, event_file, "./data/unlearn.dat", read_mode);
       if file_stat != open_ok then
@@ -118,10 +55,7 @@ begin
       --
       report("test_name: Unlearn events");
       while endfile(event_file) == false loop
-        wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
+        rx_wait_if_not_ready
         readline(event_file, report_line);
         report(report_line);
         read(event_file, RXB0D0, 1); -- Ignore event type from data file
@@ -130,57 +64,18 @@ begin
         read(event_file, RXB0D2, 1);
         read(event_file, RXB0D3, 1);
         read(event_file, RXB0D4, 1);
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
-        --
-        TXB1CON.TXREQ <= '0';
-        wait until TXB1CON.TXREQ == '1';
-        if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
-          report("test_name: Sent wrong response");
-          test_state := fail;
-        end if;
-        if TXB1D1 != 4 then
-          report("test_name: Sent wrong Node Number (high)");
-          test_state := fail;
-        end if;
-        if TXB1D2 != 2 then
-          report("test_name: Sent wrong Node Number (low)");
-          test_state := fail;
-        end if;
+        rx_frame(5)
+        tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response node 4 2
       --
       end loop;
       --
       file_close(event_file);
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Exit learn mode");
-      RXB0D0 <= 16#54#;    -- NNULN, exit learn mode
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#54#, 4, 2) -- NNULN, CBUS exit learn mode to node 4 2
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Do not unlearn event");
-      RXB0D0 <= 16#95#;            -- EVULN, CBUS unlearn event
-      RXB0D1 <= 1;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0D3 <= 2;
-      RXB0D4 <= 4;
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#95#, 1, 2, 2, 4) -- EVULN, CBUS unlearn event, node 1 2, event 2 4
       --
       -- FIXME SHould reject request as not in learn mode
       --TXB1CON.TXREQ <= '0';
@@ -202,69 +97,13 @@ begin
       --  test_state := fail;
       --end if;
       --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Recheck available event space");
-      RXB0D0 <= 16#56#;    -- NNEVN, CBUS request available event space
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
+      tx_wait_for_node_message(16#70#, 4, 2, 125, available event space) -- EVLNF, CBUS available event space response node 4 2
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#70# then -- EVLNF, CBUS available event space response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 125 then
-        report("test_name: Sent wrong available event space");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      if RXB0CON.RXFUL != '0' then
-        wait until RXB0CON.RXFUL == '0';
-      end if;
       report("test_name: Recheck number of stored events");
-      RXB0D0 <= 16#58#;    -- RQEVN, CBUS request number of stored events
-      RXB0D1 <= 4;         -- NN high
-      RXB0D2 <= 2;         -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
-      --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1';
-      if TXB1D0 != 16#74# then -- NNEVN, CBUS number of stored events response
-        report("test_name: Sent wrong response");
-        test_state := fail;
-      end if;
-      if TXB1D1 != 4 then
-        report("test_name: Sent wrong Node Number (high)");
-        test_state := fail;
-      end if;
-      if TXB1D2 != 2 then
-        report("test_name: Sent wrong Node Number (low)");
-        test_state := fail;
-      end if;
-      if TXB1D3 != 3 then
-        report("test_name: Sent wrong number of stored events");
-        test_state := fail;
-      end if;
+      rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(16#74#, 4, 2, 3, number of stored events) -- EVLNF, CBUS available event space response node 4 2
       --
       file_open(file_stat, event_file, "./data/remaining_events.dat", read_mode);
       if file_stat != open_ok then
@@ -275,12 +114,8 @@ begin
       end if;
       --
       report("test_name: Check events");
-      wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
-      report("test_name: Check events");
       while endfile(event_file) == false loop
-        if RXB0CON.RXFUL != '0' then
-          wait until RXB0CON.RXFUL == '0';
-        end if;
+        rx_wait_if_not_ready
         readline(event_file, report_line);
         report(report_line);
         read(event_file, RXB0D0, 1);
@@ -288,10 +123,7 @@ begin
         read(event_file, RXB0D2, 1);
         read(event_file, RXB0D3, 1);
         read(event_file, RXB0D4, 1);
-        RXB0CON.RXFUL <= '1';
-        RXB0DLC.DLC3 <= '1';
-        CANSTAT <= 16#0C#;
-        PIR3.RXB0IF <= '1';
+        rx_frame(5)
         --
         readline(event_file, report_line);
         while match(report_line, "Done") == false loop
@@ -317,11 +149,12 @@ begin
           wait until PORTC == 0;
         end if;
       end loop;
+      --
       if test_state == pass then
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;

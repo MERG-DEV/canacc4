@@ -1,5 +1,6 @@
 include(common.inc)dnl
 define(test_name, flim_index_events_test)dnl
+include(rx_tx.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
@@ -21,7 +22,10 @@ begin
     file     event_file  : text;
     variable file_stat   : file_open_status;
     variable file_line   : string;
-    variable line_val    : integer;
+    variable ev_node_hi  : integer;
+    variable ev_node_lo  : integer;
+    variable ev_ev_hi    : integer;
+    variable ev_ev_lo    : integer;
     begin
       report("test_name: START");
       test_state := pass;
@@ -33,30 +37,11 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Ignore read events request not addressed to node");
-      RXB0D0 <= 16#57#; -- QNN, CBUS Read events request
-      RXB0D1 <= 0;      -- NN high
-      RXB0D2 <= 0;      -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#57#, 0, 0) -- NERD, CBUS Read events request, node 0 0
+      tx_check_no_message(776)  -- Test if unexpected response sent
       --
-      TXB1CON.TXREQ <= '0';
-      wait until TXB1CON.TXREQ == '1' for 776 ms; -- Test if response sent
-      if TXB1CON.TXREQ == '1' then
-        report("test_name: Unexpected response");
-        test_state := fail;
-      end if;
-      --
-      wait for 1 ms; -- FIXME Next packet lost if previous Tx not yet completed
       report("test_name: Read events");
-      RXB0D0 <= 16#57#; -- NERD, CBUS Read events request
-      RXB0D1 <= 4;      -- NN high
-      RXB0D2 <= 2;      -- NN low
-      RXB0CON.RXFUL <= '1';
-      RXB0DLC.DLC3 <= '1';
-      CANSTAT <= 16#0C#;
-      PIR3.RXB0IF <= '1';
+      rx_data(16#57#, 4, 2) -- NERD, CBUS Read events request, node 4 2
       --
       file_open(file_stat, event_file, "./data/stored_events.dat", read_mode);
       if file_stat != open_ok then
@@ -70,49 +55,15 @@ begin
       while endfile(event_file) == false loop
         readline(event_file, file_line);
         report(file_line);
-        --
-        TXB1CON.TXREQ <= '0';
-        wait until TXB1CON.TXREQ == '1';
-        if TXB1D0 != 16#F2# then -- ENRSP, CBUS stored event response
-          report("test_name: Sent wrong response");
-          test_state := fail;
-        end if;
-        if TXB1D1 != 4 then
-          report("test_name: Sent wrong Node Number (high)");
-          test_state := fail;
-        end if;
-        if TXB1D2 != 2 then
-          report("test_name: Sent wrong Node Number (low)");
-          test_state := fail;
-        end if;
         readline(event_file, file_line);
-        read(file_line, line_val);
-        if TXB1D3 != line_val then
-          report("test_name: Sent wrong Event Node Number (high)");
-          test_state := fail;
-        end if;
+        read(file_line, ev_node_hi);
         readline(event_file, file_line);
-        read(file_line, line_val);
-        if TXB1D4 != line_val then
-          report("test_name: Sent wrong Event Node Number (low)");
-          test_state := fail;
-        end if;
+        read(file_line, ev_node_lo);
         readline(event_file, file_line);
-        read(file_line, line_val);
-        if TXB1D5 != line_val then
-          report("test_name: Sent wrong Event Number (high)");
-          test_state := fail;
-        end if;
+        read(file_line, ev_ev_hi);
         readline(event_file, file_line);
-        read(file_line, line_val);
-        if TXB1D6 != line_val then
-          report("test_name: Sent wrong Event Number (low)");
-          test_state := fail;
-        end if;
-        if TXB1D7 != event_index then
-          report("test_name: Sent wrong Event Index");
-          test_state := fail;
-        end if;
+        read(file_line, ev_ev_lo);
+        tx_wait_for_node_message(16#F2#, 4, 2, ev_node_hi, event node high, ev_node_lo, event node low, ev_ev_hi, event event high, ev_ev_lo, event event low, event_index, event index) -- ENRSP, CBUS stored event response
         --
         while match(file_line, "Done") == false loop
           readline(event_file, file_line);
@@ -132,7 +83,7 @@ begin
         report("test_name: PASS");
       else
         report("test_name: FAIL");
-      end if;          
+      end if;
       PC <= 0;
       wait;
     end process test_name;
