@@ -1,10 +1,10 @@
 define(test_name, flim_rx_buffer_test)dnl
 include(common.inc)dnl
-configuration for "PIC18F2480" is
+configuration for "processor_type" is
   shared variable Datmode; -- FIXME, kludge to prevent overwriting Rx packet
 end configuration;
 --
-testbench for "PIC18F2480" is
+testbench for "processor_type" is
 begin
   test_timeout: process is
     begin

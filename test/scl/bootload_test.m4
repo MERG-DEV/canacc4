@@ -1,10 +1,10 @@
 define(test_name, bootload_test)dnl
 include(common.inc)dnl
-configuration for "PIC18F2480" is
+configuration for "processor_type" is
   shared label    _CANMain;
 end configuration;
 --
-testbench for "PIC18F2480" is
+testbench for "processor_type" is
 begin
   test_timeout: process is
     begin

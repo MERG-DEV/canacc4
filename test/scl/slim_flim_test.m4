@@ -1,11 +1,11 @@
 define(test_name, slim_flim_test)dnl
 include(common.inc)dnl
-configuration for "PIC18F2480" is
+configuration for "processor_type" is
   shared label    main_loop;
   shared label    setup;
 end configuration;
 --
-testbench for "PIC18F2480" is
+testbench for "processor_type" is
 begin
   test_timeout: process is
     begin
