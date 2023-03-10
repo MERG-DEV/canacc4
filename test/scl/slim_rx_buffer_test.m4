@@ -1,6 +1,5 @@
-include(common.inc)dnl
 define(test_name, slim_rx_buffer_test)dnl
-include(rx_tx.inc)dnl
+include(common.inc)dnl
 configuration for "PIC18F2480" is
   shared variable Datmode; -- FIXME, kludge to prevent overwriting Rx packet
 end configuration;

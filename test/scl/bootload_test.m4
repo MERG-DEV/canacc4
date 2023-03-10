@@ -1,5 +1,5 @@
-include(common.inc)dnl
 define(test_name, bootload_test)dnl
+include(common.inc)dnl
 configuration for "PIC18F2480" is
   shared label    _CANMain;
 end configuration;

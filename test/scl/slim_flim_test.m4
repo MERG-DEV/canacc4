@@ -1,6 +1,5 @@
-include(common.inc)dnl
 define(test_name, slim_flim_test)dnl
-include(rx_tx.inc)dnl
+include(common.inc)dnl
 configuration for "PIC18F2480" is
   shared label    main_loop;
   shared label    setup;

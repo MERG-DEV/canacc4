@@ -1,6 +1,5 @@
-include(common.inc)dnl
 define(test_name, flim_event_by_index_test)dnl
-include(rx_tx.inc)dnl
+include(common.inc)dnl
 configuration for "PIC18F2480" is
 end configuration;
 --
