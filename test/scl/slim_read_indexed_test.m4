@@ -39,8 +39,7 @@ begin
       --
       event_index := 1;
       while endfile(data_file) == false loop
-        readline(data_file, file_line);
-        report(file_line);
+        data_file_report_line
         --
         -- Skip node and event numbers
         readline(data_file, file_line);

@@ -38,8 +38,7 @@ begin
       --
       report("test_name: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
-        readline(data_file, file_line);
-        report(file_line);
+        data_file_report_line
         readline(data_file, file_line);
         read(file_line, node_hi);
         readline(data_file, file_line);

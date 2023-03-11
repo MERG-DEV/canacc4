@@ -89,8 +89,7 @@ begin
       data_file_open(learnt_events.dat)
       --
       while endfile(data_file) == false loop
-        readline(data_file, file_line);
-        report(file_line);
+        data_file_report_line
         rx_wait_if_not_ready
         read(data_file, RXB0D0, 1);
         read(data_file, RXB0D1, 1);

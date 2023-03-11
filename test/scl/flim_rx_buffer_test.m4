@@ -47,8 +47,7 @@ begin
       --
       param_index := 0;
       while param_index < 2 loop
-        readline(data_file, file_line);
-        report(file_line);
+        data_file_report_line
         readline(data_file, file_line);
         read(file_line, param_value);
         --

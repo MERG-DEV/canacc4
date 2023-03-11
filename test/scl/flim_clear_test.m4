@@ -68,8 +68,7 @@ begin
       --
       while endfile(data_file) == false loop
         rx_wait_if_not_ready
-        readline(data_file, file_line);
-        report(file_line);
+        data_file_report_line
         read(data_file, RXB0D0, 1);
         read(data_file, RXB0D1, 1);
         read(data_file, RXB0D2, 1);

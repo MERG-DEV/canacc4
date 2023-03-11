@@ -48,8 +48,7 @@ begin
       --
       event_index := 1;
       while endfile(data_file) == false loop
-        readline(data_file, file_line);
-        report(file_line);
+        data_file_report_line
         readline(data_file, file_line);
         read(file_line, ev_node_hi);
         readline(data_file, file_line);

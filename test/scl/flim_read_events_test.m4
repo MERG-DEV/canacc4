@@ -45,8 +45,7 @@ begin
       --
       report("test_name: Read events");
       while endfile(data_file) == false loop
-        readline(data_file, file_line);
-        report(file_line);
+        data_file_report_line
         --
         readline(data_file, file_line);
         read(file_line, node_hi);

@@ -6,3 +6,6 @@ define(data_file_open,
          PC <= 0;
          wait;
        end if;)dnl
+define(data_file_report_line,
+       readline(data_file, file_line);
+       report(file_line);)dnl
