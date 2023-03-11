@@ -18,13 +18,11 @@ begin
     --
   test_name: process is
     type test_result is (pass, fail);
-    variable test_state   : test_result;
+    variable test_state  : test_result;
     file     data_file   : text;
-    variable file_stat    : file_open_status;
-    variable file_line    : string;
-    variable report_line  : string;
-    variable trigger_line : string;
-    variable trigger_val  : integer;
+    variable file_stat   : file_open_status;
+    variable file_line   : string;
+    variable trigger_val : integer;
     begin
       report("test_name: START");
       test_state := pass;
@@ -42,8 +40,7 @@ begin
       data_file_open(modify.dat)
       --
       while endfile(data_file) == false loop
-        readline(data_file, report_line);
-        report(report_line);
+        data_file_report_line
         --
         rx_wait_if_not_ready
         RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
@@ -56,21 +53,21 @@ begin
         rx_frame(7)
         tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response node 4 2
         --
-        readline(data_file, report_line);
-        while match(report_line, "Done") == false loop
-          readline(data_file, trigger_line);
-          read(trigger_line, trigger_val);
+        readline(data_file, file_line);
+        while match(file_line, "Done") == false loop
+          readline(data_file, file_line);
+          read(file_line, trigger_val);
           --
           wait until PORTC != 0;
           if PORTC == trigger_val then
-            report(report_line);
+            report(file_line);
          else
             report("test_name: Wrong output");
             test_state := fail;
           end if;
           wait until PORTC == 0;
           --
-          readline(data_file, report_line);
+          readline(data_file, file_line);
         end loop;
         --
         wait until PORTC != 0 for 1005 ms;
@@ -97,26 +94,25 @@ begin
       data_file_open(modified_events.dat)
       --
       while endfile(data_file) == false loop
-        readline(data_file, report_line);
-        report(report_line);
+        data_file_report_line
         rx_wait_if_not_ready
         rx_data_file_event
         --
-        readline(data_file, report_line);
-        while match(report_line, "Done") == false loop
-          readline(data_file, trigger_line);
-          read(trigger_line, trigger_val);
+        readline(data_file, file_line);
+        while match(file_line, "Done") == false loop
+          readline(data_file, file_line);
+          read(file_line, trigger_val);
           --
           wait until PORTC != 0;
           if PORTC == trigger_val then
-            report(report_line);
+            report(file_line);
          else
             report("test_name: Wrong output");
             test_state := fail;
           end if;
           wait until PORTC == 0;
           --
-          readline(data_file, report_line);
+          readline(data_file, file_line);
         end loop;
         --
         wait until PORTC != 0 for 1005 ms;

@@ -18,12 +18,11 @@ begin
     --
   test_name: process is
     type test_result is (pass, fail);
-    variable test_state   : test_result;
-    file     data_file    : text;
-    variable file_stat    : file_open_status;
-    variable report_line  : string;
-    variable trigger_line : string;
-    variable trigger_val  : integer;
+    variable test_state  : test_result;
+    file     data_file   : text;
+    variable file_stat   : file_open_status;
+    variable file_line   : string;
+    variable trigger_val : integer;
     begin
       report("test_name: START");
       test_state := pass;
@@ -42,8 +41,7 @@ begin
       report("test_name: Unlearn events");
       while endfile(data_file) == false loop
         rx_wait_if_not_ready
-        readline(data_file, report_line);
-        report(report_line);
+        data_file_report_line
         rx_data_file_event
         --
         wait until PORTC != 0;
@@ -60,25 +58,24 @@ begin
       report("test_name: Check remaining events");
       while endfile(data_file) == false loop
         rx_wait_if_not_ready
-        readline(data_file, report_line);
-        report(report_line);
+        data_file_report_line
         rx_data_file_event
         --
-        readline(data_file, report_line);
-        while match(report_line, "Done") == false loop
-          readline(data_file, trigger_line);
-          read(trigger_line, trigger_val);
+        readline(data_file, file_line);
+        while match(file_line, "Done") == false loop
+          readline(data_file, file_line);
+          read(file_line, trigger_val);
           --
           wait until PORTC != 0;
           if PORTC == trigger_val then
-            report(report_line);
+            report(file_line);
          else
             report("slim_unlearn_test: Wrong output");
             test_state := fail;
           end if;
           wait until PORTC == 0;
           --
-          readline(data_file, report_line);
+          readline(data_file, file_line);
         end loop;
         --
         wait until PORTC != 0 for 1005 ms;
