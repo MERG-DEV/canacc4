@@ -48,8 +48,7 @@ begin
       param_index := 0;
       while param_index < 2 loop
         data_file_report_line
-        readline(data_file, file_line);
-        read(file_line, param_value);
+        data_file_read(param_value)
         --
         tx_wait_for_node_message(16#9B#, 0, 0, param_index, parameter index, param_value, parameter value) -- PARAN, CBUS individual parameter response node 0 0
         param_index := param_index + 1;

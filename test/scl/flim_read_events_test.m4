@@ -47,22 +47,17 @@ begin
       while endfile(data_file) == false loop
         data_file_report_line
         --
-        readline(data_file, file_line);
-        read(file_line, node_hi);
-        readline(data_file, file_line);
-        read(file_line, node_lo);
-        readline(data_file, file_line);
-        read(file_line, event_hi);
-        readline(data_file, file_line);
-        read(file_line, event_lo);
+        data_file_read(node_hi)
+        data_file_read(node_lo)
+        data_file_read(event_hi)
+        data_file_read(event_lo)
         --
         readline(data_file, file_line);
         while match(file_line, "Done") == false loop
           report(file_line);
           read(file_line, variable_index);
           rx_data(16#B2#, node_hi, node_lo, event_hi, event_lo, variable_index) -- REQEV, CBUS Read event variable request
-          readline(data_file, file_line);
-          read(file_line, variable_value);
+          data_file_read(variable_value)
           tx_wait_for_message(16#D3#, opcode, node_hi, node high, node_lo, node low, event_hi, event high, event_lo, event low, variable_index, event variable index, variable_value, event variable value) -- EVANS, CBUS event variable response
           --
           readline(data_file, file_line);

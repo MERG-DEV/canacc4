@@ -53,8 +53,7 @@ begin
           report(file_line);
           read(file_line, variable_index);
           rx_data(16#9C#, 4, 2, event_index, variable_index) -- REVAL, CBUS Indexed read event variable request, node 4 2
-          readline(data_file, file_line);
-          read(file_line, variable_value);
+          data_file_read(variable_value)
           tx_wait_for_node_message(16#B5#, 4, 2, event_index, event index, variable_index, variable index, variable_value, variable value) -- NEVAL, CBUS Indexed event variable response
           --
           readline(data_file, file_line);

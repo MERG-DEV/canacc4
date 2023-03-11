@@ -46,14 +46,10 @@ begin
       while endfile(data_file) == false loop
         data_file_report_line
         --
-        readline(data_file, file_line);
-        read(file_line, node_hi);
-        readline(data_file, file_line);
-        read(file_line, node_lo);
-        readline(data_file, file_line);
-        read(file_line, event_hi);
-        readline(data_file, file_line);
-        read(file_line, event_lo);
+        data_file_read(node_hi)
+        data_file_read(node_lo)
+        data_file_read(event_hi)
+        data_file_read(event_lo)
         --
         readline(data_file, file_line);
         while match(file_line, "Done") == false loop

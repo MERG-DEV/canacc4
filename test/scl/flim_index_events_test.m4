@@ -49,14 +49,10 @@ begin
       event_index := 1;
       while endfile(data_file) == false loop
         data_file_report_line
-        readline(data_file, file_line);
-        read(file_line, ev_node_hi);
-        readline(data_file, file_line);
-        read(file_line, ev_node_lo);
-        readline(data_file, file_line);
-        read(file_line, ev_ev_hi);
-        readline(data_file, file_line);
-        read(file_line, ev_ev_lo);
+        data_file_read(ev_node_hi)
+        data_file_read(ev_node_lo)
+        data_file_read(ev_ev_hi)
+        data_file_read(ev_ev_lo)
         tx_wait_for_node_message(16#F2#, 4, 2, ev_node_hi, event node high, ev_node_lo, event node low, ev_ev_hi, event event high, ev_ev_lo, event event low, event_index, event index) -- ENRSP, CBUS stored event response
         --
         while match(file_line, "Done") == false loop

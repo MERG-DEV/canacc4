@@ -39,10 +39,8 @@ begin
       report("test_name: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
         data_file_report_line
-        readline(data_file, file_line);
-        read(file_line, node_hi);
-        readline(data_file, file_line);
-        read(file_line, node_lo);
+        data_file_read(node_hi)
+        data_file_read(node_lo)
         --
         rx_data(16#73#, node_hi, node_lo) -- RQNPN, CBUS read node parameter by index
         tx_check_no_message(2) -- Test if response sent
@@ -56,8 +54,7 @@ begin
       param_index := 0;
       while endfile(data_file) == false loop
         data_file_report_line
-        readline(data_file, file_line);
-        read(file_line, param_value);
+        data_file_read(param_value)
         --
         rx_data(16#73#, 4, 2, param_index) -- RQNPN, CBUS read node parameter by index
         tx_wait_for_node_message(16#9B#, 4, 2, param_index, param_value) -- PARAN, CBUS individual parameter response

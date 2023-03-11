@@ -39,10 +39,8 @@ begin
       report("test_name: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
         data_file_report_line
-        readline(data_file, file_line);
-        read(file_line, node_hi);
-        readline(data_file, file_line);
-        read(file_line, node_lo);
+        data_file_read(node_hi)
+        data_file_read(node_lo)
         rx_data(16#71#, node_hi, node_lo, 1) -- NVRD, CBUS read node variable, index 1
         tx_check_no_message(2) -- Test if unexpected response sent
       end loop;
@@ -54,10 +52,8 @@ begin
       report("test_name: Read Node Variables");
       while endfile(data_file) == false loop
         data_file_report_line
-        readline(data_file, file_line);
-        read(file_line, nv_index);
-        readline(data_file, file_line);
-        read(file_line, nv_value);
+        data_file_read(nv_index)
+        data_file_read(nv_value)
         rx_data(16#71#, 4, 2, nv_index) -- NVRD, CBUS read node variable by index, node 4 2
         tx_wait_for_node_message(16#97#, 4, 2, nv_index, variable index, nv_value, variable value) -- NVANS, CBUS node variable response node 4 2
       end loop;

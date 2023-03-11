@@ -39,10 +39,8 @@ begin
       report("test_name: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
         data_file_report_line
-        readline(data_file, file_line);
-        read(file_line, node_hi);
-        readline(data_file, file_line);
-        read(file_line, node_lo);
+        data_file_read(node_hi)
+        data_file_read(node_lo)
         rx_data(16#96#, node_hi, node_lo, 1, 1) -- NVSET, CBUS set node variable, index 1, value 1
         tx_check_no_message(2) -- Test if unexpected response sent
       end loop;

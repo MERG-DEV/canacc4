@@ -36,8 +36,7 @@ begin
       report("test_name: Read Node Variables");
       while endfile(data_file) == false loop
         data_file_report_line
-        readline(data_file, file_line);
-        read(file_line, nv_index);
+        data_file_read(nv_index)
         readline(data_file, file_line);
         --
         rx_data(16#71#, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
