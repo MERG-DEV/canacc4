@@ -1,5 +1,6 @@
 define(test_name, slim_reboot_test)dnl
 include(common.inc)dnl
+include(rx_tx.inc)dnl
 configuration for "processor_type" is
   shared label    _CANInit;
   shared label    _CANMain;

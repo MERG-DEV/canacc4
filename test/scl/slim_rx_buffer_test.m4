@@ -1,5 +1,6 @@
 define(test_name, slim_rx_buffer_test)dnl
 include(common.inc)dnl
+include(rx_tx.inc)dnl
 configuration for "processor_type" is
   shared variable Datmode; -- FIXME, kludge to prevent overwriting Rx packet
 end configuration;

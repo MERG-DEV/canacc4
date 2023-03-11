@@ -1,5 +1,6 @@
 define(test_name, flim_nv_write_test)dnl
 include(common.inc)dnl
+include(rx_tx.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
