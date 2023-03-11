@@ -117,6 +117,14 @@ define(rx_data,
        {rx_load_data(RXB0D6, $7)}
        {rx_load_data(RXB0D7, $8)}
        {rx_frame($#)})dnl
+define(rx_data_file_event,
+       rx_wait_if_not_ready
+       read(data_file, RXB0D0, 1); -- opcode
+       read(data_file, RXB0D1, 1); -- Node high
+       read(data_file, RXB0D2, 1); -- Node low
+       read(data_file, RXB0D3, 1); -- Event high
+       read(data_file, RXB0D4, 1); -- Event low
+       rx_frame(5))dnl
 define(rxb1_wait_if_not_ready,
        if RXB1CON.RXFUL != '0' then
          report("test_name: Waiting to RxB1");

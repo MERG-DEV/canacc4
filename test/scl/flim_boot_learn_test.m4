@@ -51,12 +51,7 @@ begin
         rx_wait_if_not_ready
         readline(data_file, report_line);
         report(report_line);
-        read(data_file, RXB0D0, 1);
-        read(data_file, RXB0D1, 1);
-        read(data_file, RXB0D2, 1);
-        read(data_file, RXB0D3, 1);
-        read(data_file, RXB0D4, 1);
-        rx_frame(5)
+        rx_data_file_event
         --
         readline(data_file, report_line);
         while match(report_line, "Done") == false loop
