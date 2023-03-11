@@ -19,7 +19,7 @@ scl_m4s := $(wildcard $(scl_dir)/*.m4)
 
 test: $(logs)
 	@echo
-	@grep -e 'Error: ' $(log_dir)/*_test.log|sort
+	@grep -e 'Error: ' -e 'Failed to parse SCL' $(log_dir)/*_test.log|sort
 	@echo
 	@grep -h -e '_test: PASS' -e '_test: FAIL' -e '_test: TIMEOUT' $(log_dir)/*_test.log|sort -k2,2 -k1,1
 	@echo \\n`grep -l '_test: PASS' $(log_dir)/*_test.log|wc -l` of `echo $(tests)|wc -w)` passed
