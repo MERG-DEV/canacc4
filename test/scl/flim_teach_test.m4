@@ -1,5 +1,6 @@
 define(test_name, flim_teach_test)dnl
 include(common.inc)dnl
+include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 configuration for "processor_type" is
 end configuration;
@@ -18,7 +19,7 @@ begin
   test_name: process is
     type test_result is (pass, fail);
     variable test_state   : test_result;
-    file     event_file   : text;
+    file     data_file   : text;
     variable file_stat    : file_open_status;
     variable file_line    : string;
     variable report_line  : string;
@@ -46,33 +47,27 @@ begin
       rx_data(16#D2#, 1, 2, 4, 2, 3, 4) -- EVLRN, CBUS learn event, node 1 2, event 4 2, variable index too high, variable value 4
       tx_wait_for_cmderr_message(4, 2, 6) -- CMDERR, CBUS error response, node 4 2, Invalid event variable index
       --
-      file_open(file_stat, event_file, "./data/teach.dat", read_mode);
-      if file_stat != open_ok then
-        report("test_name: Failed to open learn data file");
-        report("test_name: FAIL");
-        PC <= 0;
-        wait;
-      end if;
+      data_file_open(teach.dat)
       --
       report("test_name: Teach events");
-      while endfile(event_file) == false loop
-        readline(event_file, report_line);
+      while endfile(data_file) == false loop
+        readline(data_file, report_line);
         report(report_line);
         --
         rx_wait_if_not_ready
         RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
-        read(event_file, RXB0D1, 1);
-        read(event_file, RXB0D2, 1);
-        read(event_file, RXB0D3, 1);
-        read(event_file, RXB0D4, 1);
-        read(event_file, RXB0D5, 1);
-        read(event_file, RXB0D6, 1);
+        read(data_file, RXB0D1, 1);
+        read(data_file, RXB0D2, 1);
+        read(data_file, RXB0D3, 1);
+        read(data_file, RXB0D4, 1);
+        read(data_file, RXB0D5, 1);
+        read(data_file, RXB0D6, 1);
         rx_frame(7)
         tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response node 4 2
         --
-        readline(event_file, report_line);
+        readline(data_file, report_line);
         while match(report_line, "Done") == false loop
-          readline(event_file, trigger_line);
+          readline(data_file, trigger_line);
           read(trigger_line, trigger_val);
           --
           wait until PORTC != 0;
@@ -84,7 +79,7 @@ begin
           end if;
           wait until PORTC == 0;
           --
-          readline(event_file, report_line);
+          readline(data_file, report_line);
         end loop;
         --
         wait until PORTC != 0 for 1005 ms;
@@ -95,7 +90,7 @@ begin
         end if;
       end loop;
       --
-      file_close(event_file);
+      file_close(data_file);
       --
       report("test_name: Exit learn mode");
       rx_data(16#54#, 4, 2) -- NNULN, CBUS exit learn mode to node 4 2
@@ -127,29 +122,23 @@ begin
       rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
       tx_wait_for_node_message(16#74#, 4, 2, 5, number of stored events) -- NUMEV, CBUS number of stored event response node 4 2
       --
-      file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
-      if file_stat != open_ok then
-        report("test_name: Failed to open event data file");
-        report("test_name: FAIL");
-        PC <= 0;
-        wait;
-      end if;
+      data_file_open(learnt_events.dat)
       --
       report("test_name: Check events");
-      while endfile(event_file) == false loop
-        readline(event_file, report_line);
+      while endfile(data_file) == false loop
+        readline(data_file, report_line);
         report(report_line);
         rx_wait_if_not_ready
-        read(event_file, RXB0D0, 1);
-        read(event_file, RXB0D1, 1);
-        read(event_file, RXB0D2, 1);
-        read(event_file, RXB0D3, 1);
-        read(event_file, RXB0D4, 1);
+        read(data_file, RXB0D0, 1);
+        read(data_file, RXB0D1, 1);
+        read(data_file, RXB0D2, 1);
+        read(data_file, RXB0D3, 1);
+        read(data_file, RXB0D4, 1);
         rx_frame(5)
         --
-        readline(event_file, report_line);
+        readline(data_file, report_line);
         while match(report_line, "Done") == false loop
-          readline(event_file, trigger_line);
+          readline(data_file, trigger_line);
           read(trigger_line, trigger_val);
           --
           wait until PORTC != 0;
@@ -161,7 +150,7 @@ begin
           end if;
           wait until PORTC == 0;
           --
-          readline(event_file, report_line);
+          readline(data_file, report_line);
         end loop;
         --
         wait until PORTC != 0 for 1005 ms;
@@ -172,7 +161,7 @@ begin
         end if;
       end loop;
       --
-      file_close(event_file);
+      file_close(data_file);
       --
       if test_state == pass then
         report("test_name: PASS");

@@ -1,5 +1,6 @@
 define(test_name, slim_tx_arbitration_test)dnl
 include(common.inc)dnl
+include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 configuration for "processor_type" is
 end configuration;
@@ -18,7 +19,7 @@ begin
   test_name: process is
     type test_result is (pass, fail);
     variable test_state : test_result;
-    file     sidh_file  : text;
+    file     data_file  : text;
     variable file_stat  : file_open_status;
     variable sidh_line  : string;
     variable tx_count   : integer;
@@ -36,21 +37,15 @@ begin
       wait until INTCON < 128;
       wait until INTCON > 127;
       --
-      file_open(file_stat, sidh_file, "./data/slim_sidh.dat", read_mode);
-      if file_stat != open_ok then
-        report("test_name: Failed to open SIDH data file");
-        report("test_name: FAIL");
-        PC <= 0;
-        wait;
-      end if;
+      data_file_open(slim_sidh.dat)
       --
       report("test_name: Loosing arbitration raises Tx priority");
-      while endfile(sidh_file) == false loop
-        readline(sidh_file, sidh_line);
+      while endfile(data_file) == false loop
+        readline(data_file, sidh_line);
         report(sidh_line);
-        readline(sidh_file, sidh_line);
+        readline(data_file, sidh_line);
         read(sidh_line, tx_count);
-        readline(sidh_file, sidh_line);
+        readline(data_file, sidh_line);
         read(sidh_line, sidh_val);
         --
         while tx_count > 0 loop

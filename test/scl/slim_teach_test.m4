@@ -17,13 +17,7 @@ begin
     --
   test_name: process is
     type test_result is (pass, fail);
-    variable test_state   : test_result;
-    file     event_file   : text;
-    variable file_stat    : file_open_status;
-    variable file_line    : string;
-    variable report_line  : string;
-    variable trigger_line : string;
-    variable trigger_val  : integer;
+    variable test_state : test_result;
     begin
       report("test_name: START");
       test_state := pass;

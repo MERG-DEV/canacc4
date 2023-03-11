@@ -1,5 +1,6 @@
 define(test_name, flim_nv_read_test)dnl
 include(common.inc)dnl
+include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 configuration for "processor_type" is
 end configuration;
@@ -33,13 +34,7 @@ begin
       wait until RB6 == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      file_open(file_stat, data_file, "./data/flim_ignore.dat", read_mode);
-      if file_stat != open_ok then
-        report("test_name: Failed to open ignored addresses data file");
-        report("test_name: FAIL");
-        PC <= 0;
-        wait;
-      end if;
+      data_file_open(flim_ignore.dat)
       --
       report("test_name: Ignore requests not addressed to node");
       while endfile(data_file) == false loop
@@ -55,13 +50,7 @@ begin
       --
       file_close(data_file);
       --
-      file_open(file_stat, data_file, "./data/nvs.dat", read_mode);
-      if file_stat != open_ok then
-        report("test_name: Failed to open node variable data file");
-        report("test_name: FAIL");
-        PC <= 0;
-        wait;
-      end if;
+      data_file_open(nvs.dat)
       --
       report("test_name: Read Node Variables");
       while endfile(data_file) == false loop

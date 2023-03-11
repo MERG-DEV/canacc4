@@ -1,5 +1,6 @@
 define(test_name, flim_modify_by_index_test)dnl
 include(common.inc)dnl
+include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 configuration for "processor_type" is
 end configuration;
@@ -18,7 +19,7 @@ begin
   test_name: process is
     type test_result is (pass, fail);
     variable test_state   : test_result;
-    file     event_file   : text;
+    file     data_file   : text;
     variable file_stat    : file_open_status;
     variable file_line    : string;
     variable report_line  : string;
@@ -37,27 +38,21 @@ begin
       rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
       --
       report("test_name: Modify events");
-      file_open(file_stat, event_file, "./data/modify_indexed.dat", read_mode);
-      if file_stat != open_ok then
-        report("test_name: Failed to open learn data file");
-        report("test_name: FAIL");
-        PC <= 0;
-        wait;
-      end if;
+     data_file_open(modify_indexed.dat)
       --
-      while endfile(event_file) == false loop
-        readline(event_file, report_line);
+      while endfile(data_file) == false loop
+        readline(data_file, report_line);
         report(report_line);
         --
         rx_wait_if_not_ready
         RXB0D0 <= 16#F5#;    -- EVLRNI, CBUS learn by index event
-        read(event_file, RXB0D1, 1);
-        read(event_file, RXB0D2, 1);
-        read(event_file, RXB0D3, 1);
-        read(event_file, RXB0D4, 1);
-        read(event_file, RXB0D5, 1);
-        read(event_file, RXB0D6, 1);
-        read(event_file, RXB0D7, 1);
+        read(data_file, RXB0D1, 1);
+        read(data_file, RXB0D2, 1);
+        read(data_file, RXB0D3, 1);
+        read(data_file, RXB0D4, 1);
+        read(data_file, RXB0D5, 1);
+        read(data_file, RXB0D6, 1);
+        read(data_file, RXB0D7, 1);
         rx_frame(8)
         --
         -- CANACC4 does not implement learn by index so no WRACK expected
@@ -77,9 +72,9 @@ begin
         --end if;
         tx_check_no_message(776) -- Test if unexpectedresponse sent
         --
-        readline(event_file, report_line);
+        readline(data_file, report_line);
         while match(report_line, "Done") == false loop
-          readline(event_file, trigger_line);
+          readline(data_file, trigger_line);
           read(trigger_line, trigger_val);
           --
           wait until PORTC != 0 for 1005 ms;
@@ -89,12 +84,12 @@ begin
             wait until PORTC == 0;
           end if;
           --
-          readline(event_file, report_line);
+          readline(data_file, report_line);
         end loop;
         --
       end loop;
       --
-      file_close(event_file);
+      file_close(data_file);
       --
       report("test_name: Exit learn mode");
       rx_data(16#54#, 4, 2) -- NNULN, CBUS exit learn mode to node 4 2
@@ -108,29 +103,23 @@ begin
       --
       report("test_name: Check events");
       -- CANACC4 does not implement learn by index so events are unmodified
-      -- file_open(file_stat, event_file, "./data/index_modified_events.dat", read_mode);
-      file_open(file_stat, event_file, "./data/learnt_events.dat", read_mode);
-      if file_stat != open_ok then
-        report("test_name: Failed to open event data file");
-        report("test_name: FAIL");
-        PC <= 0;
-        wait;
-      end if;
+      -- file_open(file_stat, data_file, "./data/index_modified_events.dat", read_mode);
+      data_file_open(learnt_events.dat)
       --
-      while endfile(event_file) == false loop
-        readline(event_file, report_line);
+      while endfile(data_file) == false loop
+        readline(data_file, report_line);
         report(report_line);
         rx_wait_if_not_ready
-        read(event_file, RXB0D0, 1);
-        read(event_file, RXB0D1, 1);
-        read(event_file, RXB0D2, 1);
-        read(event_file, RXB0D3, 1);
-        read(event_file, RXB0D4, 1);
+        read(data_file, RXB0D0, 1);
+        read(data_file, RXB0D1, 1);
+        read(data_file, RXB0D2, 1);
+        read(data_file, RXB0D3, 1);
+        read(data_file, RXB0D4, 1);
         rx_frame(5)
         --
-        readline(event_file, report_line);
+        readline(data_file, report_line);
         while match(report_line, "Done") == false loop
-          readline(event_file, trigger_line);
+          readline(data_file, trigger_line);
           read(trigger_line, trigger_val);
           --
           wait until PORTC != 0;
@@ -142,7 +131,7 @@ begin
           end if;
           wait until PORTC == 0;
           --
-          readline(event_file, report_line);
+          readline(data_file, report_line);
         end loop;
         --
         wait until PORTC != 0 for 1005 ms;
@@ -153,7 +142,7 @@ begin
         end if;
       end loop;
       --
-      file_close(event_file);
+      file_close(data_file);
       --
       if test_state == pass then
         report("test_name: PASS");

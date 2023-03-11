@@ -1,5 +1,6 @@
 define(test_name, slim_rx_buffer_test)dnl
 include(common.inc)dnl
+include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 configuration for "processor_type" is
   shared variable Datmode; -- FIXME, kludge to prevent overwriting Rx packet
@@ -42,13 +43,7 @@ begin
       report("test_name: Read Node Parameter, received in RXB1");
       rxb1_data(16#73#, 0, 0, 1) -- CBUS read node parameter by index, node 0 0, index 1
       --
-      file_open(file_stat, data_file, "./data/slim_params.dat", read_mode);
-      if file_stat != open_ok then
-        report("test_name: Failed to open parameter data file");
-        report("test_name: FAIL");
-        PC <= 0;
-        wait;
-      end if;
+      data_file_open(slim_params.dat)
       --
       param_index := 0;
       while param_index < 2 loop
