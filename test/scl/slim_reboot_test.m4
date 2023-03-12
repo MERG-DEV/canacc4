@@ -8,14 +8,7 @@ end configuration;
 --
 testbench for "processor_type" is
 begin
-  test_timeout: process is
-    begin
-      wait for 902 ms;
-      report("test_name: TIMEOUT");
-      report(PC); -- Crashes simulator, MDB will report current source line
-      PC <= 0;
-      wait;
-    end process test_timeout;
+  timeout_process(902)
     --
   test_name: process is
     type test_result is (pass, fail);
