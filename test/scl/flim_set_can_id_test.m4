@@ -32,12 +32,6 @@ begin
       tx_wait_for_node_message(16#52#, 4, 2) -- NNACK, CBUS node number acknowledge, node 4 2
       tx_check_can_id(NN acknowledge, 16#B0#, 16#60#)
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

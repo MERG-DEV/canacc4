@@ -67,12 +67,6 @@ begin
       rx_data(16#9C#, 4, 2, 0, 1) -- REVAL, CBUS Indexed read event variable request, node 4 2, event index too low
       tx_wait_for_cmderr_message(4, 2, 7) -- CMDERR, CBUS error response, node 4 2, Invalid event index
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

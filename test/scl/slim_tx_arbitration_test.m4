@@ -58,12 +58,6 @@ begin
         end loop;
       end loop;
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

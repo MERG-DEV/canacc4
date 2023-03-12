@@ -101,12 +101,6 @@ begin
       --
       tx_wait_for_node_message(16#70#, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response, node 4 2
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

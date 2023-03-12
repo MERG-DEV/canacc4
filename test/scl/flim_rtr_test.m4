@@ -26,12 +26,6 @@ begin
       rx_rtr
       tx_wait_for_rtr_response(16#B1#, 16#80#)
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

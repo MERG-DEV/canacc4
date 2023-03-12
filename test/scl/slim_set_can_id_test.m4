@@ -33,12 +33,6 @@ begin
       rx_data(16#73#, 0, 0, 0) -- RQNPN, CBUS read node parameter by index, node 0 0, index 0 == number of parameters
       tx_can_id(unchanged, 16#B0#, 16#00#)
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

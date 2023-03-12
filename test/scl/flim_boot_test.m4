@@ -15,8 +15,7 @@ begin
         report("test_name: Green LED (SLiM) on");
       end if;
       report(PC); -- Crashes simulator, MDB will report current source line
-      PC <= 0;
-      wait;
+      stop_test
     end process test_timeout;
     --
   test_name: process is
@@ -69,12 +68,6 @@ begin
         test_state := fail;
       end if;
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

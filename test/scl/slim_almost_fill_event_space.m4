@@ -80,7 +80,6 @@ begin
       end loop;
       report("test_name: Learnt 127 events");
       --
-      PC <= 0;
-      wait;
+      stop_test
     end process test_name;
 end testbench;

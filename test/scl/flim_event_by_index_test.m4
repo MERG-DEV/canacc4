@@ -64,12 +64,6 @@ begin
       rx_data(16#72#, 4, 2, 0) -- NENRD, CBUS Read event by index request to node 4 2
       tx_wait_for_node_message(16#6F#, 4, 2, 7, error number) -- CMDERR, CBUS error response
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

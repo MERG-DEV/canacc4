@@ -25,12 +25,6 @@ begin
       rx_data(16#0D#) -- QNN, CBUS Query node request
       tx_wait_for_node_message(16#B6#, 4, 2, 165, manufacturer id, 8, module id, 13, flags) -- PNN, CBUS Query node response
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

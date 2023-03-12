@@ -69,12 +69,6 @@ begin
       rx_data(16#B2#, 9, 8, 7, 6, 1) -- REQEV, CBUS Read event variable request
       tx_wait_for_cmderr_message(4, 2, 5) -- CMDERR, CBUS error response, node 4 2, unknown event
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

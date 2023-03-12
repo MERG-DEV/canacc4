@@ -49,12 +49,6 @@ begin
       tx_wait_for_cmderr_message(4, 2 ,7) -- CMDERR, CBUS error response, node 4 2, error 7
       tx_check_can_id(unchanged, 16#BF#, 16#E0#)
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

@@ -58,12 +58,6 @@ begin
       rx_data(16#73#, 0, 0, param_index) -- RQNPN, CBUS read node parameter by index
       tx_wait_for_cmderr_message(0, 0, 9) -- CMDERR, CBUS error response
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

@@ -41,12 +41,6 @@ begin
       rx_data(16#71#, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
       tx_check_no_message(776)
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-      end if;
-      PC <= 0;
-      wait;
+      end_test
     end process test_name;
 end testbench;

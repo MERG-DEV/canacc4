@@ -84,7 +84,6 @@ begin
         report("test_name: FAIL");
         report(PC); -- Crashes simulator, MDB will report current source line
       end if;
-      PC <= 0;
-      wait;
+      stop_test
     end process test_name;
 end testbench;
