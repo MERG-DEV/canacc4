@@ -64,8 +64,7 @@ begin
         --
         readline(data_file, file_line);
         while match(file_line, "Done") == false loop
-          readline(data_file, file_line);
-          read(file_line, trigger_val);
+          data_file_read(trigger_val)
           --
           wait until PORTC != 0 for 1005 ms;
           if PORTC != 0 then
@@ -103,8 +102,7 @@ begin
         --
         readline(data_file, file_line);
         while match(file_line, "Done") == false loop
-          readline(data_file, file_line);
-          read(file_line, trigger_val);
+          data_file_read(trigger_val)
           --
           wait until PORTC != 0;
           if PORTC == trigger_val then
