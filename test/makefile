@@ -58,34 +58,24 @@ data.dep: $(scl_m4s) $(dats)
 mdb.dep: $(mdb_m4s) $(mdb_incs)
 	@rm -f $@
 	@touch $@
-	@for including_file in $$(grep -l -e 'include(.*\.inc)' $(mdb_incs)); do                                            \
-     echo -n $${including_file}':' >> $@;                                                                             \
+	@for including_file in $$(grep -l -e 'include(.*\.inc)' $(mdb_m4s) $(mdb_incs)); do                                 \
+     echo -n $${including_file}: >> $@;                                                                               \
      for included_file in $$(grep -e 'include(.*\.inc)' $${including_file}|sed 's/.*(\(.*\)).*/\1/g'|tr '\n' ' '); do \
        echo -n ' $(mdb_dir)/'$${included_file} >> $@;                                                                 \
      done;                                                                                                            \
-     echo '\n\t' '@'touch $$'@' >> $@;                                                                                \
+     echo '\n\t@'touch $$'@'>> $@;                                                                                 \
    done
-	@for included_file in $(mdb_incs); do                                                  \
-     for m4_file in $$(grep -l include\($$(basename $${included_file})\) $(mdb_m4s)); do \
-	     echo $(mdb_dir)/$$(basename $${m4_file} .m4).mdb: $${included_file} >> $@;        \
-	   done;                                                                               \
-	 done
 
 scl.dep: $(scl_m4s) $(scl_incs)
 	@rm -f $@
 	@touch $@
-	@for including_file in $$(grep -l -e 'include(.*\.inc)' $(scl_incs)); do                                            \
-     echo -n $${including_file}':' >> $@;                                                                             \
+	@for including_file in $$(grep -l -e 'include(.*\.inc)' $(scl_m4s) $(scl_incs)); do                                 \
+     echo -n $${including_file}: >> $@;                                                                               \
      for included_file in $$(grep -e 'include(.*\.inc)' $${including_file}|sed 's/.*(\(.*\)).*/\1/g'|tr '\n' ' '); do \
        echo -n ' $(scl_dir)/'$${included_file} >> $@;                                                                 \
      done;                                                                                                            \
-     echo '\n\t' '@'touch $$'@' >> $@;                                                                                \
+     echo '\n\t@'touch $$'@'>> $@;                                                                                 \
    done
-	@for included_file in $(scl_incs); do                                                  \
-     for m4_file in $$(grep -l include\($$(basename $${included_file})\) $(scl_m4s)); do \
-	     echo $(scl_dir)/$$(basename $${m4_file} .m4).scl: $${included_file} >> $@;        \
-	   done;                                                                               \
-	 done
 
 ifeq ($(filter clean, $(MAKECMDGOALS)), )
 include data.dep mdb.dep scl.dep
