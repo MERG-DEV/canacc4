@@ -1,6 +1,7 @@
 define(test_name, slim_nv_write_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(io.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -28,18 +29,7 @@ begin
       report("test_name: Test long off 0x0102,0x0204, trigger 3A");
       rx_data(16#91#, 1, 2, 2, 4) -- ACOF, CBUS long off, node 1 2, event 2 4
       --
-      wait until PORTC != 0;
-      if PORTC == 32 then
-        report("test_name: Triggered 3A");
-      else
-        report("test_name: Wrong output");
-        test_state := fail;
-      end if;
-      wait until PORTC == 0 for 25 ms;
-      if PORTC == 0 then
-        report("test_name: Trigger too short");
-        test_state := fail;
-      end if;
+      output_wait_for_pulse(32, "Triggered 3A", 25)
       --
       end_test
     end process test_name;

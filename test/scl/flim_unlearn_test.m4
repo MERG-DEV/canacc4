@@ -2,6 +2,7 @@ define(test_name, flim_unlearn_test)dnl
 include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
+include(io.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -11,11 +12,12 @@ begin
     --
   test_name: process is
     type test_result is (pass, fail);
-    variable test_state  : test_result;
-    file     data_file   : text;
-    variable file_stat   : file_open_status;
-    variable file_line   : string;
-    variable trigger_val : integer;
+    variable test_state     : test_result;
+    file     data_file      : text;
+    variable file_stat      : file_open_status;
+    variable file_line      : string;
+    variable trigger_report : string;
+    variable trigger_val    : integer;
     begin
       report("test_name: START");
       test_state := pass;
@@ -54,21 +56,7 @@ begin
         data_file_report_line
         rx_data_file_event
         --
-        readline(data_file, file_line);
-        while match(file_line, "Done") == false loop
-          data_file_read(trigger_val)
-          --
-          wait until PORTC != 0;
-          if PORTC == trigger_val then
-            report(file_line);
-         else
-            report("slim_unlearn_test: Wrong output");
-            test_state := fail;
-          end if;
-          wait until PORTC == 0;
-          --
-          readline(data_file, file_line);
-        end loop;
+        output_wait_for_data_file_pulse
         --
         wait until PORTC != 0 for 1005 ms;
         if PORTC != 0 then
@@ -78,12 +66,6 @@ begin
         end if;
       end loop;
       --
-      if test_state == pass then
-        report("test_name: PASS");
-      else
-        report("test_name: FAIL");
-        report(PC); -- Crashes simulator, MDB will report current source line
-      end if;
-      stop_test
+      end_test
     end process test_name;
 end testbench;

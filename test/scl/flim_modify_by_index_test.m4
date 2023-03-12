@@ -2,6 +2,7 @@ define(test_name, flim_modify_by_index_test)dnl
 include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
+include(io.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -11,11 +12,12 @@ begin
     --
   test_name: process is
     type test_result is (pass, fail);
-    variable test_state  : test_result;
-    file     data_file   : text;
-    variable file_stat   : file_open_status;
-    variable file_line   : string;
-    variable trigger_val : integer;
+    variable test_state     : test_result;
+    file     data_file      : text;
+    variable file_stat      : file_open_status;
+    variable file_line      : string;
+    variable trigger_report : string;
+    variable trigger_val    : integer;
     begin
       report("test_name: START");
       test_state := pass;
@@ -29,7 +31,7 @@ begin
       rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
       --
       report("test_name: Modify events");
-     data_file_open(modify_indexed.dat)
+      data_file_open(modify_indexed.dat)
       --
       while endfile(data_file) == false loop
         data_file_report_line
@@ -100,21 +102,7 @@ begin
         rx_wait_if_not_ready
         rx_data_file_event
         --
-        readline(data_file, file_line);
-        while match(file_line, "Done") == false loop
-          data_file_read(trigger_val)
-          --
-          wait until PORTC != 0;
-          if PORTC == trigger_val then
-            report(file_line);
-         else
-            report("test_name: Wrong output");
-            test_state := fail;
-          end if;
-          wait until PORTC == 0;
-          --
-          readline(data_file, file_line);
-        end loop;
+        output_wait_for_data_file_pulse
         --
         wait until PORTC != 0 for 1005 ms;
         if PORTC != 0 then

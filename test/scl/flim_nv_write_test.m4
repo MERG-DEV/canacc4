@@ -2,6 +2,7 @@ define(test_name, flim_nv_write_test)dnl
 include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
+include(io.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -49,12 +50,7 @@ begin
       --
       wait until PORTC != 0;
       fire_time1 := now();
-      if PORTC == 32 then
-        report("test_name: Triggered 3A");
-      else
-        report("test_name: Wrong output");
-        test_state := fail;
-      end if;
+      output_check_output(32, "Triggered 3A")
       wait until PORTC == 0;
       fire_time1 := now() - fire_time1;
       --
@@ -87,12 +83,7 @@ begin
       --
       wait until PORTC != 0;
       fire_time2 := now();
-      if PORTC == 32 then
-        report("test_name: Triggered 3A");
-      else
-        report("test_name: Wrong output");
-        test_state := fail;
-      end if;
+      output_check_output(32, "Triggered 3A")
       wait until PORTC == 0;
       fire_time2 := now() - fire_time2;
       --

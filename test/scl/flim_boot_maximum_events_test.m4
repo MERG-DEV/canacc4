@@ -1,6 +1,7 @@
 define(test_name, flim_boot_maximum_events_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(io.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -24,13 +25,7 @@ begin
       report("test_name: Long on 0x0102, 0x0180");
       rx_data(16#90#, 1, 2, 1, 128) -- ACON, CBUS accessory on
       --
-      wait until PORTC != 0;
-      if PORTC == 32 then
-        report("test_name: Trigger 3A");
-      else
-        report("test_name: Wrong output");
-        test_state := fail;
-      end if;
+      output_wait_for_output(32, "Trigger 3A")
       --
       end_test
     end process test_name;
