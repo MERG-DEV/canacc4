@@ -1,6 +1,7 @@
 define(test_name, slim_learn_short_no_space_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(io.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -29,10 +30,7 @@ begin
       --
       report("test_name: Short On 0x0102, 0x0180");
       rx_data(16#98#, 1, 2, 1, 128) -- ASON, CBUS accessory short on, node 1 2, event 1 128
-      --
-      wait until PORTC != 0;
-      wait until PORTC == 0;
-      --
+      output_wait_for_any_pulse(PORTC)
       tx_check_no_message
       --
       report("test_name: Learnt 128 events");

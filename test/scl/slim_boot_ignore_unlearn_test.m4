@@ -40,13 +40,7 @@ begin
         rx_data_file_event
         --
         output_wait_for_data_file_pulse(PORTC)
-        --
-        wait on PORTC for 1005 ms;
-        if PORTC != 0 then
-          report("test_name: Unexpected trigger");
-          test_state := fail;
-          wait until PORTC == 0;
-        end if;
+        output_check_no_pulse(PORTC, 1005)
       end loop;
       --
       end_test

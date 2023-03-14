@@ -1,6 +1,7 @@
 define(test_name, flim_teach_no_space_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(io.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -28,9 +29,7 @@ begin
       report("test_name: Learn event");
       rx_data(16#D2#, 1, 2, 9, 128, 1, 4) -- EVLRN, CBUS learn event, node 1 2, event 9 128, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
       tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response, node 4 2
-      --
-      wait until PORTC != 0;
-      wait until PORTC == 0;
+      output_wait_for_any_pulse(PORTC)
       --
       report("test_name: Learnt 128 events");
       --

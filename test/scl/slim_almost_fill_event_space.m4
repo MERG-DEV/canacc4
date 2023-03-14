@@ -1,6 +1,7 @@
 define(test_name, slim_almost_fill_event_space)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(io.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -42,8 +43,7 @@ begin
           short_event := false;
         end if;
         --
-        wait until PORTC != 0;
-        wait until PORTC == 0;
+        output_wait_for_any_pulse(PORTC)
         --
         event_low   := event_low + 1;
         sel_setting := sel_setting + 1;

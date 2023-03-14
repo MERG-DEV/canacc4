@@ -57,12 +57,7 @@ begin
           readline(data_file, file_line);
         end loop;
         --
-        wait until PORTC != 0 for 1005 ms;
-        if PORTC != 0 then
-          report("test_name: Unexpected trigger");
-          test_state := fail;
-          wait until PORTC == 0;
-        end if;
+        output_check_no_pulse(PORTC, 1005)
       end loop;
       --
       file_close(data_file);
@@ -87,12 +82,7 @@ begin
         --
         output_wait_for_data_file_pulse(PORTC)
         --
-        wait until PORTC != 0 for 1005 ms;
-        if PORTC != 0 then
-          report("test_name: Unexpected trigger");
-          test_state := fail;
-          wait until PORTC == 0;
-        end if;
+        output_check_no_pulse(PORTC, 1005)
       end loop;
       --
       file_close(data_file);

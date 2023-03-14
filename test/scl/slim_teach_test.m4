@@ -1,6 +1,7 @@
 define(test_name, slim_teach_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(io.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -36,12 +37,7 @@ begin
       report("test_name: Test long on 0x0102,0x0402");
       rx_data(16#90#, 1, 2 , 4, 2) -- ACON, CBUS long on, node 1 2, event 4 2
       --
-      wait until PORTC != 0 for 1005 ms;
-      if PORTC != 0 then
-        report("test_name: Unexpected trigger");
-        test_state := fail;
-        wait until PORTC == 0;
-      end if;
+      output_check_no_pulse(PORTC, 1005)
       --
       end_test
     end process test_name;
