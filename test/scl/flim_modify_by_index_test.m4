@@ -102,7 +102,7 @@ begin
         rx_wait_if_not_ready
         rx_data_file_event
         --
-        output_wait_for_data_file_pulse
+        output_wait_for_data_file_pulse(PORTC)
         --
         wait until PORTC != 0 for 1005 ms;
         if PORTC != 0 then

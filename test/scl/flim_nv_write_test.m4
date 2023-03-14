@@ -50,7 +50,7 @@ begin
       --
       wait until PORTC != 0;
       fire_time1 := now();
-      output_check_output(32, "Triggered 3A")
+      output_check_changed_to(PORTC, 32, "Triggered 3A")
       wait until PORTC == 0;
       fire_time1 := now() - fire_time1;
       --
@@ -83,7 +83,7 @@ begin
       --
       wait until PORTC != 0;
       fire_time2 := now();
-      output_check_output(32, "Triggered 3A")
+      output_check_changed_to(PORTC, 32, "Triggered 3A")
       wait until PORTC == 0;
       fire_time2 := now() - fire_time2;
       --

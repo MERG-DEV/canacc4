@@ -39,7 +39,7 @@ begin
         data_file_report_line
         rx_data_file_event
         --
-        output_wait_for_data_file_pulse
+        output_wait_for_data_file_pulse(PORTC)
         --
         wait on PORTC for 1005 ms;
         if PORTC != 0 then
