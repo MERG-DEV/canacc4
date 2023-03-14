@@ -26,9 +26,9 @@ define(output_check_pulse_duration,
          test_state := fail;
        end if;)dnl
 define(output_wait_for_data_file_pulse,
-        readline(data_file, trigger_report);
-        while match(trigger_report, "Done") == false loop
-          data_file_read(trigger_val)
-          {output_wait_for_pulse($1, trigger_val, trigger_report)}
-          readline(data_file, trigger_report);
+        readline(data_file, pulse_report);
+        while match(pulse_report, "Done") == false loop
+          data_file_read(pulse_val)
+          {output_wait_for_pulse($1, pulse_val, pulse_report)}
+          readline(data_file, pulse_report);
         end loop;)dnl

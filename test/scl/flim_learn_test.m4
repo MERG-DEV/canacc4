@@ -15,7 +15,7 @@ begin
     file     data_file   : text;
     variable file_stat   : file_open_status;
     variable file_line   : string;
-    variable trigger_val : integer;
+    variable pulse_val : integer;
     begin
       report("test_name: START");
       test_state := pass;

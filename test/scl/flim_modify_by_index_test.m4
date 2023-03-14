@@ -16,8 +16,8 @@ begin
     file     data_file      : text;
     variable file_stat      : file_open_status;
     variable file_line      : string;
-    variable trigger_report : string;
-    variable trigger_val    : integer;
+    variable pulse_report : string;
+    variable pulse_val    : integer;
     begin
       report("test_name: START");
       test_state := pass;
@@ -66,7 +66,7 @@ begin
         --
         readline(data_file, file_line);
         while match(file_line, "Done") == false loop
-          data_file_read(trigger_val)
+          data_file_read(pulse_val)
           --
           wait until PORTC != 0 for 1005 ms;
           if PORTC != 0 then
