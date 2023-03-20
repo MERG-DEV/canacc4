@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -35,7 +36,7 @@ begin
         data_file_report_line
         data_file_read(node_hi)
         data_file_read(node_lo)
-        rx_data(16#73#, node_hi, node_lo, 0) -- RQNPN, CBUS read node parameter by index, 0 == number of parameters
+        rx_data(OPC_RQNPN, node_hi, node_lo, 0) -- RQNPN, CBUS read node parameter by index, 0 == number of parameters
         tx_check_no_message(2)
       end loop;
       --
@@ -49,15 +50,15 @@ begin
         data_file_report_line
         data_file_read(param_value)
         --
-        rx_data(16#73#, 0, 0, param_index) -- RQNPN, CBUS read node parameter by index, node 0 0, index = param_index
+        rx_data(OPC_RQNPN, 0, 0, param_index) -- RQNPN, CBUS read node parameter by index, node 0 0, index = param_index
         --
-        tx_wait_for_node_message(16#9B#, 0, 0, param_index, parameter index, param_value, parameter value) then -- PARAN, CBUS individual parameter response
+        tx_wait_for_node_message(OPC_PARAN, 0, 0, param_index, parameter index, param_value, parameter value) then -- PARAN, CBUS individual parameter response
         param_index := param_index + 1;
       end loop;
       --
       report("test_name: Test past number of parameters");
-      rx_data(16#73#, 0, 0, param_index) -- RQNPN, CBUS read node parameter by index
-      tx_wait_for_cmderr_message(0, 0, 9) -- CMDERR, CBUS error response
+      rx_data(OPC_RQNPN, 0, 0, param_index) -- RQNPN, CBUS read node parameter by index
+      tx_wait_for_cmderr_message(0, 0, CMDERR_INV_PARAM_IDX) -- CBUS error response
       --
       end_test
     end process test_name;

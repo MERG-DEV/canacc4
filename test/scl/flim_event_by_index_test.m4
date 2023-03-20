@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -32,7 +33,7 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Ignore read events by index not addressed to node");
-      rx_data(16#72#, 0, 0, 1) -- NENRD, CBUS Read event by index request, node 0, index 1
+      rx_data(OPC_NENRD, 0, 0, 1) -- NENRD, CBUS Read event by index request, node 0, index 1
       --
       tx_check_no_message(776)
       --
@@ -47,8 +48,8 @@ begin
         data_file_read(ev_ev_hi)
         data_file_read(ev_ev_lo)
         --
-        rx_data(16#72#, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
-        tx_wait_for_node_message(16#F2#, 4, 2, ev_node_hi, event node high, ev_node_lo, event node low, ev_ev_hi, event event high, ev_ev_lo, event event low, event_index, event index) -- ENRSP, CBUS stored event response
+        rx_data(OPC_NENRD, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
+        tx_wait_for_node_message(OPC_ENRSP, 4, 2, ev_node_hi, event node high, ev_node_lo, event node low, ev_ev_hi, event event high, ev_ev_lo, event event low, event_index, event index) -- ENRSP, CBUS stored event response
         --
         while match(file_line, "Done") == false loop
           readline(data_file, file_line);
@@ -58,12 +59,12 @@ begin
       end loop;
       --
       report("test_name: Reject request with too high event index");
-      rx_data(16#72#, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
-      tx_wait_for_node_message(16#6F#, 4, 2, 7, error number) -- CMDERR, CBUS error response
+      rx_data(OPC_NENRD, 4, 2, event_index) -- NENRD, CBUS Read event by index request to node 4 2
+      tx_wait_for_cmderr_message(4, 2, CMDERR_INVALID_EVENT) -- CBUS error response
       --
       report("test_name: Event index too low");
-      rx_data(16#72#, 4, 2, 0) -- NENRD, CBUS Read event by index request to node 4 2
-      tx_wait_for_node_message(16#6F#, 4, 2, 7, error number) -- CMDERR, CBUS error response
+      rx_data(OPC_NENRD, 4, 2, 0) -- NENRD, CBUS Read event by index request to node 4 2
+      tx_wait_for_cmderr_message(4, 2, CMDERR_INVALID_EVENT) -- CBUS error response
       --
       end_test
     end process test_name;

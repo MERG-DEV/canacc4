@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -43,11 +44,11 @@ begin
       end loop;
       --
       report("test_name: Request available event space");
-      rx_data(16#56#, 0, 0) -- NNEVN, CBUS request available event space, node 0 0
+      rx_data(OPC_NNEVN, 0, 0) -- NNEVN, CBUS request available event space, node 0 0
       tx_check_no_message(776)
       --
       report("test_name: Request number of stored events");
-      rx_data(16#58#, 0, 0) -- RQEVN, CBUS request number of stored events, node 0 0
+      rx_data(OPC_RQEVN, 0, 0) -- RQEVN, CBUS request number of stored events, node 0 0
       tx_check_no_message(776)
       --
       end_test

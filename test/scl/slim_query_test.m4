@@ -2,6 +2,7 @@ define(test_name, slim_query_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -23,7 +24,7 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Query node");
-      rx_data(16#0D#) -- QNN, CBUS Query node request
+      rx_data(OPC_QNN) -- QNN, CBUS Query node request
       tx_check_no_message(776)
       --
       end_test

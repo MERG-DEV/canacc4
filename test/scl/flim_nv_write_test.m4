@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -36,18 +37,18 @@ begin
         data_file_report_line
         data_file_read(node_hi)
         data_file_read(node_lo)
-        rx_data(16#96#, node_hi, node_lo, 1, 1) -- NVSET, CBUS set node variable, index 1, value 1
+        rx_data(OPC_NVSET, node_hi, node_lo, 1, 1) -- NVSET, CBUS set node variable, index 1, value 1
         tx_check_no_message(2) -- Test if unexpected response sent
       end loop;
       --
       file_close(data_file);
       --
       report("test_name: Check original 3A fire time");
-      rx_data(16#71#, 4, 2, 5) -- NVRD, CBUS read node variable, node 4 2, index 5 - output 3A fire time
-      tx_wait_for_node_message(16#97#, 4, 2, 5, variable index, 5, fire time value) -- NVANS, CBUS node variable response node 4 2, index 5, value 5
+      rx_data(OPC_NVRD, 4, 2, 5) -- NVRD, CBUS read node variable, node 4 2, index 5 - output 3A fire time
+      tx_wait_for_node_message(OPC_NVANS, 4, 2, 5, variable index, 5, fire time value) -- NVANS, CBUS node variable response node 4 2, index 5, value 5
       --
       report("test_name: Long off 0x0102,0x0204, trigger 3A");
-      rx_data(16#91#, 1, 2, 2, 4) -- ACOF, CBUS long off, node 1 2, event 2 4
+      rx_data(OPC_ACOF, 1, 2, 2, 4) -- ACOF, CBUS long off, node 1 2, event 2 4
       --
       wait until PORTC != 0;
       fire_time1 := now();
@@ -56,12 +57,12 @@ begin
       fire_time1 := now() - fire_time1;
       --
       report("test_name: Change 3A fire time");
-      rx_data(16#96#, 4, 2, 5, 2) -- NVSET, CBUS set node variable, node 4 2, index 5 - output 3A fire time, value 2
+      rx_data(OPC_NVSET, 4, 2, 5, 2) -- NVSET, CBUS set node variable, node 4 2, index 5 - output 3A fire time, value 2
       --
       -- FIXME No WRACK
       --TXB1CON.TXREQ <= '0';
       --wait until TXB1CON.TXREQ == '1';
-      --if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
+      --if TXB1D0 != OPC_WRACK then -- WRACK, CBUS write acknowledge response
       --  report("test_name: Sent wrong response");
       --  test_state := fail;
       --end if;
@@ -76,11 +77,11 @@ begin
       --
       wait for 1 ms; -- FIXME Next packet lost if previous Rx not yet processed
       report("test_name: Read back new 3A fire time");
-      rx_data(16#71#, 4, 2, 5) -- NVRD, CBUS read node variable, node 4 2, index 5 - output 3A fire time
-      tx_wait_for_node_message(16#97#, 4, 2, 5, variable index, 2, fire time value) -- NVANS, CBUS node variable response node 4 2, index 5, value 2
+      rx_data(OPC_NVRD, 4, 2, 5) -- NVRD, CBUS read node variable, node 4 2, index 5 - output 3A fire time
+      tx_wait_for_node_message(OPC_NVANS, 4, 2, 5, variable index, 2, fire time value) -- NVANS, CBUS node variable response node 4 2, index 5, value 2
       --
       report("test_name: Repeat long off 0x0102,0x0204, trigger 3A");
-      rx_data(16#91#, 1, 2, 2, 4) -- ACOF, CBUS long off, node 1 2, event 2 4
+      rx_data(OPC_ACOF, 1, 2, 2, 4) -- ACOF, CBUS long off, node 1 2, event 2 4
       --
       wait until PORTC != 0;
       fire_time2 := now();
@@ -94,12 +95,12 @@ begin
       end if;
       --
       report("test_name: Node variable value too low");
-      rx_data(16#96#, 4, 2, 5, 0) -- NVSET, CBUS set node variable, node 4 2, index 5 - output 3A fire time, value 0
+      rx_data(OPC_NVSET, 4, 2, 5, 0) -- NVSET, CBUS set node variable, node 4 2, index 5 - output 3A fire time, value 0
       --
       -- FIXME No CMDERR
       --TXB1CON.TXREQ <= '0';
       --wait until TXB1CON.TXREQ == '1';
-      --if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
+      --if TXB1D0 != OPC_CMDERR then -- CMDERR, CBUS error response
       --  report("flim_param_test: Sent wrong response");
       --  test_state := fail;
       --end if;
@@ -117,12 +118,12 @@ begin
       --end if;
       --
       report("test_name: Node variable value too high");
-      rx_data(16#96#, 4, 2, 5, 15) -- NVSET, CBUS set node variable, node 4 2, index 5 - output 3A fire time, value 15
+      rx_data(OPC_NVSET, 4, 2, 5, 15) -- NVSET, CBUS set node variable, node 4 2, index 5 - output 3A fire time, value 15
       --
       -- FIXME No CMDERR
       --TXB1CON.TXREQ <= '0';
       --wait until TXB1CON.TXREQ == '1';
-      --if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
+      --if TXB1D0 != OPC_CMDERR then -- CMDERR, CBUS error response
       --  report("flim_param_test: Sent wrong response");
       --  test_state := fail;
       --end if;

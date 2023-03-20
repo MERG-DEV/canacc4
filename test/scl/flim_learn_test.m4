@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -60,12 +61,12 @@ begin
       dolearn_switch <= '1'; -- Learn off
       report("test_name: Learn switch off");
       --
-      rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space, node 4 2
-      tx_wait_for_node_message(16#70#, 4, 2, 128, available event space) -- EVLNF, CBUS available event space response
+      rx_data(OPC_NNEVN, 4, 2) -- NNEVN, CBUS request available event space, node 4 2
+      tx_wait_for_node_message(OPC_EVNLF, 4, 2, 128, available event space) -- EVLNF, CBUS available event space response
       --
       report("test_name: Check number of stored events");
-      rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
-      tx_wait_for_node_message(16#74#, 4, 2, 0, number of stored events) -- NUMEV, CBUS number of stored event response node 4 2
+      rx_data(OPC_RQEVN, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(OPC_NUMEV, 4, 2, 0, number of stored events) -- NUMEV, CBUS number of stored event response node 4 2
       --
       report("test_name: Check events were not learnt");
       data_file_open(learnt_events.dat)

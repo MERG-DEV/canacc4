@@ -2,6 +2,7 @@ define(test_name, flim_no_can_id_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -25,11 +26,11 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Check CAN Id");
-      rx_data(16#0D#) -- QNN, CBUS Query node request
+      rx_data(OPC_QNN) -- QNN, CBUS Query node request
       tx_can_id(initial, 16#B1#, 16#80#)
       --
       report("test_name: Request enumerate");
-      rx_data(16#5D#, 4, 2) -- CBUS enumerate request
+      rx_data(OPC_ENUM, 4, 2) -- CBUS enumerate request
       --
       report("test_name: Waiting for RTR");
       tx_rtr
@@ -37,7 +38,7 @@ begin
       --
       test_sidh := 0;
       test_sidl := 16#20#;
-      while test_sidh < 16#10# loop
+      while test_sidh < OPC_RQNP loop
         while test_sidl < 16#100# loop
           rx_sid(test_sidh, test_sidl)
           test_sidl := test_sidl + 16#20#;
@@ -47,7 +48,7 @@ begin
       end loop;
       report("test_name: RTR, all CAN Ids taken");
       --
-      tx_wait_for_cmderr_message(4, 2 ,7) -- CMDERR, CBUS error response, node 4 2, error 7
+      tx_wait_for_cmderr_message(4, 2 ,CMDERR_INVALID_EVENT) -- CBUS error response, node 4 2, error 7
       tx_check_can_id(unchanged, 16#BF#, 16#E0#)
       --
       end_test

@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -30,16 +31,16 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Enter learn mode");
-      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
+      rx_data(OPC_NNLRN, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       report("test_name: Event Variable index too low long 0x0102,0x0402");
-      rx_data(16#D2#, 1, 2, 4, 2, 0, 4) -- EVLRN, CBUS learn event, node 1 2, event 4 2, variable index too low, variable value 4
-      tx_wait_for_cmderr_message(4, 2, 6) -- CMDERR, CBUS error response, node 4 2, Invalid event variable index
+      rx_data(OPC_EVLRN, 1, 2, 4, 2, 0, 4) -- EVLRN, CBUS learn event, node 1 2, event 4 2, variable index too low, variable value 4
+      tx_wait_for_cmderr_message(4, 2, CMDERR_INV_EV_IDX) -- CBUS error response, node 4 2
       --
       report("test_name: Event Variable index too high long 0x0102,0x0402");
-      rx_data(16#D2#, 1, 2, 4, 2, 3, 4) -- EVLRN, CBUS learn event, node 1 2, event 4 2, variable index too high, variable value 4
-      tx_wait_for_cmderr_message(4, 2, 6) -- CMDERR, CBUS error response, node 4 2, Invalid event variable index
+      rx_data(OPC_EVLRN, 1, 2, 4, 2, 3, 4) -- EVLRN, CBUS learn event, node 1 2, event 4 2, variable index too high, variable value 4
+      tx_wait_for_cmderr_message(4, 2, CMDERR_INV_EV_IDX) -- CBUS error response, node 4 2
       --
       data_file_open(teach.dat)
       --
@@ -48,7 +49,7 @@ begin
         data_file_report_line
         --
         rx_wait_if_not_ready
-        RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
+        RXB0D0 <= OPC_EVLRN;    -- EVLRN, CBUS learn event
         read(data_file, RXB0D1, 1);
         read(data_file, RXB0D2, 1);
         read(data_file, RXB0D3, 1);
@@ -56,7 +57,7 @@ begin
         read(data_file, RXB0D5, 1);
         read(data_file, RXB0D6, 1);
         rx_frame(7)
-        tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response node 4 2
+        tx_wait_for_node_message(OPC_WRACK, 4, 2) -- WRACK, CBUS write acknowledge response node 4 2
         --
         output_wait_for_data_file_pulse(PORTC)
         --
@@ -66,16 +67,16 @@ begin
       file_close(data_file);
       --
       report("test_name: Exit learn mode");
-      rx_data(16#54#, 4, 2) -- NNULN, CBUS exit learn mode to node 4 2
+      rx_data(OPC_NNULN, 4, 2) -- NNULN, CBUS exit learn mode to node 4 2
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       report("test_name: Do not learn event");
-      rx_data(16#D2#, 9, 9, 8, 8, 1, 4) -- EVLRN, CBUS unlearn event, node 9 9, event 8 8, variable index 1, variable value 4
+      rx_data(OPC_EVLRN, 9, 9, 8, 8, 1, 4) -- EVLRN, CBUS unlearn event, node 9 9, event 8 8, variable index 1, variable value 4
       --
       -- FIXME Should reject request as not in learn mode
       --TXB1CON.TXREQ <= '0';
       --wait until TXB1CON.TXREQ == '1';
-      --if TXB1D0 != 16#6F# then -- CMDERR, CBUS error response
+      --if TXB1D0 != OPC_CMDERR then -- CMDERR, CBUS error response
       --  report("test_name: Sent wrong response");
       --  test_state := fail;
       --end if;
@@ -92,8 +93,8 @@ begin
       --  test_state := fail;
       --end if;
       --
-      rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
-      tx_wait_for_node_message(16#74#, 4, 2, 5, number of stored events) -- NUMEV, CBUS number of stored event response node 4 2
+      rx_data(OPC_RQEVN, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(OPC_NUMEV, 4, 2, 5, number of stored events) -- NUMEV, CBUS number of stored event response node 4 2
       --
       data_file_open(learnt_events.dat)
       --

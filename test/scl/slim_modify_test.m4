@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -38,7 +39,7 @@ begin
         rx_wait_if_not_ready
         data_file_report_line
         --
-        RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
+        RXB0D0 <= OPC_EVLRN;    -- EVLRN, CBUS learn event
         read(data_file, RXB0D1, 1);
         read(data_file, RXB0D2, 1);
         read(data_file, RXB0D3, 1);
@@ -58,7 +59,7 @@ begin
       file_close(data_file);
       --
       report("test_name: Exit learn mode");
-      rx_data(16#54#, 4, 2) -- NNULN, exit learn mode, node 4 2
+      rx_data(OPC_NNULN, 4, 2) -- NNULN, exit learn mode, node 4 2
       --
       data_file_open(learnt_events.dat)
       --

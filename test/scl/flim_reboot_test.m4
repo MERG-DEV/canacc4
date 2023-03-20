@@ -2,6 +2,7 @@ define(test_name, flim_reboot_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
   shared label    _CANInit;
   shared label    _CANMain;
@@ -23,7 +24,7 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Ignore request addressed to Node 00");
-      rx_data(16#5C#, 0, 0) -- BOOTM, CBUS bootload mode request, node 0 0
+      rx_data(OPC_BOOT, 0, 0) -- BOOTM, CBUS bootload mode request, node 0 0
       wait until flim_led == '0' for 6 ms; -- Wait for LED output reset on reboot
       if flim_led == '0' then
         report("test_name: Unexpected reboot");
@@ -31,7 +32,7 @@ begin
       end if;
       --
       report("test_name: Ignore request addressed to Node 0x40");
-      rx_data(16#5C#, 4, 0) -- BOOTM, CBUS bootload mode request, node 0 0
+      rx_data(OPC_BOOT, 4, 0) -- BOOTM, CBUS bootload mode request, node 0 0
       wait until flim_led == '0' for 6 ms; -- Wait for LED output reset on reboot
       if flim_led == '0' then
         report("test_name: Unexpected reboot");
@@ -39,7 +40,7 @@ begin
       end if;
       --
       report("test_name: Ignore request addressed to Node 0x02");
-      rx_data(16#5C#, 0, 2) -- BOOTM, CBUS bootload mode request, node 0 0
+      rx_data(OPC_BOOT, 0, 2) -- BOOTM, CBUS bootload mode request, node 0 0
       wait until flim_led == '0' for 6 ms; -- Wait for LED output reset on reboot
       if flim_led == '0' then
         report("test_name: Unexpected reboot");
@@ -47,7 +48,7 @@ begin
       end if;
       --
       report("test_name: Reboot request");
-      rx_data(16#5C#, 4, 2) -- BOOTM, CBUS bootload mode request, node 4 2
+      rx_data(OPC_BOOT, 4, 2) -- BOOTM, CBUS bootload mode request, node 4 2
       wait until flim_led == '0'; -- Wait for LED output reset on reboot
       report("test_name: Rebooting");
       --

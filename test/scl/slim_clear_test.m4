@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -30,15 +31,15 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Enter learn mode");
-      rx_data(16#53#, 0, 0) -- NNLRN, CBUS enter learn mode, node 0 0
+      rx_data(OPC_NNLRN, 0, 0) -- NNLRN, CBUS enter learn mode, node 0 0
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       report("test_name: Clear events");
-      rx_data(16#55#, 0, 0) -- NNCLR, CBUS clear events, node 0 0
+      rx_data(OPC_NNCLR, 0, 0) -- NNCLR, CBUS clear events, node 0 0
       tx_check_no_message(776)
       --
       report("test_name: Exit learn mode");
-      rx_data(16#54#, 0, 0) -- NNULN, exit learn mode, node 0 0
+      rx_data(OPC_NNULN, 0, 0) -- NNULN, exit learn mode, node 0 0
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       data_file_open(learnt_events.dat)

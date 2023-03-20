@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -30,7 +31,7 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Enter learn mode");
-      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode, node 4, 2
+      rx_data(OPC_NNLRN, 4, 2) -- NNLRN, CBUS enter learn mode, node 4, 2
       --
       data_file_open(modify_indexed.dat)
       --
@@ -63,7 +64,7 @@ begin
         wait until RXB0CON.RXFUL == '0';
       end if;
       report("test_name: Exit learn mode");
-      rx_data(16#54#, 4, 2) -- NNULN, exit learn mode, node 4, 2
+      rx_data(OPC_NNULN, 4, 2) -- NNULN, exit learn mode, node 4, 2
       --
       data_file_open(learnt_events.dat)
       --

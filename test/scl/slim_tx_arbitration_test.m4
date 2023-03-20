@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -27,7 +28,7 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Request Node Parameter");
-      rx_data(16#73#, 0, 0, 0); -- CBUS read node parameter by index
+      rx_data(OPC_RQNPN, 0, 0, 0); -- CBUS read node parameter by index
       wait until INTCON < 128;
       wait until INTCON > 127;
       --

@@ -2,6 +2,7 @@ define(test_name, flim_set_can_id_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -24,13 +25,13 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Check CAN Id");
-      rx_data(16#0D#) -- QNN, CBUS Query node request
+      rx_data(OPC_QNN) -- QNN, CBUS Query node request
       tx_can_id(initial, 16#B1#, 16#80#)
       --
       report("test_name: Set CAN Id");
-      rx_data(16#75#, 4, 2, 3) -- CBUS set CAN Id request, node 4 2, CAN Id 3
+      rx_data(OPC_CANID, 4, 2, 3) -- CBUS set CAN Id request, node 4 2, CAN Id 3
       --
-      tx_wait_for_node_message(16#52#, 4, 2) -- NNACK, CBUS node number acknowledge, node 4 2
+      tx_wait_for_node_message(OPC_NNACK, 4, 2) -- NNACK, CBUS node number acknowledge, node 4 2
       tx_check_can_id(NN acknowledge, 16#B0#, 16#60#)
       --
       end_test

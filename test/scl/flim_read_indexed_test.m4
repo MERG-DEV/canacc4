@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -46,9 +47,9 @@ begin
         while match(file_line, "Done") == false loop
           report(file_line);
           read(file_line, variable_index);
-          rx_data(16#9C#, 4, 2, event_index, variable_index) -- REVAL, CBUS Indexed read event variable request, node 4 2
+          rx_data(OPC_REVAL, 4, 2, event_index, variable_index) -- REVAL, CBUS Indexed read event variable request, node 4 2
           data_file_read(variable_value)
-          tx_wait_for_node_message(16#B5#, 4, 2, event_index, event index, variable_index, variable index, variable_value, variable value) -- NEVAL, CBUS Indexed event variable response
+          tx_wait_for_node_message(OPC_NEVAL, 4, 2, event_index, event index, variable_index, variable index, variable_value, variable value) -- NEVAL, CBUS Indexed event variable response
           --
           readline(data_file, file_line);
         end loop;
@@ -56,17 +57,17 @@ begin
       end loop;
       --
       event_index := event_index - 1;
-      rx_data(16#9C#, 4, 2, event_index, 0) -- REVAL, CBUS Indexed read event variable request, node 4 2, variable index too low
-      tx_wait_for_cmderr_message(4, 2, 6) -- CMDERR, CBUS error response, node 4 2, Invalid event variable index
+      rx_data(OPC_REVAL, 4, 2, event_index, 0) -- REVAL, CBUS Indexed read event variable request, node 4 2, variable index too low
+      tx_wait_for_cmderr_message(4, 2, CMDERR_INV_EV_IDX) -- CBUS error response, node 4 2, Invalid event variable index
       --
-      rx_data(16#9C#, 4, 2, event_index, 3) -- REVAL, CBUS Indexed read event variable request, node 4 2, variable index too high
-      tx_wait_for_cmderr_message(4, 2, 6) -- CMDERR, CBUS error response, node 4 2, Invalid event variable index
+      rx_data(OPC_REVAL, 4, 2, event_index, 3) -- REVAL, CBUS Indexed read event variable request, node 4 2, variable index too high
+      tx_wait_for_cmderr_message(4, 2, CMDERR_INV_EV_IDX) -- CBUS error response, node 4 2, Invalid event variable index
       --
-      rx_data(16#9C#, 4, 2, event_index + 1, 1) -- REVAL, CBUS Indexed read event variable request, node 4 2, event index too high
-      tx_wait_for_cmderr_message(4, 2, 7) -- CMDERR, CBUS error response, node 4 2, Invalid event index
+      rx_data(OPC_REVAL, 4, 2, event_index + 1, 1) -- REVAL, CBUS Indexed read event variable request, node 4 2, event index too high
+      tx_wait_for_cmderr_message(4, 2, CMDERR_INVALID_EVENT) -- CBUS error response, node 4 2, Invalid event index
       --
-      rx_data(16#9C#, 4, 2, 0, 1) -- REVAL, CBUS Indexed read event variable request, node 4 2, event index too low
-      tx_wait_for_cmderr_message(4, 2, 7) -- CMDERR, CBUS error response, node 4 2, Invalid event index
+      rx_data(OPC_REVAL, 4, 2, 0, 1) -- REVAL, CBUS Indexed read event variable request, node 4 2, event index too low
+      tx_wait_for_cmderr_message(4, 2, CMDERR_INVALID_EVENT) -- CBUS error response, node 4 2, Invalid event index
       --
       end_test
     end process test_name;

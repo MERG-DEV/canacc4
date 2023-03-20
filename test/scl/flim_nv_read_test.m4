@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -35,7 +36,7 @@ begin
         data_file_report_line
         data_file_read(node_hi)
         data_file_read(node_lo)
-        rx_data(16#71#, node_hi, node_lo, 1) -- NVRD, CBUS read node variable, index 1
+        rx_data(OPC_NVRD, node_hi, node_lo, 1) -- NVRD, CBUS read node variable, index 1
         tx_check_no_message(2) -- Test if unexpected response sent
       end loop;
       --
@@ -48,18 +49,18 @@ begin
         data_file_report_line
         data_file_read(nv_index)
         data_file_read(nv_value)
-        rx_data(16#71#, 4, 2, nv_index) -- NVRD, CBUS read node variable by index, node 4 2
-        tx_wait_for_node_message(16#97#, 4, 2, nv_index, variable index, nv_value, variable value) -- NVANS, CBUS node variable response node 4 2
+        rx_data(OPC_NVRD, 4, 2, nv_index) -- NVRD, CBUS read node variable by index, node 4 2
+        tx_wait_for_node_message(OPC_NVANS, 4, 2, nv_index, variable index, nv_value, variable value) -- NVANS, CBUS node variable response node 4 2
       end loop;
       --
       report("test_name: Test beyond number of node variables");
       nv_index := nv_index + 1;
-      rx_data(16#71#, 4, 2, nv_index) -- NVRD, CBUS read node variable by index, node 4 2, index too high
-      tx_wait_for_node_message(16#97#, 4, 2, 0, variable index, 0, variable value) -- NVANS, CBUS node variable response node 4 2
+      rx_data(OPC_NVRD, 4, 2, nv_index) -- NVRD, CBUS read node variable by index, node 4 2, index too high
+      tx_wait_for_node_message(OPC_NVANS, 4, 2, 0, variable index, 0, variable value) -- NVANS, CBUS node variable response node 4 2
       --
       report("test_name: Test read node variable [0]");
-      rx_data(16#71#, 4, 2, 0) -- NVRD, CBUS read node variable, node 4 2, index 0
-      tx_wait_for_node_message(16#97#, 4, 2, 0, variable index, 0, variable value) -- NVANS, CBUS node variable response node 4 2
+      rx_data(OPC_NVRD, 4, 2, 0) -- NVRD, CBUS read node variable, node 4 2, index 0
+      tx_wait_for_node_message(OPC_NVANS, 4, 2, 0, variable index, 0, variable value) -- NVANS, CBUS node variable response node 4 2
       --
       end_test
     end process test_name;

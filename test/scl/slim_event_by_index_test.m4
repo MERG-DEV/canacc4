@@ -2,6 +2,7 @@ define(test_name, slim_event_by_index_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -23,7 +24,7 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Read event");
-      rx_data(16#72#, 0, 0, 1) -- NENRD, CBUS Read event by index request, node 0 0 , event index 1
+      rx_data(OPC_NENRD, 0, 0, 1) -- NENRD, CBUS Read event by index request, node 0 0 , event index 1
       tx_check_no_message(776)
       --
       end_test

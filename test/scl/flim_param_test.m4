@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -36,7 +37,7 @@ begin
         data_file_read(node_hi)
         data_file_read(node_lo)
         --
-        rx_data(16#73#, node_hi, node_lo) -- RQNPN, CBUS read node parameter by index
+        rx_data(OPC_RQNPN, node_hi, node_lo) -- CBUS read node parameter by index
         tx_check_no_message(2) -- Test if response sent
       end loop;
       --
@@ -50,14 +51,14 @@ begin
         data_file_report_line
         data_file_read(param_value)
         --
-        rx_data(16#73#, 4, 2, param_index) -- RQNPN, CBUS read node parameter by index
-        tx_wait_for_node_message(16#9B#, 4, 2, param_index, param_value) -- PARAN, CBUS individual parameter response
+        rx_data(OPC_RQNPN, 4, 2, param_index) -- CBUS read node parameter by index
+        tx_wait_for_node_message(OPC_PARAN, 4, 2, param_index, param_value) -- CBUS individual parameter response
         param_index := param_index + 1;
       end loop;
       --
       report("test_name: Test beyond number of parameters");
-      rx_data(16#73#, 4, 2, param_index) -- RQNPN, CBUS read node parameter by index
-      tx_wait_for_cmderr_message(4, 2, 9) -- CMDERR, CBUS error response, node 4 2, Invalid parameter index
+      rx_data(OPC_RQNPN, 4, 2, param_index) -- CBUS read node parameter by index
+      tx_wait_for_cmderr_message(4, 2, CMDERR_INV_PARAM_IDX) -- CBUS error response, node 4 2, Invalid parameter index
       --
       end_test
     end process test_name;

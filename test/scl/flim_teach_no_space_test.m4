@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -24,19 +25,19 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Enter learn mode");
-      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
+      rx_data(OPC_NNLRN, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       report("test_name: Learn event");
-      rx_data(16#D2#, 1, 2, 9, 128, 1, 4) -- EVLRN, CBUS learn event, node 1 2, event 9 128, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
-      tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response, node 4 2
+      rx_data(OPC_EVLRN, 1, 2, 9, 128, 1, 4) -- EVLRN, CBUS learn event, node 1 2, event 9 128, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
+      tx_wait_for_node_message(OPC_WRACK, 4, 2) -- WRACK, CBUS write acknowledge response, node 4 2
       output_wait_for_any_pulse(PORTC)
       --
       report("test_name: Learnt 128 events");
       --
       report("test_name: Cannot learn event 0x0102, 0x0981");
-      rx_data(16#D2#, 1, 2, 9, 129, 1, 4) -- EVLRN, CBUS learn event, node 1 2, event 9 129, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
-      tx_wait_for_cmderr_message(4, 2, 4) -- CMDERR, CBUS error response, node 4 2, No event space left
+      rx_data(OPC_EVLRN, 1, 2, 9, 129, 1, 4) -- EVLRN, CBUS learn event, node 1 2, event 9 129, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
+      tx_wait_for_cmderr_message(4, 2, CMDERR_TOO_MANY_EVENTS) -- CBUS error response, node 4 2, No event space left
       --
       -- FIXME yellow LED should flash
       --if flim_led == '0' then
@@ -45,8 +46,8 @@ begin
       --wait until flim_led == '1';
       --
       report("test_name: Cannot learn event 0x0000, 0x0982");
-      rx_data(16#D2#, 0, 0, 9, 130, 1, 4) -- EVLRN, CBUS learn event, node 0 0, event 9 130, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
-      tx_wait_for_cmderr_message(4, 2, 4) -- CMDERR, CBUS error response, node 4 2, No event space left
+      rx_data(OPC_EVLRN, 0, 0, 9, 130, 1, 4) -- EVLRN, CBUS learn event, node 0 0, event 9 130, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
+      tx_wait_for_cmderr_message(4, 2, CMDERR_TOO_MANY_EVENTS) -- CBUS error response, node 4 2, No event space left
       --
       -- FIXME yellow LED should flash
       --if flim_led == '0' then

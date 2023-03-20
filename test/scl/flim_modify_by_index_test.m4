@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -29,7 +30,7 @@ begin
       wait until flim_led == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
+      rx_data(OPC_NNLRN, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
       --
       report("test_name: Modify events");
       data_file_open(modify_indexed.dat)
@@ -51,7 +52,7 @@ begin
         -- CANACC4 does not implement learn by index so no WRACK expected
         --TXB1CON.TXREQ <= '0';
         --wait until TXB1CON.TXREQ == '1';
-        --if TXB1D0 != 16#59# then -- WRACK, CBUS write acknowledge response
+        --if TXB1D0 != OPC_WRACK then -- WRACK, CBUS write acknowledge response
         --  report("test_name: Sent wrong response");
         --  test_state := fail;
         --end if;
@@ -79,14 +80,14 @@ begin
       file_close(data_file);
       --
       report("test_name: Exit learn mode");
-      rx_data(16#54#, 4, 2) -- NNULN, CBUS exit learn mode to node 4 2
+      rx_data(OPC_NNULN, 4, 2) -- NNULN, CBUS exit learn mode to node 4 2
       --
-      rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space, node 4 2
-      tx_wait_for_node_message(16#70#, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response
+      rx_data(OPC_NNEVN, 4, 2) -- NNEVN, CBUS request available event space, node 4 2
+      tx_wait_for_node_message(OPC_EVNLF, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response
       --
       report("test_name: Check number of stored events");
-      rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
-      tx_wait_for_node_message(16#74#, 4, 2, 5, number of stored events) -- NUMEV, CBUS number of stored event response node 4 2
+      rx_data(OPC_RQEVN, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(OPC_NUMEV, 4, 2, 5, number of stored events) -- NUMEV, CBUS number of stored event response node 4 2
       --
       report("test_name: Check events");
       -- CANACC4 does not implement learn by index so events are unmodified

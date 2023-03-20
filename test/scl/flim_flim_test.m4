@@ -2,6 +2,7 @@ define(test_name, flim_flim_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -35,15 +36,15 @@ begin
       tx_check_can_id(default, 16#BF#, 16#E0#)
       --
       report("test_name: Awaiting Node Number request");
-      tx_wait_for_node_message(16#50#, 4, 2) -- RQNN, CBUS request Node Number, node 0 0
+      tx_wait_for_node_message(OPC_RQNN, 4, 2) -- RQNN, CBUS request Node Number, node 0 0
       report("test_name: RQNN request");
       tx_check_can_id(new, 16#B0#, 16#20#)
       --
       report("test_name: Set Node Number");
-      rx_data(16#42#, 9, 8) -- SNN, CBUS set node number, node 4 2
+      rx_data(OPC_SNN, 9, 8) -- SNN, CBUS set node number, node 4 2
       --
       report("test_name: Awaiting Node Number acknowledge");
-      tx_wait_for_node_message(16#52#, 9, 8) -- NNACK, CBUS node number acknowledge, node 4 2
+      tx_wait_for_node_message(OPC_NNACK, 9, 8) -- NNACK, CBUS node number acknowledge, node 4 2
       report("test_name: Node number response");
       tx_check_can_id(acknowledge, 16#B0#, 16#20#)
       --

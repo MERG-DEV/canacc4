@@ -2,6 +2,7 @@ define(test_name, slim_set_can_id_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -23,15 +24,15 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Check CAN Id");
-      rx_data(16#73#, 0, 0, 0) -- RQNPN, CBUS read node parameter by index, node 0 0, index 0 == number of parameters
+      rx_data(OPC_RQNPN, 0, 0, 0) -- RQNPN, CBUS read node parameter by index, node 0 0, index 0 == number of parameters
       tx_can_id(initial, 16#B0#, 16#00#)
       --
       report("test_name: Set CAN Id");
-      rx_data(16#75#, 0, 0, 3) -- CBUS set CAN Id, node 0 0, new CAN Id = 3
+      rx_data(OPC_CANID, 0, 0, 3) -- CBUS set CAN Id, node 0 0, new CAN Id = 3
       tx_check_no_message(776)
       --
       report("test_name: Verify CAN Id unchanged");
-      rx_data(16#73#, 0, 0, 0) -- RQNPN, CBUS read node parameter by index, node 0 0, index 0 == number of parameters
+      rx_data(OPC_RQNPN, 0, 0, 0) -- RQNPN, CBUS read node parameter by index, node 0 0, index 0 == number of parameters
       tx_can_id(unchanged, 16#B0#, 16#00#)
       --
       end_test

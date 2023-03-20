@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -33,13 +34,13 @@ begin
         data_file_read(nv_index)
         readline(data_file, file_line);
         --
-        rx_data(16#71#, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
+        rx_data(OPC_NVRD, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
         tx_check_no_message(776)
       end loop;
       --
       report("test_name: Test past number of Node Variables");
       nv_index := nv_index + 1;
-      rx_data(16#71#, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
+      rx_data(OPC_NVRD, 0, 0, nv_index) -- NVRD, CBUS read node variable by index, node 0 0
       tx_check_no_message(776)
       --
       end_test

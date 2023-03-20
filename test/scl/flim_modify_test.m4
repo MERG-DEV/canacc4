@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -29,7 +30,7 @@ begin
       wait until flim_led == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
+      rx_data(OPC_NNLRN, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       report("test_name: Modify events");
@@ -39,7 +40,7 @@ begin
         data_file_report_line
         --
         rx_wait_if_not_ready
-        RXB0D0 <= 16#D2#;    -- EVLRN, CBUS learn event
+        RXB0D0 <= OPC_EVLRN;    -- EVLRN, CBUS learn event
         read(data_file, RXB0D1, 1);
         read(data_file, RXB0D2, 1);
         read(data_file, RXB0D3, 1);
@@ -47,7 +48,7 @@ begin
         read(data_file, RXB0D5, 1);
         read(data_file, RXB0D6, 1);
         rx_frame(7)
-        tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response node 4 2
+        tx_wait_for_node_message(OPC_WRACK, 4, 2) -- WRACK, CBUS write acknowledge response node 4 2
         --
         readline(data_file, file_line);
         while match(file_line, "Done") == false loop
@@ -64,14 +65,14 @@ begin
       file_close(data_file);
       --
       report("test_name: Exit learn mode");
-      rx_data(16#54#, 4, 2) -- NNULN, CBUS exit learn mode to node 4 2
+      rx_data(OPC_NNULN, 4, 2) -- NNULN, CBUS exit learn mode to node 4 2
       --
-      rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space, node 4 2
-      tx_wait_for_node_message(16#70#, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response
+      rx_data(OPC_NNEVN, 4, 2) -- NNEVN, CBUS request available event space, node 4 2
+      tx_wait_for_node_message(OPC_EVNLF, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response
       --
       report("test_name: Check number of stored events");
-      rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
-      tx_wait_for_node_message(16#74#, 4, 2, 5, number of stored events) -- NUMEV, CBUS number of stored event response node 4 2
+      rx_data(OPC_RQEVN, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(OPC_NUMEV, 4, 2, 5, number of stored events) -- NUMEV, CBUS number of stored event response node 4 2
       --
       report("test_name: Check modified events");
       data_file_open(modified_events.dat)

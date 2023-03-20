@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -37,10 +38,10 @@ begin
       short_event := false;
       while event_low < 127 loop
         if short_event then
-          rx_data(16#90#, 1, node_low, 9, event_low) -- ACON, CBUS accessory on, node 1 node_low, event 9 event_low
+          rx_data(OPC_ACON, 1, node_low, 9, event_low) -- ACON, CBUS accessory on, node 1 node_low, event 9 event_low
           short_event := true;
         else
-          rx_data(16#98#, 1, node_low, 9, event_low) -- ASON, CBUS accessory short on, node 1 node_low, event 9 event_low
+          rx_data(OPC_ASON, 1, node_low, 9, event_low) -- ASON, CBUS accessory short on, node 1 node_low, event 9 event_low
           short_event := false;
         end if;
         --

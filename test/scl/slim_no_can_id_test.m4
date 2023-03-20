@@ -2,6 +2,7 @@ define(test_name, slim_no_can_id_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -34,7 +35,7 @@ begin
       --
       test_sidh := 0;
       test_sidl := 16#20#;
-      while test_sidh < 16#10# loop
+      while test_sidh < OPC_RQNP loop
         while test_sidl < 16#100# loop
           rx_sid(test_sidh, test_sidl)
           test_sidl := test_sidl + 16#20#;
@@ -45,7 +46,7 @@ begin
       report("test_name: RTR, all CAN Ids taken");
       --
       report("test_name: Awaiting CMDERR");
-      tx_wait_for_cmderr_message(0, 0 ,7) -- CMDERR, CBUS error response, node 0 0, error 7
+      tx_wait_for_cmderr_message(0, 0 ,CMDERR_INVALID_EVENT) -- CBUS error response, node 0 0
       tx_check_can_id(unchanged, 16#BF#, 16#E0#)
       --
       end_test

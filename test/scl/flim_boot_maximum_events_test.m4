@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -24,7 +25,7 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Long on 0x0102, 0x0180");
-      rx_data(16#90#, 1, 2, 1, 128) -- ACON, CBUS accessory on
+      rx_data(OPC_ACON, 1, 2, 1, 128) -- ACON, CBUS accessory on
       --
       output_wait_for_output(PORTC, 32, "Trigger 3A")
       --

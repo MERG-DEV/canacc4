@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -32,7 +33,7 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Enter learn mode");
-      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode, node 4 2
+      rx_data(OPC_NNLRN, 4, 2) -- NNLRN, CBUS enter learn mode, node 4 2
       --
       report("test_name: Read events");
       data_file_open(stored_events.dat)
@@ -49,7 +50,7 @@ begin
         while match(file_line, "Done") == false loop
           report(file_line);
           read(file_line, ev_index);
-          rx_data(16#B2#;, node_hi, node_lo, event_hi, event_lo, ev_index) -- REQEV, CBUS Read event variable request
+          rx_data(OPC_REQEV;, node_hi, node_lo, event_hi, event_lo, ev_index) -- REQEV, CBUS Read event variable request
           tx_check_no_message(2)
           --
           readline(data_file, file_line);

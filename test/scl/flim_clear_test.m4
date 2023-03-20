@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -28,35 +29,35 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Reject clear events request");
-      rx_data(16#55#, 4, 2) -- NNCLR, CBUS clear events to node 4 2
-      tx_wait_for_node_message(16#6F#, 4, 2, 2, error number) -- CMDERR, CBUS error response
+      rx_data(OPC_NNCLR, 4, 2) -- NNCLR, CBUS clear events to node 4 2
+      tx_wait_for_node_message(OPC_CMDERR, 4, 2, 2, error number) -- CMDERR, CBUS error response
       --
       report("test_name: Check available event space");
-      rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
-      tx_wait_for_node_message(16#70#, 4, 2, 123) -- EVLNF, CBUS available event space response
+      rx_data(OPC_NNEVN, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
+      tx_wait_for_node_message(OPC_EVNLF, 4, 2, 123) -- EVLNF, CBUS available event space response
       --
       report("test_name: Check number of stored events");
-      rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
-      tx_wait_for_node_message(16#74#, 4, 2, 5, number of stored events) -- NNEVN, CBUS number of stored events response
+      rx_data(OPC_RQEVN, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(OPC_NUMEV, 4, 2, 5, number of stored events) -- NNEVN, CBUS number of stored events response
       --
       report("test_name: Enter learn mode");
-      rx_data(16#53#, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
+      rx_data(OPC_NNLRN, 4, 2) -- NNLRN, CBUS enter learn mode to node 4 2
       wait for 1 ms; -- FIXME Next packet lost if previous not yet processed
       --
       report("test_name: Clear events");
-      rx_data(16#55#, 4, 2) -- NNCLR, CBUS clear events to node 4 2
-      tx_wait_for_node_message(16#59#, 4, 2) -- WRACK, CBUS write acknowledge response
+      rx_data(OPC_NNCLR, 4, 2) -- NNCLR, CBUS clear events to node 4 2
+      tx_wait_for_node_message(OPC_WRACK, 4, 2) -- WRACK, CBUS write acknowledge response
       --
       report("test_name: Exit learn mode");
-      rx_data(16#54#, 4, 2) -- NNULN, exit learn mode to node 4 2
+      rx_data(OPC_NNULN, 4, 2) -- NNULN, exit learn mode to node 4 2
       --
       report("test_name: Reheck available event space");
-      rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
-      tx_wait_for_node_message(16#70#, 4, 2, 128) -- EVLNF, CBUS available event space response
+      rx_data(OPC_NNEVN, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
+      tx_wait_for_node_message(OPC_EVNLF, 4, 2, 128) -- EVLNF, CBUS available event space response
       --
       report("test_name: Reheck number of stored events");
-      rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
-      tx_wait_for_node_message(16#74#, 4, 2, 0, number of stored events) -- NNEVN, CBUS number of stored events response
+      rx_data(OPC_RQEVN, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(OPC_NUMEV, 4, 2, 0, number of stored events) -- NNEVN, CBUS number of stored events response
       --
       report("test_name: Check events are now ignored");
       data_file_open(learnt_events.dat)

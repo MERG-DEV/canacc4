@@ -2,6 +2,7 @@ define(test_name, flim_slim_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -29,7 +30,7 @@ begin
       wait until flim_led == '0';
       report("test_name: SLiM setup started");
       --
-      tx_wait_for_node_message(16#51#, 4, 2) -- NNREL, CBUS release node number, node 4 2
+      tx_wait_for_node_message(OPC_NNREL, 4, 2) -- NNREL, CBUS release node number, node 4 2
       tx_check_can_id(release, 16#B1#, 16#80#)
       --
       setup_button <= '1'; -- Setup button released

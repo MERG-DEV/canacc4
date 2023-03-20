@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -45,7 +46,7 @@ begin
         while match(file_line, "Done") == false loop
           report(file_line);
           read(file_line, ev_index);
-          rx_data(16#9C#, 4, 2, event_index, ev_index) -- REVAL, CBUS Indexed read event variable request, node 4 2
+          rx_data(OPC_REVAL, 4, 2, event_index, ev_index) -- REVAL, CBUS Indexed read event variable request, node 4 2
           tx_check_no_message(2)
           --
           readline(data_file, file_line);

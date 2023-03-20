@@ -4,6 +4,7 @@ include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -37,12 +38,12 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Check available event space");
-      rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
-      tx_wait_for_node_message(16#70#, 4, 2, 128, available event space) -- EVLNF, CBUS available event space response node 4 2
+      rx_data(OPC_NNEVN, 4, 2) -- NNEVN, CBUS request available event space to node 4 2
+      tx_wait_for_node_message(OPC_EVNLF, 4, 2, 128, available event space) -- EVLNF, CBUS available event space response node 4 2
       --
       report("test_name: Check number of stored events");
-      rx_data(16#58#, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
-      tx_wait_for_node_message(16#74#, 4, 2, 0, number of stored events) -- EVLNF, CBUS available event space response node 4 2
+      rx_data(OPC_RQEVN, 4, 2) -- RQEVN, CBUS request number of stored events to node 4 2
+      tx_wait_for_node_message(OPC_NUMEV, 4, 2, 0, number of stored events) -- EVLNF, CBUS available event space response node 4 2
       --
       report("test_name: Check events");
       data_file_open(learnt_events.dat)

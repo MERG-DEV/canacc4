@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -32,11 +33,11 @@ begin
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Ignore read events request not addressed to node");
-      rx_data(16#57#, 0, 0) -- NERD, CBUS Read events request, node 0 0
+      rx_data(OPC_NERD, 0, 0) -- NERD, CBUS Read events request, node 0 0
       tx_check_no_message(776)  -- Test if unexpected response sent
       --
       report("test_name: Read events");
-      rx_data(16#57#, 4, 2) -- NERD, CBUS Read events request, node 4 2
+      rx_data(OPC_NERD, 4, 2) -- NERD, CBUS Read events request, node 4 2
       --
       data_file_open(stored_events.dat)
       --
@@ -47,7 +48,7 @@ begin
         data_file_read(ev_node_lo)
         data_file_read(ev_ev_hi)
         data_file_read(ev_ev_lo)
-        tx_wait_for_node_message(16#F2#, 4, 2, ev_node_hi, event node high, ev_node_lo, event node low, ev_ev_hi, event event high, ev_ev_lo, event event low, event_index, event index) -- ENRSP, CBUS stored event response
+        tx_wait_for_node_message(OPC_ENRSP, 4, 2, ev_node_hi, event node high, ev_node_lo, event node low, ev_ev_hi, event event high, ev_ev_lo, event event low, event_index, event index) -- ENRSP, CBUS stored event response
         --
         while match(file_line, "Done") == false loop
           readline(data_file, file_line);

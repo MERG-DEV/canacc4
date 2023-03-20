@@ -2,6 +2,7 @@ define(test_name, slim_flim_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
   shared label    main_loop;
   shared label    setup;
@@ -52,18 +53,18 @@ begin
       report("test_name: RTR, first free CAN Id is 12");
       --
       report("test_name: Waiting for Node Number request");
-      tx_wait_for_node_message(16#50#, 0, 0) -- RQNN, CBUS request Node Number, node 0 0
+      tx_wait_for_node_message(OPC_RQNN, 0, 0) -- RQNN, CBUS request Node Number, node 0 0
       report("test_name: RQNN request");
       tx_check_can_id(new, 16#B1#, 16#80#)
       --
       report("test_name: Request Node Parameters");
-      rx_data(16#10#, 0, 0) -- RQNP, CBUS node parameters request, node 0 0
-      tx_wait_for_message(16#EF#, response, 165, manufacturer id, 114, minor version, 8, module id, 128, number of events allowed, 2, number of variables per event, 16, number of node variables, 2, major version) -- PARAMS, CBUS node parameters response
+      rx_data(OPC_RQNP, 0, 0) -- RQNP, CBUS node parameters request, node 0 0
+      tx_wait_for_message(OPC_PARAMS, response, 165, manufacturer id, 114, minor version, 8, module id, 128, number of events allowed, 2, number of variables per event, 16, number of node variables, 2, major version) -- PARAMS, CBUS node parameters response
       --
       report("test_name: Request Module Name");
-      rx_data(16#11#, 0, 0) -- RQMN, CBUS module name request, node 0 0
+      rx_data(OPC_RQMN, 0, 0) -- RQMN, CBUS module name request, node 0 0
       report("test_name: Name request");
-      tx_wait_for_message(16#E2#, response, 65, name [0], 67, name [1], 67, name [2], 52, name [3], 95, name [4], 50, name [5], 32,  name [6]) -- NAME, CBUS module name response, CANACC4_2
+      tx_wait_for_message(OPC_NAME, response, 65, name [0], 67, name [1], 67, name [2], 52, name [3], 95, name [4], 50, name [5], 32,  name [6]) -- NAME, CBUS module name response, CANACC4_2
       --
       wait until flim_led == '1';
       wait until flim_led == '0';
@@ -72,10 +73,10 @@ begin
       report("test_name: Yellow LED (FLiM) flashing");
       --
       report("test_name: Set Node Number");
-      rx_data(16#42#, 4, 2) -- SNN, CBUS set node number, node 4 2
+      rx_data(OPC_SNN, 4, 2) -- SNN, CBUS set node number, node 4 2
       --
       report("test_name: Awaiting Node Number Acknowledge");
-      tx_wait_for_node_message(16#52#, 4, 2) -- NNACK, CBUS node number acknowledge, node 4 2
+      tx_wait_for_node_message(OPC_NNACK, 4, 2) -- NNACK, CBUS node number acknowledge, node 4 2
       report("test_name: Node number response");
       tx_check_can_id(acknowledge, 16#B1#, 16#80#)
       --
@@ -98,9 +99,9 @@ begin
       report("test_name: Yellow LED (FLiM) back on");
       --
       report("test_name: Check Node Number and event space after restart");
-      rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space, node 4 2
+      rx_data(OPC_NNEVN, 4, 2) -- NNEVN, CBUS request available event space, node 4 2
       --
-      tx_wait_for_node_message(16#70#, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response, node 4 2
+      tx_wait_for_node_message(OPC_EVNLF, 4, 2, 123, available event space) -- EVLNF, CBUS available event space response, node 4 2
       --
       end_test
     end process test_name;

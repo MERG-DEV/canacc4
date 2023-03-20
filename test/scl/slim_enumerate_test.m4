@@ -2,6 +2,7 @@ define(test_name, slim_enumerate_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -24,7 +25,7 @@ begin
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Request enumerate");
-      rx_data(16#5D#, 0, 0) -- CBUS enumerate request, node 0 0
+      rx_data(OPC_ENUM, 0, 0) -- CBUS enumerate request, node 0 0
       tx_check_no_message(776)
       --
       end_test

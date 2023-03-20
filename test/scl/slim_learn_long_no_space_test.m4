@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
 include(hardware.inc)dnl
+include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -30,7 +31,7 @@ begin
       polarity_switch <= '1'; -- Polarity normal, On event => A, Off event => B
       --
       report("test_name: Long On 0x0102, 0x0180");
-      rx_data(16#90#, 1, 2, 1, 128) -- ACON, CBUS accessory on, node 1 2, event 1 128
+      rx_data(OPC_ACON, 1, 2, 1, 128) -- ACON, CBUS accessory on, node 1 2, event 1 128
       output_wait_for_any_pulse(PORTC)
       tx_check_no_message
       --
@@ -40,10 +41,10 @@ begin
         wait until RXB0CON.RXFUL == '0';
       end if;
       report("test_name: Long On 0x0102, 0x0181");
-      rx_data(16#90#, 1, 2, 2, 129) -- ACON, CBUS accessory on, node 1 2, event 2 129
+      rx_data(OPC_ACON, 1, 2, 2, 129) -- ACON, CBUS accessory on, node 1 2, event 2 129
       --
       report("test_name: Awaiting CMDERR");
-      tx_wait_for_cmderr_message(0, 0, 4) -- CMDERR, CBUS error response, node 0 0, no event space left
+      tx_wait_for_cmderr_message(0, 0, CMDERR_TOO_MANY_EVENTS) -- CBUS error response, node 0 0, no event space left
       --
       -- FIXME yellow LED should flash
       --if flim_led == '0' then
