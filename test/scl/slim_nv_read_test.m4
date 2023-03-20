@@ -2,6 +2,7 @@ define(test_name, slim_nv_read_test)dnl
 include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -19,9 +20,9 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
+      setup_button <= '1'; -- Setup button not pressed
       --
-      wait until RB7 == '1'; -- Booted into SLiM
+      wait until slim_led == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
       data_file_open(nvs.dat)

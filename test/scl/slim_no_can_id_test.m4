@@ -1,6 +1,7 @@
 define(test_name, slim_no_can_id_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -16,17 +17,17 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
+      setup_button <= '1'; -- Setup button not pressed
       --
-      wait until RB7 == '1'; -- Booted into SLiM
+      wait until slim_led == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
-      RA3 <= '0';
+      setup_button <= '0';
       report("test_name: Setup button pressed");
-      wait until RB7 == '0';
+      wait until slim_led == '0';
       report("test_name: FLiM setup started");
       --
-      RA3 <= '1';
+      setup_button <= '1';
       report("test_name: Setup button released, awaiting RTR");
       tx_rtr
       tx_check_can_id(default, 16#BF#, 16#E0#)

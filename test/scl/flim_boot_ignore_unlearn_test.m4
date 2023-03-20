@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -12,24 +13,24 @@ begin
     --
   test_name: process is
     type test_result is (pass, fail);
-    variable test_state     : test_result;
-    file     data_file      : text;
-    variable file_stat      : file_open_status;
-    variable file_line      : string;
+    variable test_state   : test_result;
+    file     data_file    : text;
+    variable file_stat    : file_open_status;
+    variable file_line    : string;
     variable pulse_report : string;
     variable pulse_val    : integer;
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '0'; -- DOLEARN on
-      RA5 <= '0'; -- UNLEARN on
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '0'; -- DOLEARN on
+      unlearn_switch <= '0'; -- UNLEARN on
       --
-      wait until RB6 == '1'; -- Booted into FLiM
+      wait until flim_led == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      RB4 <= '1'; -- DOLEARN off
-      RA5 <= '1'; -- UNLEARN off
+      dolearn_switch <= '1'; -- DOLEARN off
+      unlearn_switch <= '1'; -- UNLEARN off
       --
       report("test_name: Check available event space");
       rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space to node 4 2

@@ -1,6 +1,7 @@
 define(test_name, slim_event_by_index_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -14,11 +15,11 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- Learn off
-      RA5 <= '1'; -- Unlearn off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- Learn off
+      unlearn_switch <= '1'; -- Unlearn off
       --
-      wait until RB7 == '1'; -- Booted into SLiM
+      wait until slim_led == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
       report("test_name: Read event");

@@ -2,6 +2,7 @@ define(test_name, flim_event_by_index_test)dnl
 include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -23,11 +24,11 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- Learn off
-      RA5 <= '1'; -- Unlearn off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- Learn off
+      unlearn_switch <= '1'; -- Unlearn off
       --
-      wait until RB6 == '1'; -- Booted into FLiM
+      wait until flim_led == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Ignore read events by index not addressed to node");

@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -21,14 +22,14 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- Learn off
-      RA5 <= '1'; -- Unlearn off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- Learn off
+      unlearn_switch <= '1'; -- Unlearn off
       --
-      wait until RB7 == '1'; -- Booted into SLiM
+      wait until slim_led == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
-      RB4 <= '0'; -- Learn on
+      dolearn_switch <= '0'; -- Learn on
       --
       data_file_open(learn.dat)
       --
@@ -38,11 +39,11 @@ begin
         data_file_report_line
         --
         readline(data_file, file_line);
-        read(file_line, RB0); -- Sel 0, LSB
+        read(file_line, sel0_switch); -- Sel 0, LSB
         readline(data_file, file_line);
-        read(file_line, RB1); -- Sel 1, MSB
+        read(file_line, sel1_switch); -- Sel 1, MSB
         readline(data_file, file_line);
-        read(file_line, RB5); -- Polarity
+        read(file_line, polarity_switch); -- Polarity
 
         rx_data_file_event
         --
@@ -53,7 +54,7 @@ begin
       --
       file_close(data_file);
       --
-      RB4 <= '1'; -- Learn off
+      dolearn_switch <= '1'; -- Learn off
       --
       data_file_open(learnt_events.dat)
       --

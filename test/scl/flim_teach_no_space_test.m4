@@ -2,6 +2,7 @@ define(test_name, flim_teach_no_space_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -15,11 +16,11 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- Learn off
-      RA5 <= '1'; -- Unlearn off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- Learn off
+      unlearn_switch <= '1'; -- Unlearn off
       --
-      wait until RB6 == '1'; -- Booted into FLiM
+      wait until flim_led == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Enter learn mode");
@@ -38,20 +39,20 @@ begin
       tx_wait_for_cmderr_message(4, 2, 4) -- CMDERR, CBUS error response, node 4 2, No event space left
       --
       -- FIXME yellow LED should flash
-      --if RB6 == '0' then
-      --  wait until RB6 == '1';
+      --if flim_led == '0' then
+      --  wait until flim_led == '1';
       --end if;
-      --wait until RB6 == '1';
+      --wait until flim_led == '1';
       --
       report("test_name: Cannot learn event 0x0000, 0x0982");
       rx_data(16#D2#, 0, 0, 9, 130, 1, 4) -- EVLRN, CBUS learn event, node 0 0, event 9 130, variable index 1 - trigger bitmap, variable value 4 - trigger output pair 3
       tx_wait_for_cmderr_message(4, 2, 4) -- CMDERR, CBUS error response, node 4 2, No event space left
       --
       -- FIXME yellow LED should flash
-      --if RB6 == '0' then
-      --  wait until RB6 == '1';
+      --if flim_led == '0' then
+      --  wait until flim_led == '1';
       --end if;
-      --wait until RB6 == '1';
+      --wait until flim_led == '1';
       --
       end_test
     end process test_name;

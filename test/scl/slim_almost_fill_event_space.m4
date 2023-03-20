@@ -2,6 +2,7 @@ define(test_name, slim_almost_fill_event_space)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -17,17 +18,17 @@ begin
     variable short_event : boolean;
     begin
       report("test_name: START");
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- Learn off
-      RA5 <= '1'; -- Unlearn off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- Learn off
+      unlearn_switch <= '1'; -- Unlearn off
       --
-      wait until RB7 == '1'; -- Booted into SLiM
+      wait until slim_led == '1'; -- Booted into SLiM
       --
       -- Learn events for output 3
-      RB4 <= '0'; -- Learn on
-      RB0 <= '0'; -- Sel 0 on
-      RB1 <= '1'; -- Sel 1 off
-      RB5 <= '1'; -- Polarity normal, On event => A, Off event => B
+      dolearn_switch <= '0'; -- Learn on
+      sel0_switch <= '0'; -- Sel 0 on
+      sel1_switch <= '1'; -- Sel 1 off
+      polarity_switch <= '1'; -- Polarity normal, On event => A, Off event => B
       --
       event_low   := 0;
       node_low    := 0;
@@ -50,30 +51,30 @@ begin
         --
         if sel_setting == 0 then
           -- Select ouput pair 1
-          RB0 <= '0'; -- Sel 0 on
-          RB1 <= '0'; -- Sel 1 off
+          sel0_switch <= '0'; -- Sel 0 on
+          sel1_switch <= '0'; -- Sel 1 off
           if pol_setting then
-            RB5 <= '0'; -- Polarity reversed, On event => B, Off event => A
+            polarity_switch <= '0'; -- Polarity reversed, On event => B, Off event => A
             pol_setting := false;
           else
-            RB5 <= '1'; -- Polarity normal, On event => A, Off event => B
+            polarity_switch <= '1'; -- Polarity normal, On event => A, Off event => B
             pol_setting := true;
           end if;
         end if;
         if sel_setting == 1 then
           -- Select ouput pair 2
-          RB0 <= '1'; -- Sel 0 on
-          RB1 <= '0'; -- Sel 1 off
+          sel0_switch <= '1'; -- Sel 0 on
+          sel1_switch <= '0'; -- Sel 1 off
         end if;
         if sel_setting == 2 then
           -- Select ouput pair 3
-          RB0 <= '0'; -- Sel 0 on
-          RB1 <= '1'; -- Sel 1 off
+          sel0_switch <= '0'; -- Sel 0 on
+          sel1_switch <= '1'; -- Sel 1 off
         end if;
         if sel_setting == 3 then
           -- Select ouput pair 4
-          RB0 <= '1'; -- Sel 0 on
-          RB1 <= '1'; -- Sel 1 off
+          sel0_switch <= '1'; -- Sel 0 on
+          sel1_switch <= '1'; -- Sel 1 off
           node_low    := node_low + 1;
           sel_setting := 0;
         end if;

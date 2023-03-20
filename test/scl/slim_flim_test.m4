@@ -1,6 +1,7 @@
 define(test_name, slim_flim_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
   shared label    main_loop;
   shared label    setup;
@@ -18,19 +19,19 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- DOLEARN off
-      RA5 <= '1'; -- UNLEARN off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- DOLEARN off
+      unlearn_switch <= '1'; -- UNLEARN off
       --
-      wait until RB7 == '1'; -- Booted into SLiM
+      wait until slim_led == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
-      RA3 <= '0';
+      setup_button <= '0';
       report("test_name: Setup button pressed");
-      wait until RB7 == '0';
+      wait until slim_led == '0';
       report("test_name: FLiM setup started");
       --
-      RA3 <= '1'; -- Setup button released
+      setup_button <= '1'; -- Setup button released
       report("test_name: Setup button released, awaiting RTR");
       tx_rtr
       tx_check_can_id(default, 16#BF#, 16#E0#)
@@ -64,10 +65,10 @@ begin
       report("test_name: Name request");
       tx_wait_for_message(16#E2#, response, 65, name [0], 67, name [1], 67, name [2], 52, name [3], 95, name [4], 50, name [5], 32,  name [6]) -- NAME, CBUS module name response, CANACC4_2
       --
-      wait until RB6 == '1';
-      wait until RB6 == '0';
-      wait until RB6 == '1';
-      wait until RB6 == '0';
+      wait until flim_led == '1';
+      wait until flim_led == '0';
+      wait until flim_led == '1';
+      wait until flim_led == '0';
       report("test_name: Yellow LED (FLiM) flashing");
       --
       report("test_name: Set Node Number");
@@ -78,10 +79,10 @@ begin
       report("test_name: Node number response");
       tx_check_can_id(acknowledge, 16#B1#, 16#80#)
       --
-      wait until RB6 == '1';
+      wait until flim_led == '1';
       report("test_name: Yellow LED (FLiM) now on");
       --
-      if RB7 == '1' then
+      if slim_led == '1' then
         report("test_name: Green LED (SLiM) on");
         test_state := fail;
       end if;
@@ -90,10 +91,10 @@ begin
       wait until PC == main_loop;
       PC <= setup;
       --
-      if RB6 == '1' then
-        wait until RB6 == '0';
+      if flim_led == '1' then
+        wait until flim_led == '0';
       end if;
-      wait until RB6 == '1';
+      wait until flim_led == '1';
       report("test_name: Yellow LED (FLiM) back on");
       --
       report("test_name: Check Node Number and event space after restart");

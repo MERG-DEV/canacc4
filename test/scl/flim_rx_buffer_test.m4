@@ -2,6 +2,7 @@ define(test_name, flim_rx_buffer_test)dnl
 include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
   shared variable Datmode; -- FIXME, kludge to prevent overwriting Rx packet
 end configuration;
@@ -21,9 +22,9 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
+      setup_button <= '1'; -- Setup button not pressed
       --
-      wait until RB6 == '1'; -- Booted into FliM
+      wait until flim_led == '1'; -- Booted into FliM
       report("test_name: Yellow LED (FLiM) on");
       --
       report("test_name: Read Node Parameter, received in RXB0");

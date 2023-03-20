@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -21,15 +22,15 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- DOLEARN off
-      RA5 <= '1'; -- UNLEARN off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- DOLEARN off
+      unlearn_switch <= '1'; -- UNLEARN off
       --
-      wait until RB6 == '1'; -- Booted into FLiM
+      wait until flim_led == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      RB4 <= '0'; -- DOLEARN on
-      RA5 <= '0'; -- UNLEARN on
+      dolearn_switch <= '0'; -- DOLEARN on
+      unlearn_switch <= '0'; -- UNLEARN on
       --
       data_file_open(unlearn.dat)
       --
@@ -43,8 +44,8 @@ begin
       --
       file_close(data_file);
       --
-      RB4 <= '1'; -- DOLEARN off
-      RA5 <= '1'; -- UNLEARN off
+      dolearn_switch <= '1'; -- DOLEARN off
+      unlearn_switch <= '1'; -- UNLEARN off
       --
       data_file_open(learnt_events.dat)
       --

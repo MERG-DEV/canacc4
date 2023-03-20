@@ -2,6 +2,7 @@ define(test_name, slim_learn_short_no_space_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -15,18 +16,18 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- Learn off
-      RA5 <= '1'; -- Unlearn off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- Learn off
+      unlearn_switch <= '1'; -- Unlearn off
       --
-      wait until RB7 == '1'; -- Booted into SLiM
+      wait until slim_led == '1'; -- Booted into SLiM
       report("test_name: Green LED (SLiM) on");
       --
       -- Learn events for output 3
-      RB4 <= '0'; -- Learn on
-      RB0 <= '0'; -- Sel 0 on
-      RB1 <= '1'; -- Sel 1 off
-      RB5 <= '1'; -- Polarity normal, On event => A, Off event => B
+      dolearn_switch <= '0'; -- Learn on
+      sel0_switch <= '0'; -- Sel 0 on
+      sel1_switch <= '1'; -- Sel 1 off
+      polarity_switch <= '1'; -- Polarity normal, On event => A, Off event => B
       --
       report("test_name: Short On 0x0102, 0x0180");
       rx_data(16#98#, 1, 2, 1, 128) -- ASON, CBUS accessory short on, node 1 2, event 1 128
@@ -42,10 +43,10 @@ begin
       tx_wait_for_cmderr_message(0, 0, 4) -- CMDERR, CBUS error response, node 0 0, no event space left
       --
       -- FIXME yellow LED should flash
-      --if RB6 == '0' then
-      --  wait until RB6 == '1';
+      --if flim_led == '0' then
+      --  wait until flim_led == '1';
       --end if;
-      --wait until RB6 == '1';
+      --wait until flim_led == '1';
       --
       end_test
     end process test_name;

@@ -3,6 +3,7 @@ include(common.inc)dnl
 include(data_file.inc)dnl
 include(rx_tx.inc)dnl
 include(io.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -20,14 +21,14 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- Learn off
-      RA5 <= '1'; -- Unlearn off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- Learn off
+      unlearn_switch <= '1'; -- Unlearn off
       --
-      wait until RB6 == '1'; -- Booted into FLiM
+      wait until flim_led == '1'; -- Booted into FLiM
       report("test_name: Yellow LED (FLiM) on");
       --
-      RB4 <= '0';
+      dolearn_switch <= '0';
       report("test_name: Learn switch on");
       --
       report("test_name: Do not learn events");
@@ -37,11 +38,11 @@ begin
         data_file_report_line
         --
         readline(data_file, file_line);
-        read(file_line, RB0);
+        read(file_line, sel0_switch);
         readline(data_file, file_line);
-        read(file_line, RB1);
+        read(file_line, sel1_switch);
         readline(data_file, file_line);
-        read(file_line, RB5);
+        read(file_line, polarity_switch);
 
         rx_wait_if_not_ready
         rx_data_file_event
@@ -56,7 +57,7 @@ begin
       --
       file_close(data_file);
       --
-      RB4 <= '1'; -- Learn off
+      dolearn_switch <= '1'; -- Learn off
       report("test_name: Learn switch off");
       --
       rx_data(16#56#, 4, 2) -- NNEVN, CBUS request available event space, node 4 2

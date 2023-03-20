@@ -1,6 +1,7 @@
 define(test_name, flim_flim_test)dnl
 include(common.inc)dnl
 include(rx_tx.inc)dnl
+include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --
@@ -16,17 +17,17 @@ begin
     begin
       report("test_name: START");
       test_state := pass;
-      RA3 <= '1'; -- Setup button not pressed
-      RB4 <= '1'; -- DOLEARN off
-      RA5 <= '1'; -- UNLEARN off
+      setup_button <= '1'; -- Setup button not pressed
+      dolearn_switch <= '1'; -- DOLEARN off
+      unlearn_switch <= '1'; -- UNLEARN off
       --
-      wait until RB6 == '1';
+      wait until flim_led == '1';
       report("test_name: Booted into FLiM");
       --
-      RA3 <= '0';
+      setup_button <= '0';
       report("test_name: Setup button pressed");
       wait for 1 sec;
-      RA3 <= '1';
+      setup_button <= '1';
       report("test_name: Setup button released");
       --
       report("test_name: Awaiting RTR");
@@ -46,13 +47,13 @@ begin
       report("test_name: Node number response");
       tx_check_can_id(acknowledge, 16#B0#, 16#20#)
       --
-      if RB6 == '0' then
+      if flim_led == '0' then
         report("test_name: Awaiting yellow LED (FLiM)");
-        wait until RB6 == '1';
+        wait until flim_led == '1';
       end if;
       report("test_name: Yellow LED (FLiM) on");
       --
-      if RB7 == '1' then
+      if slim_led == '1' then
         report("test_name: Green LED (SLiM) on");
         test_state := fail;
       end if;
