@@ -14,7 +14,7 @@ begin
     variable test_state : test_result;
     file     data_file  : text;
     variable file_stat  : file_open_status;
-    variable sidh_line  : string;
+    variable file_line  : string;
     variable tx_count   : integer;
     variable sidh_val   : integer;
     begin
@@ -34,12 +34,12 @@ begin
       --
       report("test_name: Loosing arbitration raises Tx priority");
       while endfile(data_file) == false loop
-        readline(data_file, sidh_line);
-        report(sidh_line);
-        readline(data_file, sidh_line);
-        read(sidh_line, tx_count);
-        readline(data_file, sidh_line);
-        read(sidh_line, sidh_val);
+        readline(data_file, file_line);
+        report(file_line);
+        readline(data_file, file_line);
+        read(file_line, tx_count);
+        readline(data_file, file_line);
+        read(file_line, sidh_val);
         --
         while tx_count > 0 loop
           if TXB1CON.TXREQ == '0' then
