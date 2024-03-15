@@ -1,13 +1,13 @@
 define(output_check_changed_to,
        if $1 == $2 then
-         report($3);
+         report("test_name: $3");
        else
          report("test_name: Output not changed to expected value");
          test_state := fail;
        end if;)dnl
 define(output_check_changed_from,
        if $1 != $2 then
-         report($3);
+         report("test_name: $3");
        else
          report("test_name: Output not changed");
          test_state := fail;

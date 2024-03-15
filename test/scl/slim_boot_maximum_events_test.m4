@@ -27,7 +27,7 @@ begin
       report("test_name: Long on 0x0102,0x0201");
       rx_data(OPC_ACON, 1, 2, 1, 128) -- ACON, CBUS accessory on, node 1 2, event 1 128
       --
-      output_wait_for_output(PORTC, 32, "Trigger 3A")
+      output_wait_for_output(PORTC, 32, Trigger 3A)
       --
       end_test
     end process test_name;

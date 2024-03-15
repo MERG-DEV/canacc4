@@ -23,7 +23,7 @@ begin
       unlearn_switch <= '1'; -- UNLEARN off
       --
       wait until flim_led == '1'; -- Booted into FLiM
-      report("flim_boot_test: Yellow LED (FLiM) on");
+      report("test_name: Yellow LED (FLiM) on");
       --
       setup_button <= '0';
       report("test_name: Setup button pressed");

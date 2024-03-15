@@ -52,7 +52,7 @@ begin
       --
       wait until PORTC != 0;
       fire_time1 := now();
-      output_check_changed_to(PORTC, 32, "Triggered 3A")
+      output_check_changed_to(PORTC, 32, Triggered 3A)
       wait until PORTC == 0;
       fire_time1 := now() - fire_time1;
       --
@@ -85,7 +85,7 @@ begin
       --
       wait until PORTC != 0;
       fire_time2 := now();
-      output_check_changed_to(PORTC, 32, "Triggered 3A")
+      output_check_changed_to(PORTC, 32, Triggered 3A)
       wait until PORTC == 0;
       fire_time2 := now() - fire_time2;
       --
@@ -101,19 +101,19 @@ begin
       --TXB1CON.TXREQ <= '0';
       --wait until TXB1CON.TXREQ == '1';
       --if TXB1D0 != OPC_CMDERR then -- CMDERR, CBUS error response
-      --  report("flim_param_test: Sent wrong response");
+      --  report("test_name: Sent wrong response");
       --  test_state := fail;
       --end if;
       --if TXB1D1 != 4 then
-      --  report("flim_param_test: Sent wrong Node Number (high)");
+      --  report("test_name: Sent wrong Node Number (high)");
       --  test_state := fail;
       --end if;
       --if TXB1D2 != 2 then
-      --  report("flim_param_test: Sent wrong Node Number (low)");
+      --  report("test_name: Sent wrong Node Number (low)");
       --  test_state := fail;
       --end if;
       --if TXB1D3 != 10 then -- Invalid node variable index
-      --  report("flim_param_test: Sent wrong error number");
+      --  report("test_name: Sent wrong error number");
       --  test_state := fail;
       --end if;
       --
@@ -124,19 +124,19 @@ begin
       --TXB1CON.TXREQ <= '0';
       --wait until TXB1CON.TXREQ == '1';
       --if TXB1D0 != OPC_CMDERR then -- CMDERR, CBUS error response
-      --  report("flim_param_test: Sent wrong response");
+      --  report("test_name: Sent wrong response");
       --  test_state := fail;
       --end if;
       --if TXB1D1 != 4 then
-      --  report("flim_param_test: Sent wrong Node Number (high)");
+      --  report("test_name: Sent wrong Node Number (high)");
       --  test_state := fail;
       --end if;
       --if TXB1D2 != 2 then
-      --  report("flim_param_test: Sent wrong Node Number (low)");
+      --  report("test_name: Sent wrong Node Number (low)");
       --  test_state := fail;
       --end if;
       --if TXB1D3 != 10 then -- Invalid node variable index
-      --  report("flim_param_test: Sent wrong error number");
+      --  report("test_name: Sent wrong error number");
       --  test_state := fail;
       --end if;
       --
