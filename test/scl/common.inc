@@ -1,16 +1,21 @@
-changecom(--)dnl
-changequote({,})dnl
-define(processor_type, PIC18F2480)dnl
+divert(-1)
+changecom(--)
+changequote({,})
+
+define(processor_type, PIC18F2480)
+
 define(stop_test,
        PC <= 0;
-       wait;)dnl
+       wait;)
+
 define(end_test,
        if test_state == pass then
          report("test_name: PASS");
        else
          report("test_name: FAIL");
        end if;
-       stop_test)dnl
+       stop_test)
+
 define(timeout_process,
        test_timeout: process is
          begin
@@ -18,4 +23,6 @@ define(timeout_process,
            report("test_name: TIMEOUT");
            report(PC); -- Crashes simulator, MDB will report current source line
            stop_test
-         end process test_timeout;)dnl
+         end process test_timeout;)
+
+divert(0)dnl

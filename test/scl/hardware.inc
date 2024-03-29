@@ -1,8 +1,10 @@
-define(flim_led, RB6)dnl
-define(slim_led, RB7)dnl
-define(setup_button, RA3)dnl
-define(dolearn_switch, RB4)dnl
-define(unlearn_switch, RA5)dnl
-define(polarity_switch, RB5)dnl
-define(sel0_switch, RB0)dnl
-define(sel1_switch, RB1)dnl
+divert(-1)
+define(flim_led, RB6)
+define(slim_led, RB7)
+define(setup_button, RA3)
+define(dolearn_switch, RB4)
+define(unlearn_switch, RA5)
+define(polarity_switch, RB5)
+define(sel0_switch, RB0)
+define(sel1_switch, RB1)
+divert(0)dnl

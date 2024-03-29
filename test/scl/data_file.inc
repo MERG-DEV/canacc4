@@ -1,3 +1,5 @@
+divert(-1)
+
 define(data_file_open,
        file_open(file_stat, data_file, "./data/$1", read_mode);
        if file_stat != open_ok then
@@ -5,10 +7,14 @@ define(data_file_open,
          report("test_name: FAIL");
          PC <= 0;
          wait;
-       end if;)dnl
+       end if;)
+
 define(data_file_report_line,
        readline(data_file, file_line);
-       report(file_line);)dnl
+       report(file_line);)
+
 define(data_file_read,
        readline(data_file, file_line);
-       read(file_line, $1);)dnl
+       read(file_line, $1);)
+
+divert(0)dnl

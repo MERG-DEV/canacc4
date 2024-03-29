@@ -1,10 +1,14 @@
+divert(-1)
+
 define(tx_check_data,
        if $1 != $2 then
          report("test_name: Tx wrong $3");
          test_state := fail;
-       end if;)dnl
+       end if;)
+
 define(tx_test_data,
-       {ifelse( $2, {}, {--}, tx_check_data($1,  $2,   $3))})dnl
+       {ifelse( $2, {}, {--}, tx_check_data($1,  $2,   $3))})
+
 define(tx2_wait_if_not_ready,
        if TXB2CON.TXREQ == '0' then
          {ifelse($1, {}, report("test_name: Awaiting Tx2");, report("test_name: Awaiting Tx2 for $1 ms");)}
@@ -15,13 +19,15 @@ define(tx2_wait_if_not_ready,
          TXB2CON.TXREQ <= '0';
        else
          {ifelse($1, {},   report("test_name: No Tx2");,   report("test_name: No Tx2 in $1 ms");)}
-       end if;)dnl
+       end if;)
+
 define(tx_wait_for_rtr_response,
        tx2_wait_if_not_ready
        report("test_name: RTR response sent");
        {tx_check_data(TXB2SIDH,  $1,   RTR SIDH)}
        {tx_check_data(TXB2SIDL,  $2,   RTR SIDL)}
-       {tx_check_data(TXB2DLC,    0,   RTR data length)})dnl
+       {tx_check_data(TXB2DLC,    0,   RTR data length)})
+
 define(tx_check_no_rtr_response,
        {tx2_wait_if_not_ready($1)}
        if TXB2CON.TXREQ == '1' then
@@ -29,7 +35,8 @@ define(tx_check_no_rtr_response,
          test_state := fail;
        else
          report("test_name: No RTR response sent in $1 ms");
-       end if;)dnl
+       end if;)
+
 define(tx_wait_if_not_ready,
        if TXB1CON.TXREQ == '0' then
          {ifelse($1, {}, report("test_name: Awaiting Tx");, report("test_name: Awaiting Tx for $1 ms");)}
@@ -40,7 +47,8 @@ define(tx_wait_if_not_ready,
          TXB1CON.TXREQ <= '0';
        else
          {ifelse($1, {}, report("test_name: No Tx");, report("test_name: No Tx in $1 ms");)}
-       end if;)dnl
+       end if;)
+
 define(tx_wait_for_message,
        tx_wait_if_not_ready
        {tx_test_data(TXB1D0,  $1,   $2)}
@@ -50,11 +58,14 @@ define(tx_wait_for_message,
        {tx_test_data(TXB1D4,  $9,  $10)}
        {tx_test_data(TXB1D5, $11,  $12)}
        {tx_test_data(TXB1D6, $13,  $14)}
-       {tx_test_data(TXB1D7, $15,  $16)})dnl
+       {tx_test_data(TXB1D7, $15,  $16)})
+
 define(tx_wait_for_node_message,
-       {tx_wait_for_message($1, opcode, $2, Node Number (high), $3, Node Number (low), $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)})dnl
+       {tx_wait_for_message($1, opcode, $2, Node Number (high), $3, Node Number (low), $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)})
+
 define(tx_wait_for_cmderr_message,
-       {tx_wait_for_message(16#6F#, opcode, $1, Node Number (high), $2, Node Number (low), $3, error number)})dnl
+       {tx_wait_for_message(16#6F#, opcode, $1, Node Number (high), $2, Node Number (low), $3, error number)})
+
 define(tx_check_no_message,
        {ifelse($1, {}, {--}, tx_wait_if_not_ready($1))}
        if TXB1CON.TXREQ == '1' then
@@ -63,7 +74,8 @@ define(tx_check_no_message,
          TXB1CON.TXREQ <= '0';
        else
          {ifelse($1, {}, report("test_name: No message sent");, report("test_name: No message sent in $1 ms");)}
-       end if;)dnl
+       end if;)
+
 define(tx_rtr,
        tx_wait_if_not_ready
        if TXB1DLC.TXRTR == '1' then
@@ -71,7 +83,7 @@ define(tx_rtr,
        else
          report("test_name: not RTR request");
          test_state := fail;
-       end if;)dnl
+       end if;)
 define(tx_check_can_id,
        if TXB1SIDH != $2 then
          report("test_name: Incorrect $1 CAN Id SIDH");
@@ -80,32 +92,39 @@ define(tx_check_can_id,
        if TXB1SIDL != $3 then
          report("test_name: Incorrect $1 CAN Id SIDL");
          test_state := fail;
-       end if;)dnl
+       end if;)
+
 define(tx_can_id,
        tx_wait_if_not_ready
-       tx_check_can_id($1, $2, $3))dnl
+       tx_check_can_id($1, $2, $3))
+
 define(rx_wait_if_not_ready,
        if RXB0CON.RXFUL != '0' then
          report("test_name: Waiting to Rx");
          wait until RXB0CON.RXFUL == '0';
          report("test_name: Ready to Rx");
-       end if;)dnl
+       end if;)
+
 define(rx_frame,
        RXB0DLC <= 16#0$1#;
        RXB0CON.RXFUL <= '1';
        CANSTAT <= 16#0C#;
        PIR3.RXB0IF <= '1';
-       report("test_name: Rx");)dnl
+       report("test_name: Rx");)
+
 define(rx_rtr,
        rx_wait_if_not_ready
-       rx_frame(40))dnl
+       rx_frame(40))
+
 define(rx_sid,
        rx_wait_if_not_ready
        RXB0SIDH <= $1;
        RXB0SIDL <= $2;
-       rx_frame(0))dnl
+       rx_frame(0))
+
 define(rx_load_data,
-       {ifelse($2, {}, $1 <= 0;, $1 <= $2;)})dnl
+       {ifelse($2, {}, $1 <= 0;, $1 <= $2;)})
+
 define(rx_data,
        rx_wait_if_not_ready
        {rx_load_data(RXB0D0, $1)}
@@ -116,7 +135,8 @@ define(rx_data,
        {rx_load_data(RXB0D5, $6)}
        {rx_load_data(RXB0D6, $7)}
        {rx_load_data(RXB0D7, $8)}
-       {rx_frame($#)})dnl
+       {rx_frame($#)})
+
 define(rx_data_file_event,
        rx_wait_if_not_ready
        read(data_file, RXB0D0, 1); -- opcode
@@ -124,19 +144,22 @@ define(rx_data_file_event,
        read(data_file, RXB0D2, 1); -- Node low
        read(data_file, RXB0D3, 1); -- Event high
        read(data_file, RXB0D4, 1); -- Event low
-       rx_frame(5))dnl
+       rx_frame(5))
+
 define(rxb1_wait_if_not_ready,
        if RXB1CON.RXFUL != '0' then
          report("test_name: Waiting to RxB1");
          wait until RXB1CON.RXFUL == '0';
          report("test_name: Ready to RxB1");
-       end if;)dnl
+       end if;)
+
 define(rxb1_frame,
        RXB1DLC <= 16#0$1#;
        RXB1CON.RXFUL <= '1';
        CANSTAT <= 16#0A#;
        PIR3.RXB1IF <= '1';
-       report("test_name: RxB1");)dnl
+       report("test_name: RxB1");)
+
 define(rxb1_data,
        rxb1_wait_if_not_ready
        {rx_load_data(RXB1D0, $1)}
@@ -147,4 +170,6 @@ define(rxb1_data,
        {rx_load_data(RXB1D5, $6)}
        {rx_load_data(RXB1D6, $7)}
        {rx_load_data(RXB1D7, $8)}
-       {rxb1_frame($#)})dnl
+       {rxb1_frame($#)})
+
+divert(0)dnl
