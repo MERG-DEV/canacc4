@@ -31,7 +31,7 @@ begin
       report("test_name: Test long off 0x0102,0x0204, trigger 3A");
       rx_data(OPC_ACOF, 1, 2, 2, 4) -- ACOF, CBUS long off, node 1 2, event 2 4
       --
-      output_check_pulse_duration(PORTC, 32, Triggered 3A, 25)
+      output_check_pulse_duration(PORTC, 32, "Triggered 3A", 25)
       --
       end_test
     end process test_name;
