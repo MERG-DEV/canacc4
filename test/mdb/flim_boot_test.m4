@@ -1,17 +1,11 @@
-# Test into FLiM mode.
+# Test boot into FLiM mode.
 
-Device PIC18F2480
-Hwtool SIM
-Program "../dist/default/production/canacc4.production.cof"
-Stim "./scl/flim_boot_test.scl"
-Break *0 1
+define(test_name, flim_boot_test)dnl
+include(common.inc)dnl
 
-# Set CAN Id and module status
-Write /e 0x0 0x0C 0x08
+set_up_test_simulation
 
-# Set Node Id
-Write /e 0x02 0x04 0x02
+set_flim_CAN_id_and_module_status
+set_flim_node_id
 
-Run
-Wait
-Quit
+run_test

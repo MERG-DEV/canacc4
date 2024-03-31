@@ -1,20 +1,13 @@
 # Test all Tx priority raised if arbitration lost in FLiM mode.
 
-Device PIC18F2480
-Hwtool SIM
-Program "../dist/default/production/canacc4.production.cof"
-Stim "./scl/flim_tx_arbitration_test.scl"
-Break *0 1
+define(test_name, flim_tx_arbitration_test)dnl
+include(common.inc)dnl
 
-# Set CAN Id and module status
-Write /e 0x0 0x0C 0x08
+set_up_test_simulation
 
-# Set Node Id
-Write /e 0x02 0x04 0x02
+set_flim_CAN_id_and_module_status
+set_flim_node_id
 
-# Set free event space and number of events
-Write /e 0x04 0x7b 0x05
+set_number_of_events(5)
 
-Run
-Wait
-Quit
+run_test

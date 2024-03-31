@@ -1,11 +1,10 @@
 # Test enter bootloader mode on powerup.
-#
-Device PIC18F2480
-Hwtool SIM
-Program "../dist/default/production/canacc4.production.cof"
-Stim "./scl/bootload_test.scl"
+
+define(test_name, bootload_test)dnl
+include(common.inc)dnl
+
+set_up_test_simulation
+
 Write /e 0xFF 0xFF
-Break *0 1
-Run
-Wait
-Quit
+
+run_test

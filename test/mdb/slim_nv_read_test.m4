@@ -1,14 +1,10 @@
 # Test CBUS node variable requests ignored in SLiM.
 
-Device PIC18F2480
-Hwtool SIM
-Program "../dist/default/production/canacc4.production.cof"
-Stim "./scl/slim_nv_read_test.scl"
-Break *0 1
+define(test_name, slim_nv_read_test)dnl
+include(common.inc)dnl
 
-# Set free event space and number of events
-Write /e 0x04 0x7b 0x05
+set_up_test_simulation
 
-Run
-Wait
-Quit
+set_number_of_events(5)
+
+run_test

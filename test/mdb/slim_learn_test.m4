@@ -1,12 +1,9 @@
 # Test learn both short and normal on and off events for normal and inverse
 # polarity in SLiM mode.
 
-Device PIC18F2480
-Hwtool SIM
-Program "../dist/default/production/canacc4.production.cof"
-Stim "./scl/slim_learn_test.scl"
-Break *0 1
+define(test_name, slim_learn_test)dnl
+include(common.inc)dnl
 
-Run
-Wait
-Quit
+set_up_test_simulation
+
+run_test
