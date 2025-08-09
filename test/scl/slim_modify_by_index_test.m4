@@ -1,10 +1,4 @@
 define(test_name, slim_modify_by_index_test)dnl
-include(common.inc)dnl
-include(data_file.inc)dnl
-include(rx_tx.inc)dnl
-include(io.inc)dnl
-include(hardware.inc)dnl
-include(cbusdefs.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --

@@ -1,7 +1,6 @@
 # Test event variables cannot be read in SLiM
 
 define(test_name, slim_read_events_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

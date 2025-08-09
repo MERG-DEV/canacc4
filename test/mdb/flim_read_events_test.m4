@@ -1,7 +1,6 @@
 # Test reading back event varaibles in FLiM
 
 define(test_name, flim_read_events_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

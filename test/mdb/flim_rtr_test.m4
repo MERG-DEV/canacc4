@@ -1,7 +1,6 @@
 # Test FLiM response to RTR.
 
 define(test_name, flim_rtr_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

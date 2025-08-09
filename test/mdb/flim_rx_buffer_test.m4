@@ -1,7 +1,6 @@
 # Test all Rx buffers are used in FLiM mode.
 
 define(test_name, flim_rx_buffer_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

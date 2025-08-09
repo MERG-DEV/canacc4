@@ -1,7 +1,6 @@
 # Test CBUS Enumerate request in FLiM mode.
 
 define(test_name, flim_enumerate_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

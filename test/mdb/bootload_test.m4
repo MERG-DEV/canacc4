@@ -1,7 +1,6 @@
 # Test enter bootloader mode on powerup.
 
 define(test_name, bootload_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

@@ -1,8 +1,4 @@
 define(test_name, slim_flim_test)dnl
-include(common.inc)dnl
-include(rx_tx.inc)dnl
-include(hardware.inc)dnl
-include(cbusdefs.inc)dnl
 configuration for "processor_type" is
   shared label    main_loop;
   shared label    setup;

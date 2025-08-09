@@ -10,6 +10,7 @@
 *.mcw
 *.mdb
 *.scl
+*.m4f
 **/*~
 **/.emacs.desktop*
 **/.map

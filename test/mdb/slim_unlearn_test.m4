@@ -1,7 +1,6 @@
 # Test unlearning events in SLiM mode.
 
 define(test_name, slim_unlearn_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

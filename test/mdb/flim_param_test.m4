@@ -1,7 +1,6 @@
 # Test CBUS node parameter requests in FLiM mode.
 
 define(test_name, flim_param_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

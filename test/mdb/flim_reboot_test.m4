@@ -1,7 +1,6 @@
 # Test reboot into bootloader on receipt of CBUS command in FLiM mode.
 
 define(test_name, flim_reboot_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

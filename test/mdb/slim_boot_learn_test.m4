@@ -2,7 +2,6 @@
 # clear and initialise events.
 
 define(test_name, slim_boot_learn_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

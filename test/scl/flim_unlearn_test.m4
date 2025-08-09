@@ -1,9 +1,4 @@
 define(test_name, flim_unlearn_test)dnl
-include(common.inc)dnl
-include(data_file.inc)dnl
-include(rx_tx.inc)dnl
-include(io.inc)dnl
-include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --

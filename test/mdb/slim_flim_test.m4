@@ -1,7 +1,6 @@
 # Test switch from SLiM to FLiM mode.
 
 define(test_name, slim_flim_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

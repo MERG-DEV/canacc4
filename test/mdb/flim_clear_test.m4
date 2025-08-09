@@ -1,7 +1,6 @@
 # Test clearing all events in FLiM
 
 define(test_name, flim_clear_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

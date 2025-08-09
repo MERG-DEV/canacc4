@@ -1,7 +1,6 @@
 # Test modifying indexed events in FLiM
 
 define(test_name, flim_modify_by_index_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

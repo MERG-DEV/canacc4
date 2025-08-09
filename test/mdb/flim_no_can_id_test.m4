@@ -1,7 +1,6 @@
 # Test CBUS Enumerate request in FLiM mode when all CAN Ids are in use.
 
 define(test_name, flim_no_can_id_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

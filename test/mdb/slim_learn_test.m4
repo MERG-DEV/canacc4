@@ -2,7 +2,6 @@
 # polarity in SLiM mode.
 
 define(test_name, slim_learn_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

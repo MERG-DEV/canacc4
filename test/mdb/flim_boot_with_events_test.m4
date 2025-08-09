@@ -1,7 +1,6 @@
 # Test boot into FLiM mode with events does not clear and initialise events.
 
 define(test_name, flim_boot_with_events_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

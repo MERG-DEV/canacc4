@@ -1,5 +1,4 @@
 define(test_name, bootload_test)dnl
-include(common.inc)dnl
 configuration for "processor_type" is
   shared label    _CANMain;
 end configuration;

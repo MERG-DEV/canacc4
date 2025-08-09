@@ -1,7 +1,4 @@
 define(test_name, flim_rtr_test)dnl
-include(common.inc)dnl
-include(rx_tx.inc)dnl
-include(hardware.inc)dnl
 configuration for "processor_type" is
 end configuration;
 --

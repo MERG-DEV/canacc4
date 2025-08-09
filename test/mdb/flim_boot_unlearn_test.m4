@@ -2,7 +2,6 @@
 # clear and initialise events.
 
 define(test_name, flim_boot_unlearn_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 

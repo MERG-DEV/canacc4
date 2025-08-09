@@ -1,7 +1,6 @@
 # Test learn fails when no event space left in FLiM mode.
 
 define(test_name, flim_teach_no_space_test)dnl
-include(common.inc)dnl
 
 set_up_test_simulation
 
