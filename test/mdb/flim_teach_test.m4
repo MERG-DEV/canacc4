@@ -1,6 +1,6 @@
 # Test FLiM mode can be taught using CBUS messages.
 
-define(test_name, flim_teach_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

@@ -1,6 +1,6 @@
 # Test event variables cannot be read by index in SLiM
 
-define(test_name, slim_read_indexed_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

@@ -1,6 +1,6 @@
 # Test enter bootloader mode on powerup.
 
-define(test_name, bootload_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

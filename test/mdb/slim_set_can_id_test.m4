@@ -1,6 +1,6 @@
 # Test CAN Id cannot be set by CBUS message in SLiM.
 
-define(test_name, slim_set_can_id_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

@@ -1,6 +1,6 @@
 # Test cannot read back events by index in SLiM.
 
-define(test_name, slim_event_by_index_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

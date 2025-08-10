@@ -1,4 +1,4 @@
-define(test_name, slim_flim_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 configuration for "processor_type" is
   shared label    main_loop;
   shared label    setup;

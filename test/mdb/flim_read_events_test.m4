@@ -1,6 +1,6 @@
 # Test reading back event varaibles in FLiM
 
-define(test_name, flim_read_events_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

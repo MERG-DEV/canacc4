@@ -1,6 +1,6 @@
 # Test reading back events by index in FLiM
 
-define(test_name, flim_event_by_index_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

@@ -1,6 +1,6 @@
 # Test modifying indexed events in FLiM
 
-define(test_name, flim_modify_by_index_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

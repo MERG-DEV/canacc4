@@ -1,6 +1,6 @@
 # Test CBUS Node Query request ignored in SLiM mode as Node Number is zero.
 
-define(test_name, slim_query_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

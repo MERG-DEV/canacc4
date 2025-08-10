@@ -1,6 +1,6 @@
 # Test switch from FLiM to SLiM mode.
 
-define(test_name, flim_slim_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

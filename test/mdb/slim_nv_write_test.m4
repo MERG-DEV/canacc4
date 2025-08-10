@@ -1,6 +1,6 @@
 # Test cannot modify node variables in SLiM.
 
-define(test_name, slim_nv_write_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

@@ -1,6 +1,6 @@
 # Test FLiM mode does not unlearn using switches and events.
 
-define(test_name, flim_unlearn_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 

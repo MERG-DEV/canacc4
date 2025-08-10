@@ -1,6 +1,6 @@
 # Test boot into SLiM mode with events does not clear and initialise events.
 
-define(test_name, slim_boot_with_events_test)dnl
+define(test_name, patsubst(__file__, {.m4},))dnl
 
 set_up_test_simulation
 
