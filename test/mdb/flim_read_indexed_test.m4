@@ -1,6 +1,6 @@
 # Test reading back event variables in FLiM by indexed event
 
-define(test_name, patsubst(__file__, {.m4},))dnl
+set_test_name()dnl
 
 set_up_test_simulation
 

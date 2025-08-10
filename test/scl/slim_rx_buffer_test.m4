@@ -1,4 +1,4 @@
-define(test_name, patsubst(__file__, {.m4},))dnl
+set_test_name()dnl
 configuration for "processor_type" is
   shared variable Datmode; -- FIXME, kludge to prevent overwriting Rx packet
 end configuration;

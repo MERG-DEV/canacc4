@@ -1,7 +1,7 @@
 # Test boot into FLiM mode with events when both learn and unlearn switches are
 # set does not clear and initialise events.
 
-define(test_name, patsubst(__file__, {.m4},))dnl
+set_test_name()dnl
 
 set_up_test_simulation
 

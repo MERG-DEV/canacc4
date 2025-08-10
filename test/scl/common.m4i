@@ -2,6 +2,8 @@ divert(-1)
 changecom(--)
 changequote({,})
 
+define(set_test_name, {define(test_name, patsubst(__file__, {.m4},))})
+
 define(processor_type, PIC18F2480)
 
 define(stop_test,

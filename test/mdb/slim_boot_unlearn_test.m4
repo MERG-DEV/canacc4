@@ -1,7 +1,7 @@
 # Test boot into SLiM mode with events when unlearn switch is set clears and
 # initialise events.
 
-define(test_name, patsubst(__file__, {.m4},))dnl
+set_test_name()dnl
 
 set_up_test_simulation
 

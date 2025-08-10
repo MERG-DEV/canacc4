@@ -1,6 +1,8 @@
 divert(-1)
 changequote({,})
 
+define(set_test_name, {define(test_name, patsubst(__file__, {.m4},))})
+
 define(set_up_test_simulation,
 Device PIC18F2480
 Hwtool SIM

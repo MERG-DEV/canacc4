@@ -1,6 +1,6 @@
 # Test event variables cannot be read in SLiM
 
-define(test_name, patsubst(__file__, {.m4},))dnl
+set_test_name()dnl
 
 set_up_test_simulation
 
