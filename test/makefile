@@ -19,9 +19,16 @@ scl_incs := $(wildcard $(scl_dir)/*.m4i)
 scl_m4s := $(wildcard $(scl_dir)/*.m4)
 scl_m4f := $(scl_dir)/base.m4f
 
+.PHONE: build_and_test
+build_and_test:
+	@cd .. && $(MAKE) --silent
+	@$(MAKE) --silent test
+
 test: $(logs)
 	@echo
 	@grep -e 'Error: ' -e 'Failed to parse SCL' $(log_dir)/*_test.log|sort
+	@echo
+	@grep -H -e 'ExceptionInInitializerError' $(log_dir)/*_test.log|sort
 	@echo
 	@grep -h -e '_test: PASS' -e '_test: FAIL' -e '_test: TIMEOUT' $(log_dir)/*_test.log|sort -k2,2 -k1,1
 	@echo \\n`grep -l '_test: PASS' $(log_dir)/*_test.log|wc -l` of `echo $(tests)|wc -w)` passed
@@ -29,10 +36,11 @@ test: $(logs)
 .PHONY: run
 run:
 	@rm -f $(log_dir)/*.log
-	@$(MAKE) test
+	@$(MAKE) --silent build_and_test
 
 $(logs): $(log_dir)/%.log: $(mdb_dir)/%.mdb $(scl_dir)/%.scl $(cof_dir)/*.production.cof | $(log_dir)
 	@-mdb $< > $@ 2>&1
+	@-grep -H -e 'ExceptionInInitializerError'  $@
 	@-grep -h -e 'Error: ' -e 'Failed to parse SCL' -e '_test: PASS' -e '_test: FAIL' -e '_test: TIMEOUT' $@||echo $(*F)
 
 $(log_dir):
