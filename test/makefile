@@ -40,7 +40,7 @@ run:
 
 $(logs): $(log_dir)/%.log: $(mdb_dir)/%.mdb $(scl_dir)/%.scl $(cof_dir)/*.production.cof | $(log_dir)
 	@-mdb $< > $@ 2>&1
-	@-grep -H -e 'ExceptionInInitializerError'  $@
+	@-grep -H -e 'ExceptionInInitializerError' $@
 	@-grep -h -e 'Error: ' -e 'Failed to parse SCL' -e '_test: PASS' -e '_test: FAIL' -e '_test: TIMEOUT' $@||echo $(*F)
 
 $(log_dir):
